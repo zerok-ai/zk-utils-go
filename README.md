@@ -9,7 +9,8 @@ This project is used as a central repository containing common models and fuctio
 This is a private repo and hence can only be used inside the organisation. To access this repo:
 
     1. Set GOPRIVATE environment variable
-        export GOPRIVATE=github.com/zerok-ai/private-test-repo
+        export GOPRIVATE=github.com/zerok-ai/zk-utils-go
+
 
     2. If github personal access token is not configured already configre it and add to ~/.netrc file
         Ref: https://www.digitalocean.com/community/tutorials/how-to-use-a-private-go-module-in-your-own-project#providing-private-module-credentials-for-https
