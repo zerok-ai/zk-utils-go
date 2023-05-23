@@ -49,8 +49,8 @@ type FilterRule struct {
 type Filters struct {
 	Type        string    `json:"type"`
 	Condition   string    `json:"condition"`
-	Filters     []Filters `json:"filters"`
-	WorkloadSet []string  `json:"workload_id_set"`
+	Filters     []Filters `json:"filters,omitempty"`
+	WorkloadSet []string  `json:"workload_id_set,omitempty"`
 }
 
 type Rules []RuleSet
