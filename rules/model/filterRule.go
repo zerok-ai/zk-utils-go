@@ -43,13 +43,14 @@ type FilterRule struct {
 	Version   int                     `json:"version"`
 	Workloads map[string]WorkloadRule `json:"workloads"`
 	FilterId  string                  `json:"filter_id"`
-	Filters   Filters                 `json:"filters"`
+	Filters   []Filters               `json:"filters"`
 }
 
 type Filters struct {
-	Type        string   `json:"type"`
-	Condition   string   `json:"condition"`
-	WorkloadSet []string `json:"workload_id_set"`
+	Type        string    `json:"type"`
+	Condition   string    `json:"condition"`
+	Filters     []Filters `json:"filters"`
+	WorkloadSet []string  `json:"workload_id_set"`
 }
 
 type Rules []RuleSet
