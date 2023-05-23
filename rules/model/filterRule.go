@@ -24,15 +24,36 @@ type Rule struct {
 
 type WorkloadRule struct {
 	Service         *string         `json:"service,omitempty"`
-	TraceRole       *string         `json:"trace_role,omitempty"`
-	Protocol        *string         `json:"protocol,omitempty"`
+	TraceRole       *TraceRole      `json:"trace_role,omitempty"`
+	Protocol        *Protocol       `json:"protocol,omitempty"`
 	ConditionalRule ConditionalRule `json:"conditional_rule,omitempty"`
 }
 
+type Protocol string
+
+const (
+	MYSQL Protocol = "MYSQL"
+	HTTP  Protocol = "HTTP"
+)
+
+type TraceRole string
+
+const (
+	server TraceRole = "server"
+	client TraceRole = "client"
+)
+
 type ConditionalRule struct {
-	Condition *string   `json:"condition,omitempty"`
-	RuleSet   []RuleSet `json:"rules,omitempty"`
+	Condition *Condition `json:"condition,omitempty"`
+	RuleSet   []RuleSet  `json:"rules,omitempty"`
 }
+
+type Condition string
+
+const (
+	AND Condition = "AND"
+	OR  Condition = "OR"
+)
 
 type RuleSet struct {
 	Rule
@@ -48,7 +69,7 @@ type FilterRule struct {
 
 type Filters struct {
 	Type        FilterType `json:"type"`
-	Condition   string     `json:"condition"`
+	Condition   Condition  `json:"condition"`
 	Filters     []Filters  `json:"filters,omitempty"`
 	WorkloadSet []string   `json:"workload_id_set,omitempty"`
 }
