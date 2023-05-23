@@ -47,11 +47,18 @@ type FilterRule struct {
 }
 
 type Filters struct {
-	Type        string    `json:"type"`
-	Condition   string    `json:"condition"`
-	Filters     []Filters `json:"filters,omitempty"`
-	WorkloadSet []string  `json:"workload_id_set,omitempty"`
+	Type        FilterType `json:"type"`
+	Condition   string     `json:"condition"`
+	Filters     []Filters  `json:"filters,omitempty"`
+	WorkloadSet []string   `json:"workload_id_set,omitempty"`
 }
+
+type FilterType string
+
+const (
+	Workload FilterType = "workload"
+	Filter   FilterType = "filter"
+)
 
 type Rules []RuleSet
 
