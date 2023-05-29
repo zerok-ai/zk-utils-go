@@ -1,0 +1,62 @@
+{
+  "service": "namespace/service-name",
+  "trace_role": "server",
+  "protocol": "HTTP",
+  "rule": {
+    "type": "rule_group",
+    "condition": "AND",
+    "rules": [
+      {
+        "type": "rule",
+        "id": "id_place_1",
+        "field": "field",
+        "datatype": "string",
+        "input": "input",
+        "operator": "operator",
+        "value": ""
+      },
+      {
+        "type": "rule",
+        "id": "req_path_place_2",
+        "field": "req_path",
+        "datatype": "string",
+        "input": "string",
+        "operator": "ends_with",
+        "value": "/exception"
+      },
+      {
+        "type": "rule",
+        "id": "xyz_place_3",
+        "field": "req_path",
+        "datatype": "string",
+        "input": "string",
+        "operator": "ends_with",
+        "value": "/exception"
+      },
+      {
+        "type": "rule_group",
+        "condition": "OR",
+        "rules": [
+          {
+            "type": "rule",
+            "id": "req_method_place_1",
+            "field": "req_method",
+            "datatype": "string",
+            "input": "string",
+            "operator": "equal",
+            "value": "POST"
+          },
+          {
+            "type": "rule",
+            "id": "req_path_place_2",
+            "field": "req_path",
+            "datatype": "string",
+            "input": "string",
+            "operator": "ends_with",
+            "value": "/exception"
+          }
+        ]
+      }
+    ]
+  }
+}

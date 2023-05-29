@@ -1,0 +1,95 @@
+{
+  "version": "23423",
+  "scenario_id": "myid",
+  "enabled": true,
+  "workloads": {
+    "idA": {
+      "service": "namespace/service-name",
+      "trace_role": "server",
+      "protocol": "HTTP",
+      "rule": {
+        "type": "rule_group",
+        "condition": "AND",
+        "rules": [
+          {
+            "id": "id",
+            "field": "field",
+            "type": "rule",
+            "datatype": "string",
+            "input": "input",
+            "operator": "operator",
+            "value": ""
+          },
+          {
+            "id": "req_path",
+            "type": "rule",
+            "field": "req_path",
+            "datatype": "string",
+            "input": "string",
+            "operator": "ends_with",
+            "value": "/exception"
+          },
+          {
+            "type": "rule_group",
+            "condition": "OR",
+            "rules": [
+              {
+                "id": "req_method",
+                "type": "rule",
+                "field": "req_method",
+                "datatype": "string",
+                "input": "string",
+                "operator": "equal",
+                "value": "POST"
+              },
+              {
+                "id": "req_path",
+                "type": "rule",
+                "field": "req_path",
+                "datatype": "string",
+                "input": "string",
+                "operator": "ends_with",
+                "value": "/exception"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "filter": {
+    "type": "filter",
+    "condition": "AND",
+    "filters": [
+      {
+        "type": "workload",
+        "condition": "AND",
+        "workload_ids": [
+          "idA"
+        ]
+      },
+      {
+        "type": "filter",
+        "condition": "AND",
+        "filters": [
+          {
+            "type": "workload",
+            "condition": "AND",
+            "workload_ids": [
+              "id1",
+              "id2"
+            ]
+          },
+          {
+            "type": "workload",
+            "condition": "AND",
+            "workload_ids": [
+              "id3",
+              "id1"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

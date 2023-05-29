@@ -1,0 +1,10 @@
+{
+  "version": "",
+  "scenario_id": "",
+  "enabled": false,
+  "workloads": null,
+  "filter": {
+    "type": "",
+    "condition": ""
+  }
+}

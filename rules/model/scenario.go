@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/zerok-ai/zk-utils-go/utils"
 	"sort"
 )
@@ -10,6 +11,7 @@ import (
 type Scenario struct {
 	Version    string                  `json:"version"`
 	ScenarioId string                  `json:"scenario_id"`
+	Enabled    bool                    `json:"enabled"`
 	Workloads  map[string]WorkloadRule `json:"workloads"`
 	Filter     Filter                  `json:"filter"`
 }
@@ -156,4 +158,11 @@ func (a Rules) Less(i, j int) bool {
 
 		return true
 	}
+}
+
+func WorkLoadUUID(w WorkloadRule) uuid.UUID {
+	sort.Sort(Rules(w.Rule.Rules))
+	jStr, _ := json.Marshal(w)
+	id := utils.CalculateHash(string(jStr))
+	return id
 }
