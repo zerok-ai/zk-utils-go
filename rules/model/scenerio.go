@@ -83,16 +83,18 @@ func (a Rules) Len() int      { return len(a) }
 func (a Rules) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 
 func (a Rules) Less(i, j int) bool {
-	if a[i].Condition == nil && a[j].Condition != nil {
+	if a[i].RuleGroup == nil && a[j].RuleGroup != nil {
 		sort.Sort(Rules(a[j].Rules))
 		return true
-	} else if a[i].Condition != nil && a[j].Condition == nil {
+	} else if a[i].RuleGroup != nil && a[j].RuleGroup == nil {
 		sort.Sort(Rules(a[i].Rules))
 		return false
-	} else if a[i].Condition != nil && a[j].Condition != nil {
+	} else if a[i].RuleGroup != nil && a[j].RuleGroup != nil {
 		var ret *bool
 		if a[i].Condition != a[j].Condition {
 			ret = utils.ToPtr(*a[i].Condition < *a[j].Condition)
+		} else if a[i].Type != a[j].Type {
+			ret = utils.ToPtr(a[i].Type < a[j].Type)
 		}
 
 		sort.Sort(Rules(a[i].Rules))
@@ -117,6 +119,10 @@ func (a Rules) Less(i, j int) bool {
 
 		return *ret
 	} else {
+
+		if a[i].Type != a[j].Type {
+			return *a[i].ID < *a[j].ID
+		}
 
 		if *a[i].ID != *a[j].ID {
 			return *a[i].ID < *a[j].ID
