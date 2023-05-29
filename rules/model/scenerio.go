@@ -30,7 +30,6 @@ type Rule struct {
 type RuleGroup struct {
 	Condition *Condition `json:"condition,omitempty"`
 	Rules     []Rule     `json:"rules,omitempty"`
-	Type      string     `json:"type"`
 }
 
 type RuleLeaf struct {
