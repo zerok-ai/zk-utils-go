@@ -15,7 +15,7 @@ const (
 // ValidScenarioJsonString = “
 )
 
-func GetBytes(path string) []byte {
+func GetBytesFromFile(path string) []byte {
 	file, err := os.Open(path)
 	if err != nil {
 		fmt.Println("Error opening file:", err)

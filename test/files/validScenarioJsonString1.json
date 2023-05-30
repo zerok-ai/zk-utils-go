@@ -11,6 +11,7 @@
         "type": "rule_group",
         "condition": "AND",
         "rules": [
+
           {
             "id": "req_path",
             "type": "rule",
@@ -20,7 +21,15 @@
             "operator": "ends_with",
             "value": "/exception"
           },
-
+          {
+            "id": "id",
+            "field": "field",
+            "type": "rule",
+            "datatype": "string",
+            "input": "input",
+            "operator": "operator",
+            "value": ""
+          },
           {
             "type": "rule_group",
             "condition": "OR",
@@ -47,6 +56,16 @@
                 "type": "rule_group",
                 "condition": "OR",
                 "rules": [
+
+                  {
+                    "id": "req_path",
+                    "type": "rule",
+                    "field": "req_path",
+                    "datatype": "string",
+                    "input": "string",
+                    "operator": "ends_with",
+                    "value": "/exception"
+                  },
                   {
                     "id": "req_method",
                     "type": "rule",
@@ -55,26 +74,10 @@
                     "input": "string",
                     "operator": "equal",
                     "value": "POST"
-                  },{
-                    "id": "req_path",
-                    "type": "rule",
-                    "field": "req_path",
-                    "datatype": "string",
-                    "input": "string",
-                    "operator": "ends_with",
-                    "value": "/exception"
                   }
                 ]
               }
             ]
-          },{
-            "id": "id",
-            "field": "field",
-            "type": "rule",
-            "datatype": "string",
-            "input": "input",
-            "operator": "operator",
-            "value": ""
           }
         ]
       }

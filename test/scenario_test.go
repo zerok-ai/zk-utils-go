@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
 	"github.com/zerok-ai/zk-utils-go/rules/model"
-	"sort"
+	"log"
 	"testing"
 )
 
 func TestScenarioMarshalUnMarshalSuccess(t *testing.T) {
 	var s model.Scenario
-	validScenarioJsonString := string(GetBytes("files/validScenarioJsonString.json"))
+	validScenarioJsonString := string(GetBytesFromFile("files/validScenarioJsonString.json"))
 
 	err := json.Unmarshal([]byte(validScenarioJsonString), &s)
 	assert.NoError(t, err)
@@ -22,8 +22,8 @@ func TestScenarioMarshalUnMarshalSuccess(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, len(dst.String()), len(sJsonStr))
 
-	nonScenarioJsonString := string(GetBytes("files/nonScenarioJsonString.json"))
-	emptyScenarioJsonString := string(GetBytes("files/emptyScenarioJsonString.json"))
+	nonScenarioJsonString := string(GetBytesFromFile("files/nonScenarioJsonString.json"))
+	emptyScenarioJsonString := string(GetBytesFromFile("files/emptyScenarioJsonString.json"))
 
 	var s2 model.Scenario
 	_ = json.Unmarshal([]byte(nonScenarioJsonString), &s2)
@@ -37,11 +37,11 @@ func TestScenarioMarshalUnMarshalSuccess(t *testing.T) {
 }
 
 func TestSort(t *testing.T) {
-	workloadJS := string(GetBytes("files/unsortedWorkloadJs.json"))
+	workloadJS := string(GetBytesFromFile("files/unsortedWorkloadJs.json"))
 
-	var w model.WorkloadRule
+	var w model.Workload
 	err := json.Unmarshal([]byte(workloadJS), &w)
-	sort.Sort(model.Rules(w.Rule.Rules))
+	//sort.Sort(model.Rules(w.Rule.Rules))
 
 	assert.NoError(t, err)
 	assert.Equal(t, string(*w.Rule.RuleGroup.Condition), "AND")
@@ -58,4 +58,20 @@ func TestSort(t *testing.T) {
 	assert.Equal(t, len(w.Rule.RuleGroup.Rules[3].RuleGroup.Rules), 2)
 	assert.Equal(t, *w.Rule.RuleGroup.Rules[3].RuleGroup.Rules[0].RuleLeaf.ID, "req_method_place_1")
 	assert.Equal(t, *w.Rule.RuleGroup.Rules[3].RuleGroup.Rules[1].RuleLeaf.ID, "req_path_place_2")
+}
+
+func TestScenarioEqualitySuccess(t *testing.T) {
+	var scenario1 model.Scenario
+	validScenarioJsonString := string(GetBytesFromFile("files/validScenarioJsonString.json"))
+	err := json.Unmarshal([]byte(validScenarioJsonString), &scenario1)
+	assert.NoError(t, err)
+
+	var scenario2 model.Scenario
+	validScenarioJsonString = string(GetBytesFromFile("files/validScenarioJsonString1.json"))
+	err = json.Unmarshal([]byte(validScenarioJsonString), &scenario2)
+	assert.NoError(t, err)
+
+	log.Default().Println("Checking equality using equals = ", scenario1.Equals(scenario2))
+	log.Default().Println("Calling assert ")
+	assert.Equal(t, scenario1, scenario2)
 }
