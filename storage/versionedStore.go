@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/redis/go-redis/v9"
+	"github.com/zerok-ai/zk-utils-go/interfaces"
 	zkTime "github.com/zerok-ai/zk-utils-go/ticker"
 	"time"
 )
@@ -22,7 +23,7 @@ type VersionedStoreConfig struct {
 	RefreshTimeSec int `yaml:"RefreshTimeSec" env:"REFRESH_TIME_SEC" env-description:"Database host"`
 }
 
-type VersionedStore[T comparable] struct {
+type VersionedStore[T interfaces.ZKComparable] struct {
 	redisClient        *redis.Client
 	versionHashSetName string
 	versions           map[string]string
@@ -34,7 +35,7 @@ type Version struct {
 	version int
 }
 
-func GetVersionedStore[T any](redisConfig *RedisConfig, model T) (*VersionedStore[*T], error) {
+func GetVersionedStore[T interfaces.ZKComparable](redisConfig *RedisConfig, model T) (*VersionedStore[T], error) {
 
 	if redisConfig == nil {
 		return nil, fmt.Errorf("redis config not found")
@@ -47,7 +48,7 @@ func GetVersionedStore[T any](redisConfig *RedisConfig, model T) (*VersionedStor
 		ReadTimeout: readTimeout,
 	})
 
-	versionStore := (&VersionedStore[*T]{
+	versionStore := (&VersionedStore[T]{
 		redisClient:        _redisClient,
 		versionHashSetName: "zk_value_version",
 	}).initialize()
@@ -57,7 +58,7 @@ func GetVersionedStore[T any](redisConfig *RedisConfig, model T) (*VersionedStor
 
 var filterPullTickInterval time.Duration = 10 * time.Second
 
-func (versionStore *VersionedStore[T]) initialize() *VersionedStore[T] {
+func (versionStore VersionedStore[T]) initialize() *VersionedStore[T] {
 
 	// trigger recurring filter pull
 	tickerFilterPull := time.NewTicker(filterPullTickInterval)
@@ -72,7 +73,7 @@ func (versionStore *VersionedStore[T]) initialize() *VersionedStore[T] {
 	zkTime.RunTaskOnTicks(tickerFilterPull, task)
 	task()
 
-	return versionStore
+	return &versionStore
 }
 
 func (versionStore *VersionedStore[T]) Value(key string) (*T, error) {
@@ -96,7 +97,7 @@ func (versionStore *VersionedStore[T]) SetValue(key string, value T) error {
 
 	// 1. check if the local value is different from the new value
 	localVal := versionStore.localKeyValueCache[key]
-	if *localVal == value {
+	if (*localVal).Equals(value) {
 		return LATEST
 	}
 
@@ -108,7 +109,7 @@ func (versionStore *VersionedStore[T]) SetValue(key string, value T) error {
 			return err
 		}
 
-		if *remoteT == value {
+		if (*remoteT).Equals(value) {
 			versionStore.localKeyValueCache[key] = &value
 			return LATEST
 		}
