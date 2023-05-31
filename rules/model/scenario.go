@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/zerok-ai/zk-utils-go/utils"
+	"github.com/zerok-ai/zk-utils-go/crypto"
 	"reflect"
 	"sort"
 )
@@ -270,6 +270,6 @@ type Condition string
 func WorkLoadUUID(w Workload) uuid.UUID {
 	sort.Sort(Rules(w.Rule.Rules))
 	jStr, _ := json.Marshal(w)
-	id := utils.CalculateHash(string(jStr))
+	id := crypto.CalculateHash(string(jStr))
 	return id
 }

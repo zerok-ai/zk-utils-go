@@ -20,7 +20,6 @@
             "operator": "ends_with",
             "value": "/exception"
           },
-
           {
             "type": "rule_group",
             "condition": "OR",

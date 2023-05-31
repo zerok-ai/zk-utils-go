@@ -1,14 +1,14 @@
 package test
 
 import (
-	"github.com/zerok-ai/zk-utils-go/utils"
+	"github.com/zerok-ai/zk-utils-go/crypto"
 	"testing"
 )
 
 func TestCalculateHash(t *testing.T) {
 	input := "example string"
 	expected := "0d355fb4-a093-520b-9d7e-f1f615e3fa10"
-	result := utils.CalculateHash(input)
+	result := crypto.CalculateHash(input)
 
 	if result.String() != expected {
 		t.Errorf("Expected: %s, but got: %s", expected, result)
