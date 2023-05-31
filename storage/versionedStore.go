@@ -97,7 +97,7 @@ func (versionStore *VersionedStore[T]) SetValue(key string, value T) error {
 
 	// 1. check if the local value is different from the new value
 	localVal := versionStore.localKeyValueCache[key]
-	if (*localVal).Equals(value) {
+	if localVal != nil && (*localVal).Equals(value) {
 		return LATEST
 	}
 
