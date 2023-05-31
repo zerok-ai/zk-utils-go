@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/zerok-ai/zk-utils-go/crypto"
+	"github.com/zerok-ai/zk-utils-go/interfaces"
 	"reflect"
 	"sort"
 )
@@ -17,7 +18,13 @@ type Scenario struct {
 	Filter     Filter               `json:"filter"`
 }
 
-func (s Scenario) Equals(other Scenario) bool {
+func (s Scenario) Equals(otherInterface interfaces.ZKComparable) bool {
+
+	other, ok := otherInterface.(Scenario)
+	if !ok {
+		return false
+	}
+
 	if s.Version != other.Version || s.ScenarioId != other.ScenarioId || s.Enabled != other.Enabled {
 		return false
 	}
