@@ -102,13 +102,13 @@ func (zkPostgresService zkPostgresRepo[T]) Insert(stmt string, param []any) erro
 	return nil
 }
 
-func (zkPostgresService zkPostgresRepo[T]) BulkInsert(tx *sql.Tx, tableName string, columns []string, data []any, r interfaces.PostgresRuleIterator) error {
+func (zkPostgresService zkPostgresRepo[T]) BulkInsert(tx *sql.Tx, tableName string, columns []string, data []interfaces.PostgresRuleIterator) error {
 	stmt, err := tx.Prepare(pq.CopyIn(tableName, columns...))
 	if err != nil {
 		return err
 	}
 	for _, d := range data {
-		_, err := stmt.Exec(r.Explode(d))
+		_, err := stmt.Exec(d.Explode())
 		if err != nil {
 			zkLogger.Debug("couldn't prepare COPY statement: %v", err)
 			return err

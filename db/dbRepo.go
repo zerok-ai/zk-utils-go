@@ -11,5 +11,5 @@ type DatabaseRepo[T any] interface {
 	Update(stmt string, param []any, tx *sql.Tx, rollback bool) (int, error)
 	Get(query string, param []any, args []any) error
 	Insert(stmt string, param []any) error
-	BulkInsert(tx *sql.Tx, tableName string, columns []string, data []any, r interfaces.PostgresRuleIterator) error
+	BulkInsert(tx *sql.Tx, tableName string, columns []string, data []interfaces.PostgresRuleIterator) error
 }
