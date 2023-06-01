@@ -4,13 +4,13 @@ import (
 	"flag"
 	"fmt"
 	"github.com/ilyakaznacheev/cleanenv"
-	"github.com/zerok-ai/zk-utils-go/storage"
+	"github.com/zerok-ai/zk-utils-go/storage/model"
 	"os"
 )
 
 // AppConfigs is an application configuration structure
 type AppConfigs struct {
-	Redis *storage.RedisConfig `yaml:"redis"`
+	Redis *model.RedisConfig `yaml:"redis"`
 }
 
 // Args command-line parameters
