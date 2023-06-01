@@ -5,23 +5,42 @@ import (
 	"time"
 )
 
-// RunTaskOnTicks This function runs task. If a task more than the tick interval to execute, the function
-// makes sure that the next task is only run on the next tick which occurs after the completion
-// of the current task
-func RunTaskOnTicks(ticker *time.Ticker, task func()) {
+// TickerTask create a struct to hold the ticker and the task
+type TickerTask struct {
+	ticker  *time.Ticker
+	name    string
+	task    func()
+	counter int
+}
+
+func GetNewTickerTask(name string, interval time.Duration, task func()) *TickerTask {
+	return &TickerTask{
+		ticker: time.NewTicker(interval),
+		task:   task,
+		name:   name,
+	}
+}
+
+func (tt TickerTask) Start() {
 	go func() {
 		for {
 			select {
-			case <-ticker.C:
+			case <-tt.ticker.C:
 				// Perform the task
-				task()
+				fmt.Printf("tick (%s) - %d\n", tt.name, tt.counter)
+				tt.counter = tt.counter + 1
+				tt.task()
 
-				// If there are multiple ticks available, flush all for now
-				for len(ticker.C) > 0 {
-					<-ticker.C
+				//If there are multiple ticks available, flush all for now
+				for len(tt.ticker.C) > 0 {
+					<-tt.ticker.C
 					fmt.Println("Skipping tick due to slow processing")
 				}
 			}
 		}
 	}()
+}
+
+func (tt TickerTask) Stop() {
+	tt.ticker.Stop()
 }

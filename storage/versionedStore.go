@@ -6,18 +6,13 @@ import (
 	"fmt"
 	"github.com/redis/go-redis/v9"
 	"github.com/zerok-ai/zk-utils-go/interfaces"
-	zkTime "github.com/zerok-ai/zk-utils-go/ticker"
+	"github.com/zerok-ai/zk-utils-go/storage/model"
+	ticker "github.com/zerok-ai/zk-utils-go/ticker"
+	"sync"
 	"time"
 )
 
 var LATEST = fmt.Errorf("version passed is already latest")
-
-type RedisConfig struct {
-	Host        string `yaml:"host" env:"REDIS_HOST" env-description:"Database host"`
-	Port        string `yaml:"port" env:"REDIS_PORT" env-description:"Database port"`
-	DB          int    `yaml:"db" env:"REDIS_DB" env-description:"Database to load"`
-	ReadTimeout int    `yaml:"readTimeout"`
-}
 
 type VersionedStoreConfig struct {
 	RefreshTimeSec int `yaml:"RefreshTimeSec" env:"REFRESH_TIME_SEC" env-description:"Database host"`
@@ -26,8 +21,24 @@ type VersionedStoreConfig struct {
 type VersionedStore[T interfaces.ZKComparable] struct {
 	redisClient        *redis.Client
 	versionHashSetName string
-	versions           map[string]string
+	localVersions      map[string]string
 	localKeyValueCache map[string]*T
+	AutoSync           bool
+
+	tickerTask *ticker.TickerTask
+	mutex      sync.Mutex
+}
+
+func (versionStore *VersionedStore[T]) safeAddToLocalVersionMap(key string, value string) {
+	versionStore.mutex.Lock()
+	versionStore.mutex.Unlock()
+	versionStore.localVersions[key] = value
+}
+
+func (versionStore *VersionedStore[T]) safeAddToLocalKeyValueCacheMap(key string, value *T) {
+	versionStore.mutex.Lock()
+	versionStore.mutex.Unlock()
+	versionStore.localKeyValueCache[key] = value
 }
 
 type Version struct {
@@ -35,7 +46,7 @@ type Version struct {
 	version int
 }
 
-func GetVersionedStore[T interfaces.ZKComparable](redisConfig *RedisConfig, model T) (*VersionedStore[T], error) {
+func GetVersionedStore[T interfaces.ZKComparable](redisConfig *model.RedisConfig, dbName string, autoSync bool, model T) (*VersionedStore[T], error) {
 
 	if redisConfig == nil {
 		return nil, fmt.Errorf("redis config not found")
@@ -44,25 +55,26 @@ func GetVersionedStore[T interfaces.ZKComparable](redisConfig *RedisConfig, mode
 	_redisClient := redis.NewClient(&redis.Options{
 		Addr:        fmt.Sprint(redisConfig.Host, ":", redisConfig.Port),
 		Password:    "",
-		DB:          redisConfig.DB,
+		DB:          redisConfig.DBs[dbName],
 		ReadTimeout: readTimeout,
 	})
 
 	versionStore := (&VersionedStore[T]{
 		redisClient:        _redisClient,
 		versionHashSetName: "zk_value_version",
+		localVersions:      map[string]string{},
+		localKeyValueCache: map[string]*T{},
+		AutoSync:           autoSync,
 	}).initialize()
 
 	return versionStore, nil
 }
 
-var filterPullTickInterval time.Duration = 10 * time.Second
+var filterPullTickInterval time.Duration = 2 * time.Minute
 
-func (versionStore VersionedStore[T]) initialize() *VersionedStore[T] {
+func (versionStore *VersionedStore[T]) initialize() *VersionedStore[T] {
 
 	// trigger recurring filter pull
-	tickerFilterPull := time.NewTicker(filterPullTickInterval)
-
 	task := func() {
 		err := versionStore.RefreshLocalCache()
 		if err != nil {
@@ -70,10 +82,12 @@ func (versionStore VersionedStore[T]) initialize() *VersionedStore[T] {
 		}
 	}
 
-	zkTime.RunTaskOnTicks(tickerFilterPull, task)
+	if versionStore.AutoSync {
+		ticker.GetNewTickerTask("version ticker", filterPullTickInterval, task)
+	}
 	task()
 
-	return &versionStore
+	return versionStore
 }
 
 func (versionStore *VersionedStore[T]) Value(key string) (*T, error) {
@@ -84,9 +98,16 @@ func (versionStore *VersionedStore[T]) Value(key string) (*T, error) {
 		return localVal, nil
 	}
 
-	valueFromStore, err := versionStore.valueFromStore(key)
+	var valueFromStore *T
+	var err error
+	// get the version and value from remote store
+	versionFromStore, err := versionStore.getVersionFromDB(key)
 	if err == nil {
-		versionStore.localKeyValueCache[key] = valueFromStore
+		versionStore.safeAddToLocalVersionMap(key, versionFromStore)
+		valueFromStore, err = versionStore.valueFromStore(key)
+		if err == nil {
+			versionStore.safeAddToLocalKeyValueCacheMap(key, valueFromStore)
+		}
 	}
 
 	return valueFromStore, err
@@ -110,7 +131,6 @@ func (versionStore *VersionedStore[T]) SetValue(key string, value T) error {
 		}
 
 		if (*remoteT).Equals(value) {
-			versionStore.localKeyValueCache[key] = &value
 			return LATEST
 		}
 	} else if err != redis.Nil {
@@ -137,11 +157,11 @@ func (versionStore *VersionedStore[T]) SetValue(key string, value T) error {
 	}
 
 	//4. update value in local cache
-	versionStore.localKeyValueCache[key] = &value
+	versionStore.safeAddToLocalKeyValueCacheMap(key, &value)
 	var newVersion string
 	newVersion, err = versionStore.version(key)
 	if err == nil {
-		versionStore.versions[key] = newVersion
+		versionStore.safeAddToLocalVersionMap(key, newVersion)
 	} else {
 		//	not sure what to do here
 	}
@@ -149,7 +169,15 @@ func (versionStore *VersionedStore[T]) SetValue(key string, value T) error {
 	return nil
 }
 
-func (versionStore *VersionedStore[T]) getAllVersions() (map[string]string, error) {
+func (versionStore *VersionedStore[T]) getVersionFromDB(key string) (string, error) {
+	rdb := versionStore.redisClient
+
+	// get the old value
+	result := rdb.HGet(context.Background(), versionStore.versionHashSetName, key)
+	return result.Val(), result.Err()
+}
+
+func (versionStore *VersionedStore[T]) getAllVersionsFromDB() (map[string]string, error) {
 	rdb := versionStore.redisClient
 
 	// get the old value
@@ -172,7 +200,7 @@ func (versionStore *VersionedStore[T]) valueFromStore(key string) (*T, error) {
 	return value, err
 }
 
-func (versionStore *VersionedStore[T]) valuesForKeysFromStore(keys []string) ([]*T, error) {
+func (versionStore *VersionedStore[T]) valuesForKeysFromDB(keys []string) ([]*T, error) {
 	rdb := versionStore.redisClient
 
 	// get the values
@@ -181,7 +209,7 @@ func (versionStore *VersionedStore[T]) valuesForKeysFromStore(keys []string) ([]
 		return nil, err
 	}
 
-	sliceToReturn := make([]*T, len(opt))
+	var sliceToReturn []*T
 	for i := 0; i < len(opt); i++ {
 		var valToAppend *T
 		switch value := opt[i].(type) {
@@ -234,42 +262,42 @@ func (versionStore *VersionedStore[T]) Length() (int64, error) {
 
 func (versionStore *VersionedStore[T]) RefreshLocalCache() error {
 
-	// 1. get the new filter versions for each filter
-	newFilterVersions, err := versionStore.getAllVersions()
+	// 1. get the new localVersions for all the keys
+	versionsFromDB, err := versionStore.getAllVersionsFromDB()
 	if err != nil {
-		return fmt.Errorf("error in getting versions for values: %v", err)
+		return fmt.Errorf("error in getting localVersions for values: %v", err)
 	}
 
-	// 2. collect the filters which have the same version in a new map
-	newFilters := make(map[string]*T)
-	var missingOrOldFilters []string
-	for key, newVersion := range newFilterVersions {
-		oldVersion, ok := versionStore.versions[key]
+	// 2. collect the data points which have the same versionFromDb in a new map
+	newDataPair := make(map[string]*T)
+	var missingOrOldDataKeys []string
+	for key, versionFromDb := range versionsFromDB {
+		oldVersion, ok := versionStore.localVersions[key]
 		if ok {
-			if oldVersion == newVersion {
-				newFilters[key] = versionStore.localKeyValueCache[key]
+			if oldVersion == versionFromDb {
+				newDataPair[key] = versionStore.localKeyValueCache[key]
 				continue
 			}
 		}
-		missingOrOldFilters = append(missingOrOldFilters, key)
+		missingOrOldDataKeys = append(missingOrOldDataKeys, key)
 	}
 	// 2.1 nothing new, go home
-	if len(missingOrOldFilters) == 0 {
+	if len(missingOrOldDataKeys) == 0 {
 		return nil
 	}
 
-	// 3. get the filters which don't exist
-	newRawFilters, err := versionStore.valuesForKeysFromStore(missingOrOldFilters)
+	// 3. get the values which are not present locally or are old
+	newRawDataPair, err := versionStore.valuesForKeysFromDB(missingOrOldDataKeys)
 	if err != nil {
 		return fmt.Errorf("error in fetching new data for cache: %v", err)
 	}
 	// populate new cache
-	for i, v := range newRawFilters {
-		newFilters[missingOrOldFilters[i]] = v
+	for i, v := range newRawDataPair {
+		newDataPair[missingOrOldDataKeys[i]] = v
 	}
 
 	// 4. assign the new objects to filter processors
-	versionStore.localKeyValueCache = newFilters
-	versionStore.versions = newFilterVersions
+	versionStore.localKeyValueCache = newDataPair
+	versionStore.localVersions = versionsFromDB
 	return nil
 }
