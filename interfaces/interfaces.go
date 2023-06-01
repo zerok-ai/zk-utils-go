@@ -5,5 +5,5 @@ type ZKComparable interface {
 }
 
 type PostgresRuleIterator interface {
-	Explode(any) []any
+	Explode() []any
 }
