@@ -3,9 +3,11 @@ package zkpostgres
 import (
 	"database/sql"
 	"fmt"
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 	"github.com/zerok-ai/zk-utils-go/db"
 	pgConfig "github.com/zerok-ai/zk-utils-go/db/postgres/config"
+	"github.com/zerok-ai/zk-utils-go/interfaces"
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"log"
 )
@@ -98,4 +100,26 @@ func (zkPostgresService zkPostgresRepo[T]) Insert(stmt string, param []any) erro
 	}
 
 	return nil
+}
+
+func (zkPostgresService zkPostgresRepo[T]) BulkInsert(tx *sql.Tx, tableName string, columns []string, data []any, r interfaces.PostgresRuleIterator) error {
+	stmt, err := tx.Prepare(pq.CopyIn(tableName, columns...))
+	if err != nil {
+		return err
+	}
+	for _, d := range data {
+		_, err := stmt.Exec(r.Explode(d))
+		if err != nil {
+			zkLogger.Debug("couldn't prepare COPY statement: %v", err)
+			return err
+		}
+		if err != nil {
+			return err
+		}
+	}
+	_, err = stmt.Exec()
+	if err != nil {
+		return err
+	}
+	return stmt.Close()
 }
