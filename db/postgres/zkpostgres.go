@@ -108,7 +108,8 @@ func (zkPostgresService zkPostgresRepo[T]) BulkInsert(tx *sql.Tx, tableName stri
 		return err
 	}
 	for _, d := range data {
-		_, err := stmt.Exec(d.Explode())
+		values := d.Explode()
+		_, err := stmt.Exec(values...)
 		if err != nil {
 			zkLogger.Debug("couldn't prepare COPY statement: %v", err)
 			return err
