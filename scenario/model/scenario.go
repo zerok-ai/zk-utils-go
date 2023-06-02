@@ -275,7 +275,7 @@ const (
 type Condition string
 
 func WorkLoadUUID(w Workload) uuid.UUID {
-	sort.Sort(Rules(w.Rule.Rules))
+	w.Rule.Rules.sort()
 	jStr, _ := json.Marshal(w)
 	id := crypto.CalculateHash(string(jStr))
 	return id

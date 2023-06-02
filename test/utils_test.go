@@ -1,7 +1,11 @@
 package test
 
 import (
+	"encoding/json"
+	"github.com/stretchr/testify/assert"
 	"github.com/zerok-ai/zk-utils-go/crypto"
+	"github.com/zerok-ai/zk-utils-go/scenario/model"
+	"sort"
 	"testing"
 )
 
@@ -16,19 +20,19 @@ func TestCalculateHash(t *testing.T) {
 }
 
 func TestSortedScenariosHash(t *testing.T) {
-	//unsortedWorkloadJS := string(GetBytesFromFile("files/unsortedWorkloadJs.json"))
-	//
-	//var wUnsorted model.WorkloadRule
-	//errUnsorted := json.Unmarshal([]byte(unsortedWorkloadJS), &wUnsorted)
-	//assert.NoError(t, errUnsorted)
-	//sort.Sort(model.Rules(wUnsorted.Rule.Rules))
-	//
-	//sortedWorkloadJS := string(GetBytesFromFile("files/sortedWorkloadJs.json"))
-	//
-	//var wSorted model.WorkloadRule
-	//errSorted := json.Unmarshal([]byte(sortedWorkloadJS), &wSorted)
-	//assert.NoError(t, errSorted)
-	//sort.Sort(model.Rules(wSorted.Rule.Rules))
-	//
-	//assert.Equal(t, model.WorkLoadUUID(wUnsorted), model.WorkLoadUUID(wSorted))
+	unsortedWorkloadJS := string(GetBytesFromFile("files/unsortedWorkloadJs.json"))
+
+	var wUnsorted model.Workload
+	errUnsorted := json.Unmarshal([]byte(unsortedWorkloadJS), &wUnsorted)
+	assert.NoError(t, errUnsorted)
+	sort.Sort(wUnsorted.Rule.Rules)
+
+	sortedWorkloadJS := string(GetBytesFromFile("files/sortedWorkloadJs.json"))
+
+	var wSorted model.Workload
+	errSorted := json.Unmarshal([]byte(sortedWorkloadJS), &wSorted)
+	assert.NoError(t, errSorted)
+	sort.Sort(wSorted.Rule.Rules)
+
+	assert.Equal(t, model.WorkLoadUUID(wUnsorted), model.WorkLoadUUID(wSorted))
 }
