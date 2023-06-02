@@ -13,4 +13,5 @@ type DatabaseRepo interface {
 	GetAll(db *sql.DB, query string, param []any) (*sql.Rows, error, func())
 	Insert(db *sql.DB, query string, param []any) error
 	BulkInsert(tx *sql.Tx, tableName string, columns []string, data []interfaces.DbArgs) error
+	InsertInTransaction(tx *sql.Tx, stmt string, params []any) error
 }

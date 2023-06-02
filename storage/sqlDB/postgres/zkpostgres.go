@@ -128,3 +128,19 @@ func (zkPostgresService zkPostgresRepo) BulkInsert(tx *sql.Tx, tableName string,
 
 	return stmt.Close()
 }
+
+func (zkPostgresService zkPostgresRepo) InsertInTransaction(tx *sql.Tx, stmt string, params []any) error {
+	preparedStmt, err := tx.Prepare(stmt)
+	if err != nil {
+		zkLogger.Error(LogTag, "Error preparing insert statement:", err)
+		return err
+	}
+	defer preparedStmt.Close()
+
+	_, err = preparedStmt.Exec(params...)
+	if err != nil {
+		zkLogger.Error(LogTag, "Error executing insert:", err)
+	}
+
+	return nil
+}
