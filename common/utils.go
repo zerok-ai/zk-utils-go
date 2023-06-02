@@ -17,42 +17,27 @@ import (
 	"time"
 )
 
-type StructUtils interface {
-	ToString(iInstance interface{}) *string
-	ToReader(iString string) *strings.Reader
-	ToJsonReader(iInstance interface{}) *strings.Reader
-	ToJsonString(iInstance interface{}) *string
-	FromJsonString(iString string, iType reflect.Type) interface{}
-}
-
-type structUtils struct {
-}
-
-func NewStructUtils() StructUtils {
-	return &structUtils{}
-}
-
-func (structUtils structUtils) ToString(iInstance interface{}) *string {
+func ToString(iInstance interface{}) *string {
 	if iInstance == nil {
 		return nil
 	}
 	return ToPtr[string](fmt.Sprint(iInstance))
 }
 
-func (structUtils structUtils) ToReader(iString string) *strings.Reader {
+func ToReader(iString string) *strings.Reader {
 	iReader := strings.NewReader(iString)
 	return iReader
 }
 
-func (structUtils structUtils) ToJsonReader(iInstance interface{}) *strings.Reader {
+func ToJsonReader(iInstance interface{}) *strings.Reader {
 	if iInstance == nil {
 		return nil
 	}
-	iReader := strings.NewReader(*structUtils.ToJsonString(iInstance))
+	iReader := strings.NewReader(*ToJsonString(iInstance))
 	return iReader
 }
 
-func (structUtils structUtils) ToJsonString(iInstance interface{}) *string {
+func ToJsonString(iInstance interface{}) *string {
 	if iInstance == nil {
 		return nil
 	}
@@ -67,7 +52,7 @@ func (structUtils structUtils) ToJsonString(iInstance interface{}) *string {
 	}
 }
 
-func (structUtils structUtils) FromJsonString(iString string, iType reflect.Type) interface{} {
+func FromJsonString(iString string, iType reflect.Type) interface{} {
 	if iType.Kind() == reflect.Ptr {
 		iType = iType.Elem()
 	}
@@ -82,19 +67,18 @@ func (structUtils structUtils) FromJsonString(iString string, iType reflect.Type
 }
 
 // String Utils
-type CryptoUtils struct {
-}
 
-func (cryptoUtils CryptoUtils) ToSha256(input string) [sha256.Size]byte {
+func ToSha256(input string) [sha256.Size]byte {
 	return sha256.Sum256([]byte(input))
 }
 
-func (cryptoUtils CryptoUtils) ToSha256String(prefix string, input string, suffix string) string {
-	bytes := cryptoUtils.ToSha256(input)
+func ToSha256String(prefix string, input string, suffix string) string {
+	bytes := ToSha256(input)
 	return prefix + hex.EncodeToString(bytes[:]) + suffix
 }
 
 // General Utils
+
 func GetIntegerFromString(k string) (int, error) {
 	return strconv.Atoi(k)
 }
@@ -110,7 +94,7 @@ func PtrTo[T any](arg *T) T {
 	return *arg
 }
 
-func (cryptoUtils CryptoUtils) GenerateRandomToken(length int) (string, error) {
+func GenerateRandomToken(length int) (string, error) {
 
 	tokenLength := length
 
@@ -133,19 +117,19 @@ func CheckSqlError(err error, logTag string) *zkErrors.ZkError {
 	switch err {
 	case sql.ErrNoRows:
 		fmt.Println("No rows were returned!")
-		zkError := zkErrors.ZkErrorBuilder{}.Build(zkErrors.ZK_ERROR_NOT_FOUND, nil)
+		zkError := zkErrors.ZkErrorBuilder{}.Build(zkErrors.ZkErrorNotFound, nil)
 		return &zkError
 	case nil:
 		return nil
 	default:
-		zkError := zkErrors.ZkErrorBuilder{}.Build(zkErrors.ZK_ERROR_INTERNAL_SERVER, nil)
+		zkError := zkErrors.ZkErrorBuilder{}.Build(zkErrors.ZkErrorInternalServer, nil)
 		zkLogger.Debug(logTag, "unable to scan rows", err)
 		return &zkError
 	}
 }
 
 func RollbackTransaction(tx *sql.Tx, logTag string) (bool, *zkErrors.ZkError) {
-	dbErr := zkErrors.ZkErrorBuilder{}.Build(zkErrors.ZK_ERROR_DB_ERROR, nil)
+	dbErr := zkErrors.ZkErrorBuilder{}.Build(zkErrors.ZkErrorDbError, nil)
 
 	if err := tx.Rollback(); err != nil {
 		zkLogger.Debug(logTag, "unable to rollback transaction, "+err.Error())

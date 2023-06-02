@@ -21,29 +21,28 @@ type ZkErrorBuilder struct {
 }
 
 var (
-	ZK_ERROR_INTERNAL_SERVER = ZkErrorType{Status: iris.StatusInternalServerError,
+	ZkErrorInternalServer = ZkErrorType{Status: iris.StatusInternalServerError,
 		Type:    StatusText(iris.StatusInternalServerError),
 		Message: "Encountered an issue, contact support"}
-	ZK_ERROR_TIMEOUT = ZkErrorType{Status: iris.StatusRequestTimeout,
+	ZkErrorTimeout = ZkErrorType{Status: iris.StatusRequestTimeout,
 		Type:    StatusText(iris.StatusRequestTimeout),
 		Message: "Encountered an issue, contact support"}
-	ZK_ERROR_NOT_FOUND = ZkErrorType{Status: iris.StatusNotFound,
+	ZkErrorNotFound = ZkErrorType{Status: iris.StatusNotFound,
 		Type:    StatusText(iris.StatusNotFound),
 		Message: "Encountered an issue, contact support"}
-	ZK_ERROR_SESSION_EXPIRED = ZkErrorType{Status: iris.StatusPageExpired,
+	ZkErrorSessionExpired = ZkErrorType{Status: iris.StatusPageExpired,
 		Type:    StatusText(iris.StatusPageExpired),
 		Message: "The session has expired. Please login again to continue"}
-	ZK_ERROR_UNAUTHORIZED = ZkErrorType{Status: iris.StatusUnauthorized,
+	ZkErrorUnauthorized = ZkErrorType{Status: iris.StatusUnauthorized,
 		Type:    StatusText(iris.StatusUnauthorized),
 		Message: "You are unauthorized to perform this operation. Contact system admin"}
-	ZK_ERROR_BAD_REQUEST = ZkErrorType{Status: iris.StatusBadRequest,
+	ZkErrorBadRequest = ZkErrorType{Status: iris.StatusBadRequest,
 		Type:    StatusText(iris.StatusBadRequest),
 		Message: "The request was malformed or contained invalid parameters"}
-	ZK_ERROR_INTERNAL_EMAIL_SERVER = ZkErrorType{Status: iris.StatusInternalServerError,
+	ZkErrorInterEmailServer = ZkErrorType{Status: iris.StatusInternalServerError,
 		Type:    StatusText(iris.StatusInternalServerError),
 		Message: "Encountered an issue while sending email, contact support"}
-
-	ZK_ERROR_DB_ERROR = ZkErrorType{Status: iris.StatusInternalServerError,
+	ZkErrorDbError = ZkErrorType{Status: iris.StatusInternalServerError,
 		Type:    StatusText(iris.StatusInternalServerError),
 		Message: "Encountered an issue while executing db operation"}
 )
