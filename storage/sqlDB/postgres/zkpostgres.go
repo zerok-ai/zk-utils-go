@@ -5,17 +5,17 @@ import (
 	"fmt"
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
-	"github.com/zerok-ai/zk-utils-go/db"
-	pgConfig "github.com/zerok-ai/zk-utils-go/db/postgres/config"
 	"github.com/zerok-ai/zk-utils-go/interfaces"
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
+	"github.com/zerok-ai/zk-utils-go/storage/sqlDB"
+	pgConfig "github.com/zerok-ai/zk-utils-go/storage/sqlDB/postgres/config"
 	"log"
 )
 
 type zkPostgresRepo[T any] struct {
 }
 
-func NewZkPostgresRepo[T any]() db.DatabaseRepo[T] {
+func NewZkPostgresRepo[T any]() sqlDB.DatabaseRepo[T] {
 	return &zkPostgresRepo[T]{}
 }
 
@@ -44,11 +44,19 @@ func (zkPostgresService zkPostgresRepo[T]) CreateConnection() *sql.DB {
 	return db
 }
 
-func (zkPostgresService zkPostgresRepo[T]) Get(query string, param []any, args []any) error {
-	db := zkPostgresService.CreateConnection()
+func (zkPostgresService zkPostgresRepo[T]) Get(db *sql.DB, query string, param []any, args []any) error {
 	defer db.Close()
 	row := db.QueryRow(query, param...)
 	return row.Scan(args...)
+}
+
+func (zkPostgresService zkPostgresRepo[T]) GetAll(db *sql.DB, query string, param []any) (*sql.Rows, error, func()) {
+
+	rows, err := db.Query(query, param...)
+	f := func() {
+		defer rows.Close()
+	}
+	return rows, err, f
 }
 
 //func (zkPostgresService zkPostgresRepo[T]) rowProcessor(row *sql.Row, args []any) error {
@@ -61,15 +69,15 @@ func (zkPostgresService zkPostgresRepo[T]) Get(query string, param []any, args [
 //	return nil
 //}
 
-func (zkPostgresService zkPostgresRepo[T]) Delete(stmt string, param []any, tx *sql.Tx, rollback bool) (int, error) {
-	return zkPostgresService.modifyTable(stmt, param, tx, rollback)
+func (zkPostgresService zkPostgresRepo[T]) Delete(tx *sql.Tx, query string, param []any, rollback bool) (int, error) {
+	return zkPostgresService.modifyTable(tx, query, param, rollback)
 }
 
-func (zkPostgresService zkPostgresRepo[T]) Update(stmt string, param []any, tx *sql.Tx, rollback bool) (int, error) {
-	return zkPostgresService.modifyTable(stmt, param, tx, rollback)
+func (zkPostgresService zkPostgresRepo[T]) Update(tx *sql.Tx, stmt string, param []any, rollback bool) (int, error) {
+	return zkPostgresService.modifyTable(tx, stmt, param, rollback)
 }
 
-func (zkPostgresService zkPostgresRepo[T]) modifyTable(stmt string, param []any, tx *sql.Tx, rollback bool) (int, error) {
+func (zkPostgresService zkPostgresRepo[T]) modifyTable(tx *sql.Tx, stmt string, param []any, rollback bool) (int, error) {
 	res, err := tx.Exec(stmt, param...)
 	if err == nil {
 		count, err := res.RowsAffected()
@@ -84,9 +92,8 @@ func (zkPostgresService zkPostgresRepo[T]) modifyTable(stmt string, param []any,
 	return 0, err
 }
 
-func (zkPostgresService zkPostgresRepo[T]) Insert(stmt string, param []any) error {
-	db := zkPostgresService.CreateConnection()
-	preparedStmt, err := db.Prepare(stmt)
+func (zkPostgresService zkPostgresRepo[T]) Insert(db *sql.DB, query string, param []any) error {
+	preparedStmt, err := db.Prepare(query)
 	if err != nil {
 		log.Println("Error preparing statement:", err)
 		return err

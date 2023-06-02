@@ -202,11 +202,11 @@ type Protocol string
 
 type Rules []Rule
 
-func (a Rules) Len() int      { return len(a) }
-func (a Rules) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a Rules) Less(i, j int) bool {
-	rule := a[i]
-	other := a[j]
+func (r Rules) Len() int      { return len(r) }
+func (r Rules) Swap(i, j int) { r[i], r[j] = r[j], r[i] }
+func (r Rules) Less(i, j int) bool {
+	rule := r[i]
+	other := r[j]
 
 	if rule.Type < other.Type {
 		return true
@@ -223,10 +223,10 @@ func (a Rules) Less(i, j int) bool {
 	return false
 }
 
-func (r Rules) sort() {
+func (r Rules) Sort() {
 	for i := 0; i < len(r); i++ {
 		if r[i].Type == RULE_GROUP {
-			r[i].Rules.sort()
+			r[i].Rules.Sort()
 		}
 	}
 	sort.Sort(r)
@@ -239,8 +239,8 @@ func (r Rules) Equals(other Rules) bool {
 	}
 
 	// sort the arrays first
-	r.sort()
-	other.sort()
+	r.Sort()
+	other.Sort()
 
 	// compare the arrays
 	for index, value := range other {
@@ -275,7 +275,7 @@ const (
 type Condition string
 
 func WorkLoadUUID(w Workload) uuid.UUID {
-	sort.Sort(Rules(w.Rule.Rules))
+	w.Rule.Rules.Sort()
 	jStr, _ := json.Marshal(w)
 	id := crypto.CalculateHash(string(jStr))
 	return id

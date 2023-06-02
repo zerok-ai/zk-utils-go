@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
-	"github.com/zerok-ai/zk-utils-go/rules/model"
+	"github.com/zerok-ai/zk-utils-go/scenario/model"
 	"log"
 	"testing"
 )
@@ -41,7 +41,7 @@ func TestSort(t *testing.T) {
 
 	var w model.Workload
 	err := json.Unmarshal([]byte(workloadJS), &w)
-	//sort.Sort(model.Rules(w.Rule.Rules))
+	w.Rule.Rules.Sort()
 
 	assert.NoError(t, err)
 	assert.Equal(t, string(*w.Rule.RuleGroup.Condition), "AND")
