@@ -9,14 +9,13 @@ import (
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/storage/sqlDB"
 	pgConfig "github.com/zerok-ai/zk-utils-go/storage/sqlDB/postgres/config"
-	"log"
 )
 
-type zkPostgresRepo[T any] struct {
+type zkPostgresRepo struct {
 }
 
-func NewZkPostgresRepo[T any]() sqlDB.DatabaseRepo[T] {
-	return &zkPostgresRepo[T]{}
+func NewZkPostgresRepo() sqlDB.DatabaseRepo {
+	return &zkPostgresRepo{}
 }
 
 var config pgConfig.PostgresConfig
@@ -26,7 +25,7 @@ func Init(c pgConfig.PostgresConfig) {
 	config = c
 }
 
-func (zkPostgresService zkPostgresRepo[T]) CreateConnection() *sql.DB {
+func (zkPostgresService zkPostgresRepo) CreateConnection() *sql.DB {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
 		config.Host, config.Port, config.User, config.Password, config.Dbname)
@@ -44,46 +43,43 @@ func (zkPostgresService zkPostgresRepo[T]) CreateConnection() *sql.DB {
 	return db
 }
 
-func (zkPostgresService zkPostgresRepo[T]) Get(db *sql.DB, query string, param []any, args []any) error {
+func (zkPostgresService zkPostgresRepo) Get(db *sql.DB, query string, param []any, args []any) error {
 	defer db.Close()
 	row := db.QueryRow(query, param...)
 	return row.Scan(args...)
 }
 
-func (zkPostgresService zkPostgresRepo[T]) GetAll(db *sql.DB, query string, param []any) (*sql.Rows, error, func()) {
-
+func (zkPostgresService zkPostgresRepo) GetAll(db *sql.DB, query string, param []any) (*sql.Rows, error, func()) {
 	rows, err := db.Query(query, param...)
-	f := func() {
+	closeRow := func() {
 		defer rows.Close()
 	}
-	return rows, err, f
+	return rows, err, closeRow
 }
 
-//func (zkPostgresService zkPostgresRepo[T]) rowProcessor(row *sql.Row, args []any) error {
-//	return row.Scan(args...)
-//
-//	zkErr := zkcommon.CheckSqlError(err, LOG_TAG)
-//	if zkErr != nil {
-//		return zkErr
-//	}
-//	return nil
-//}
-
-func (zkPostgresService zkPostgresRepo[T]) Delete(tx *sql.Tx, query string, param []any, rollback bool) (int, error) {
-	return zkPostgresService.modifyTable(tx, query, param, rollback)
+func (zkPostgresService zkPostgresRepo) Delete(tx *sql.Tx, query string, param []any) (int, error) {
+	return zkPostgresService.modifyTable(tx, query, param)
 }
 
-func (zkPostgresService zkPostgresRepo[T]) Update(tx *sql.Tx, stmt string, param []any, rollback bool) (int, error) {
-	return zkPostgresService.modifyTable(tx, stmt, param, rollback)
+func (zkPostgresService zkPostgresRepo) Update(tx *sql.Tx, stmt string, param []any) (int, error) {
+	return zkPostgresService.modifyTable(tx, stmt, param)
 }
 
-func (zkPostgresService zkPostgresRepo[T]) modifyTable(tx *sql.Tx, stmt string, param []any, rollback bool) (int, error) {
-	res, err := tx.Exec(stmt, param...)
+func (zkPostgresService zkPostgresRepo) modifyTable(tx *sql.Tx, stmt string, param []any) (int, error) {
+	preparedStmt, err := tx.Prepare(stmt)
+	if err != nil {
+		zkLogger.Error(LogTag, "Error preparing delete/update statement:", err)
+		return 0, err
+	}
+
+	defer preparedStmt.Close()
+	res, err := preparedStmt.Exec(param...)
 	if err == nil {
 		count, err := res.RowsAffected()
 		if err == nil {
 			return int(count), nil
 		} else {
+			zkLogger.Error(LogTag, "Error executing update/delete:", err)
 			return 0, err
 		}
 	}
@@ -92,42 +88,43 @@ func (zkPostgresService zkPostgresRepo[T]) modifyTable(tx *sql.Tx, stmt string, 
 	return 0, err
 }
 
-func (zkPostgresService zkPostgresRepo[T]) Insert(db *sql.DB, query string, param []any) error {
+func (zkPostgresService zkPostgresRepo) Insert(db *sql.DB, query string, param []any) error {
 	preparedStmt, err := db.Prepare(query)
 	if err != nil {
-		log.Println("Error preparing statement:", err)
+		zkLogger.Error(LogTag, "Error preparing insert statement:", err)
 		return err
 	}
 	defer preparedStmt.Close()
 
 	_, err = preparedStmt.Exec(param...)
 	if err != nil {
-		log.Println("Error executing statement:", err)
+		zkLogger.Error(LogTag, "Error executing insert statement:", err)
 		return err
 	}
 
 	return nil
 }
 
-func (zkPostgresService zkPostgresRepo[T]) BulkInsert(tx *sql.Tx, tableName string, columns []string, data []interfaces.PostgresRuleIterator) error {
+func (zkPostgresService zkPostgresRepo) BulkInsert(tx *sql.Tx, tableName string, columns []string, data []interfaces.DbArgs) error {
 	stmt, err := tx.Prepare(pq.CopyIn(tableName, columns...))
 	if err != nil {
 		return err
 	}
+
 	for _, d := range data {
-		values := d.Explode()
+		values := d.GetArgs()
 		_, err := stmt.Exec(values...)
 		if err != nil {
-			zkLogger.Debug("couldn't prepare COPY statement: %v", err)
-			return err
-		}
-		if err != nil {
+			zkLogger.Error(LogTag, "couldn't prepare COPY statement: %v", err)
 			return err
 		}
 	}
+
 	_, err = stmt.Exec()
 	if err != nil {
+		zkLogger.Error(LogTag, "Error executing copy statement:", err)
 		return err
 	}
+
 	return stmt.Close()
 }
