@@ -3,9 +3,11 @@ package test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
 	"log"
+	"sort"
 	"testing"
 )
 
@@ -74,4 +76,32 @@ func TestScenarioEqualitySuccess(t *testing.T) {
 	log.Default().Println("Checking equality using equals = ", scenario1.Equals(scenario2))
 	log.Default().Println("Calling assert ")
 	assert.Equal(t, scenario1, scenario2)
+}
+
+func TestSortedScenariosHash(t *testing.T) {
+	unsortedWorkloadJS := string(GetBytesFromFile("files/unsortedWorkloadJs.json"))
+	var wUnsorted model.Workload
+	errUnsorted := json.Unmarshal([]byte(unsortedWorkloadJS), &wUnsorted)
+	assert.NoError(t, errUnsorted)
+	wUnsorted.Rule.Rules.Sort()
+
+	x, _ := json.Marshal(wUnsorted)
+	fmt.Print(x)
+
+	sortedWorkloadJS := string(GetBytesFromFile("files/sortedWorkloadJs.json"))
+	var wSorted model.Workload
+	errSorted := json.Unmarshal([]byte(sortedWorkloadJS), &wSorted)
+	assert.NoError(t, errSorted)
+	sort.Sort(wSorted.Rule.Rules)
+	a, b := model.WorkLoadUUID(wUnsorted), model.WorkLoadUUID(wSorted)
+
+	fmt.Print(a, b)
+	if a == b {
+		fmt.Println("equal")
+	} else {
+		fmt.Println(a.String() + ":::" + b.String())
+	}
+	fmt.Println(a.String() + "pppp" + b.String())
+
+	assert.Equal(t, a, b)
 }

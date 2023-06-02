@@ -132,9 +132,6 @@ func (r RuleGroup) LessThan(other RuleGroup) bool {
 	}
 
 	for i := 0; i < len(r.Rules) && i < len(other.Rules); i++ {
-
-		//return r.Rules[i].LessThan(other.Rules[i])
-
 		if r.Rules[i].Type < other.Rules[i].Type {
 			return true
 		} else if r.Rules[i].Type == other.Rules[i].Type {
