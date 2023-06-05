@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
-	"github.com/zerok-ai/zk-utils-go/rules/model"
+	"github.com/zerok-ai/zk-utils-go/scenario/model"
 	"log"
 	"testing"
 )
