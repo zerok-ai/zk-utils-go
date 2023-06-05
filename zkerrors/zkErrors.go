@@ -45,8 +45,12 @@ var (
 	ZkErrorDbError = ZkErrorType{Status: iris.StatusInternalServerError,
 		Type:    StatusText(iris.StatusInternalServerError),
 		Message: "Encountered an issue while executing db operation"}
-	ZkErrorBadRequestLimitIsNotInteger  = ZkErrorType{Status: iris.StatusBadRequest, Type: "BAD_REQUEST", Message: "LIMIT is not an integer"}
-	ZkErrorBadRequestOffsetIsNotInteger = ZkErrorType{Status: iris.StatusBadRequest, Type: "BAD_REQUEST", Message: "OFFSET is not an integer"}
+	ZkErrorBadRequestLimitIsNotInteger = ZkErrorType{Status: iris.StatusBadRequest,
+		Type:    "BAD_REQUEST",
+		Message: "LIMIT is not an integer"}
+	ZkErrorBadRequestOffsetIsNotInteger = ZkErrorType{Status: iris.StatusBadRequest,
+		Type:    "BAD_REQUEST",
+		Message: "OFFSET is not an integer"}
 )
 
 func (zkError ZkError) SetMetadata(metadata any) {

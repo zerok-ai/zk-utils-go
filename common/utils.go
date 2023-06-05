@@ -9,6 +9,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/kataras/iris/v12"
+	zkHttp "github.com/zerok-ai/zk-utils-go/http"
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	zkErrors "github.com/zerok-ai/zk-utils-go/zkerrors"
 	"math"
@@ -178,4 +180,19 @@ func IsEmpty(v string) bool {
 
 func Round(val float64, precision int) float64 {
 	return math.Round(val*(math.Pow10(precision))) / math.Pow10(precision)
+}
+
+func SetResponseInCtxAndReturn[T any](ctx iris.Context, resp *T, zkError *zkErrors.ZkError) {
+	if zkError != nil {
+		z := &zkHttp.ZkHttpResponseBuilder[T]{}
+		z.WithZkErrorType(zkError.Error).Build()
+		ctx.StatusCode(zkError.Error.Status)
+		return
+	}
+
+	z := &zkHttp.ZkHttpResponseBuilder[T]{}
+	zkHttpResponse := z.WithStatus(iris.StatusOK).Data(resp).Build()
+	ctx.StatusCode(zkHttpResponse.Status)
+	ctx.JSON(zkHttpResponse)
+	return
 }
