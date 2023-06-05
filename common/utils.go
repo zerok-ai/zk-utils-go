@@ -11,6 +11,7 @@ import (
 	"fmt"
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	zkErrors "github.com/zerok-ai/zk-utils-go/zkerrors"
+	"math"
 	"reflect"
 	"strconv"
 	"strings"
@@ -160,4 +161,21 @@ func Generate256SHA(params ...string) string {
 	currentTokenBytes := []byte(currentTokenRaw)
 	currentTokenSha256Hash := sha256.Sum256(currentTokenBytes)
 	return hex.EncodeToString(currentTokenSha256Hash[:])
+}
+
+func Contains[T comparable](s []T, e T) bool {
+	for _, v := range s {
+		if v == e {
+			return true
+		}
+	}
+	return false
+}
+
+func IsEmpty(v string) bool {
+	return len(v) == 0
+}
+
+func Round(val float64, precision int) float64 {
+	return math.Round(val*(math.Pow10(precision))) / math.Pow10(precision)
 }
