@@ -41,7 +41,7 @@ func TestSort(t *testing.T) {
 
 	var w model.Workload
 	err := json.Unmarshal([]byte(workloadJS), &w)
-	//sort.Sort(model.Rules(w.Rule.Rules))
+	w.Rule.Rules.Sort()
 
 	assert.NoError(t, err)
 	assert.Equal(t, string(*w.Rule.RuleGroup.Condition), "AND")
