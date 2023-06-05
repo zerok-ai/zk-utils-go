@@ -9,6 +9,9 @@ import (
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/storage/sqlDB"
 	pgConfig "github.com/zerok-ai/zk-utils-go/storage/sqlDB/postgres/config"
+	"log"
+	"sync"
+	"time"
 )
 
 type zkPostgresRepo struct {
@@ -25,22 +28,57 @@ func Init(c pgConfig.PostgresConfig) {
 	config = c
 }
 
-func (zkPostgresService zkPostgresRepo) CreateConnection() *sql.DB {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		config.Host, config.Port, config.User, config.Password, config.Dbname)
-	zkLogger.Debug(LogTag, "psqlInfo==", psqlInfo)
-	db, err := sql.Open("postgres", psqlInfo)
+var (
+	dbInstance *sql.DB
+	once       sync.Once
+)
+
+func createConnectionPool(connectionString string, maxConnections int, maxIdleConnections int, connectionMaxLifetime time.Duration) (*sql.DB, error) {
+	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("failed to open database connection: %v", err)
 	}
+
+	db.SetMaxOpenConns(maxConnections)
+	db.SetMaxIdleConns(maxIdleConnections)
+	db.SetConnMaxLifetime(connectionMaxLifetime)
 
 	err = db.Ping()
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("failed to establish connection to the database: %v", err)
 	}
 
-	return db
+	return db, nil
+}
+
+func (zkPostgresService zkPostgresRepo) GetDBInstance() (*sql.DB, error) {
+	var err error
+
+	once.Do(func() {
+		connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+			config.Host, config.Port, config.User, config.Password, config.Dbname)
+
+		var maxConnections, maxIdleConnections int
+		var connectionMaxLifetime time.Duration
+
+		if config.MaxConnections == 0 {
+			maxConnections = 10
+		}
+		if config.MaxIdleConnections == 0 {
+			maxIdleConnections = 5
+		}
+		if config.ConnectionMaxLifetimeInMinutes == 0 {
+			connectionMaxLifetime = time.Minute * 30
+		}
+
+		// Create the connection pool
+		dbInstance, err = createConnectionPool(connectionString, maxConnections, maxIdleConnections, connectionMaxLifetime)
+		if err != nil {
+			log.Fatalf("failed to create connection pool: %v", err)
+		}
+	})
+
+	return dbInstance, err
 }
 
 func (zkPostgresService zkPostgresRepo) Get(db *sql.DB, query string, param []any, args []any) error {

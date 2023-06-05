@@ -6,7 +6,7 @@ import (
 )
 
 type DatabaseRepo interface {
-	CreateConnection() *sql.DB
+	GetDBInstance() (*sql.DB, error)
 	Delete(tx *sql.Tx, query string, param []any) (int, error)
 	Update(tx *sql.Tx, stmt string, param []any) (int, error)
 	Get(db *sql.DB, query string, param []any, args []any) error
