@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto/sha1"
+	"errors"
 	"github.com/google/uuid"
+	zkcommon "github.com/zerok-ai/zk-utils-go/common"
 	"io"
 	"log"
 )
@@ -15,18 +17,18 @@ func CalculateHash(s string) uuid.UUID {
 }
 
 func CompressString(input string) ([]byte, error) {
+	if zkcommon.IsEmpty(input) {
+		return nil, errors.New("empty input")
+	}
 	var b bytes.Buffer
 
-	// Create a gzip writer on top of the buffer
 	gzipWriter := gzip.NewWriter(&b)
 
-	// Write the input string to the gzip writer
 	_, err := gzipWriter.Write([]byte(input))
 	if err != nil {
 		return nil, err
 	}
 
-	// Close the gzip writer to flush any remaining data
 	err = gzipWriter.Close()
 	if err != nil {
 		return nil, err
@@ -38,17 +40,18 @@ func CompressString(input string) ([]byte, error) {
 }
 
 func DecompressString(input []byte) (string, error) {
-	// Create a bytes reader from the input
+	if input == nil || len(input) == 0 {
+		return "", errors.New("empty input")
+	}
+
 	reader := bytes.NewReader(input)
 
-	// Create a gzip reader on top of the bytes reader
 	gzipReader, err := gzip.NewReader(reader)
 	if err != nil {
 		return "", err
 	}
 	defer gzipReader.Close()
 
-	// Read the decompressed data from the gzip reader
 	decompressed, err := io.ReadAll(gzipReader)
 	if err != nil {
 		return "", err
