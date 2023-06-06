@@ -65,14 +65,14 @@ func GetVersionedStore[T interfaces.ZKComparable](redisConfig *model.RedisConfig
 		localVersions:      map[string]string{},
 		localKeyValueCache: map[string]*T{},
 		AutoSync:           autoSync,
-	}).initialize()
+	}).initialize(dbName)
 
 	return versionStore, nil
 }
 
 var filterPullTickInterval time.Duration = 2 * time.Minute
 
-func (versionStore *VersionedStore[T]) initialize() *VersionedStore[T] {
+func (versionStore *VersionedStore[T]) initialize(tickerName string) *VersionedStore[T] {
 
 	// trigger recurring filter pull
 	task := func() {
@@ -83,7 +83,7 @@ func (versionStore *VersionedStore[T]) initialize() *VersionedStore[T] {
 	}
 
 	if versionStore.AutoSync {
-		ticker.GetNewTickerTask("version ticker", filterPullTickInterval, task)
+		ticker.GetNewTickerTask(tickerName, filterPullTickInterval, task)
 	}
 	task()
 
