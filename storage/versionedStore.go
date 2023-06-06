@@ -90,6 +90,10 @@ func (versionStore *VersionedStore[T]) initialize(tickerName string) *VersionedS
 	return versionStore
 }
 
+func (versionStore *VersionedStore[T]) GetAllValues() map[string]*T {
+	return versionStore.localKeyValueCache
+}
+
 func (versionStore *VersionedStore[T]) Value(key string) (*T, error) {
 
 	// get the value from local store
