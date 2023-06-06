@@ -178,6 +178,7 @@ func (zkPostgresService zkPostgresRepo) InsertInTransaction(tx *sql.Tx, stmt str
 	_, err = preparedStmt.Exec(params...)
 	if err != nil {
 		zkLogger.Error(LogTag, "Error executing insert:", err)
+		return err
 	}
 
 	return nil
