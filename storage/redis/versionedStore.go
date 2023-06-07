@@ -1,4 +1,4 @@
-package storage
+package redis
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/redis/go-redis/v9"
 	"github.com/zerok-ai/zk-utils-go/interfaces"
-	"github.com/zerok-ai/zk-utils-go/storage/model"
 	ticker "github.com/zerok-ai/zk-utils-go/ticker"
 	"sync"
 	"time"
@@ -46,7 +45,7 @@ type Version struct {
 	version int
 }
 
-func GetVersionedStore[T interfaces.ZKComparable](redisConfig *model.RedisConfig, dbName string, autoSync bool, model T) (*VersionedStore[T], error) {
+func GetVersionedStore[T interfaces.ZKComparable](redisConfig *RedisConfig, dbName string, autoSync bool, model T) (*VersionedStore[T], error) {
 
 	if redisConfig == nil {
 		return nil, fmt.Errorf("redis config not found")

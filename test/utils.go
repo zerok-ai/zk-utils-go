@@ -6,15 +6,6 @@ import (
 	"os"
 )
 
-const (
-// UnsortedWorkloadJs = “
-// SortedWorkloadJs   = “
-//
-// EmptyScenarioJsonString = “
-// NonScenarioJsonString   = `{"abc", 123}`
-// ValidScenarioJsonString = “
-)
-
 func GetBytesFromFile(path string) []byte {
 	file, err := os.Open(path)
 	if err != nil {
