@@ -46,10 +46,10 @@ var (
 		Type:    StatusText(iris.StatusInternalServerError),
 		Message: "Encountered an issue while executing db operation"}
 	ZkErrorBadRequestLimitIsNotInteger = ZkErrorType{Status: iris.StatusBadRequest,
-		Type:    "BAD_REQUEST",
+		Type:    StatusText(iris.StatusBadRequest),
 		Message: "LIMIT is not an integer"}
 	ZkErrorBadRequestOffsetIsNotInteger = ZkErrorType{Status: iris.StatusBadRequest,
-		Type:    "BAD_REQUEST",
+		Type:    StatusText(iris.StatusBadRequest),
 		Message: "OFFSET is not an integer"}
 )
 

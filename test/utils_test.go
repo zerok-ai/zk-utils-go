@@ -196,14 +196,14 @@ func TestCalculateHash(t *testing.T) {
 
 // TODO: discuss with mudit which one to keep, this or below one
 func TestSortedScenariosHash1(t *testing.T) {
-	unsortedWorkloadJS := string(GetBytesFromFile("files/unsortedWorkloadJs.json"))
+	unsortedWorkloadJS := string(zkcommon.GetBytesFromFile("files/unsortedWorkloadJs.json"))
 
 	var wUnsorted model.Workload
 	errUnsorted := json.Unmarshal([]byte(unsortedWorkloadJS), &wUnsorted)
 	assert.NoError(t, errUnsorted)
 	sort.Sort(wUnsorted.Rule.Rules)
 
-	sortedWorkloadJS := string(GetBytesFromFile("files/sortedWorkloadJs.json"))
+	sortedWorkloadJS := string(zkcommon.GetBytesFromFile("files/sortedWorkloadJs.json"))
 
 	var wSorted model.Workload
 	errSorted := json.Unmarshal([]byte(sortedWorkloadJS), &wSorted)
@@ -215,7 +215,7 @@ func TestSortedScenariosHash1(t *testing.T) {
 
 // TODO: discuss with mudit which one to keep, this or above one
 func TestSortedScenariosHash2(t *testing.T) {
-	unsortedWorkloadJS := string(GetBytesFromFile("files/unsortedWorkloadJs.json"))
+	unsortedWorkloadJS := string(zkcommon.GetBytesFromFile("files/unsortedWorkloadJs.json"))
 	var wUnsorted model.Workload
 	errUnsorted := json.Unmarshal([]byte(unsortedWorkloadJS), &wUnsorted)
 	assert.NoError(t, errUnsorted)
@@ -224,7 +224,7 @@ func TestSortedScenariosHash2(t *testing.T) {
 	x, _ := json.Marshal(wUnsorted)
 	fmt.Print(x)
 
-	sortedWorkloadJS := string(GetBytesFromFile("files/sortedWorkloadJs.json"))
+	sortedWorkloadJS := string(zkcommon.GetBytesFromFile("files/sortedWorkloadJs.json"))
 	var wSorted model.Workload
 	errSorted := json.Unmarshal([]byte(sortedWorkloadJS), &wSorted)
 	assert.NoError(t, errSorted)
