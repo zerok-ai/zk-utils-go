@@ -18,18 +18,6 @@ type Scenario struct {
 	Filter     Filter               `json:"filter"`
 }
 
-func (s Scenario) GetWorkloadServiceName(workloadId string) *string {
-	if s.Workloads == nil {
-		return nil
-	}
-
-	workload, ok := (*s.Workloads)[workloadId]
-	if !ok {
-		return nil
-	}
-	return &(workload.Service)
-}
-
 func (s Scenario) Equals(otherInterface interfaces.ZKComparable) bool {
 
 	other, ok := otherInterface.(Scenario)
