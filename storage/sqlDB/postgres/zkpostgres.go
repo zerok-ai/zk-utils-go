@@ -36,6 +36,7 @@ var (
 func createConnectionPool(connectionString string, maxConnections int, maxIdleConnections int, connectionMaxLifetime time.Duration) (*sql.DB, error) {
 	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
+		zkLogger.Error("failed to open database connection database:", err)
 		return nil, fmt.Errorf("failed to open database connection: %v", err)
 	}
 
@@ -45,7 +46,8 @@ func createConnectionPool(connectionString string, maxConnections int, maxIdleCo
 
 	err = db.Ping()
 	if err != nil {
-		return nil, fmt.Errorf("failed to establish connection to the database: %v", err)
+		zkLogger.Error("failed to ping database:", err)
+		return nil, fmt.Errorf("failed to ping database: %v", err)
 	}
 
 	return db, nil
@@ -146,6 +148,7 @@ func (zkPostgresService zkPostgresRepo) Insert(db *sql.DB, query string, param [
 func (zkPostgresService zkPostgresRepo) BulkInsert(tx *sql.Tx, tableName string, columns []string, data []interfaces.DbArgs) error {
 	stmt, err := tx.Prepare(pq.CopyIn(tableName, columns...))
 	if err != nil {
+		zkLogger.Error(LogTag, "Error preparing insert statement:", err)
 		return err
 	}
 
