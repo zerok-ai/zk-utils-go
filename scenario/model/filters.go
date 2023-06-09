@@ -7,6 +7,9 @@ import (
 const (
 	FILTER   = "filter"
 	WORKLOAD = "workload"
+
+	CONDITION_AND = "AND"
+	CONDITION_OR  = "OR"
 )
 
 type Filter struct {
