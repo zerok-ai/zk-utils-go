@@ -197,7 +197,8 @@ func (zkPostgresService zkPostgresRepo) BulkUpsert(tx *sql.Tx, stmt string, data
 	defer preparedStmt.Close()
 
 	for _, row := range data {
-		_, err = preparedStmt.Exec(row.GetArgs())
+		args := row.GetArgs()
+		_, err = preparedStmt.Exec(args...)
 		if err != nil {
 			_ = tx.Rollback()
 			zkLogger.Error(LogTag, "failed to perform bulk upsert: ", err)
