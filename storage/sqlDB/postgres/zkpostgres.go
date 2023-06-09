@@ -187,7 +187,7 @@ func (zkPostgresService zkPostgresRepo) InsertInTransaction(tx *sql.Tx, stmt str
 	return nil
 }
 
-func (zkPostgresService zkPostgresRepo) BulkUpsert(tx *sql.Tx, stmt string, data [][]interface{}) error {
+func (zkPostgresService zkPostgresRepo) BulkUpsert(tx *sql.Tx, stmt string, data []interfaces.DbArgs) error {
 	preparedStmt, err := tx.Prepare(stmt)
 	if err != nil {
 		zkLogger.Error(LogTag, "Error preparing insert statement:", err)
@@ -197,7 +197,7 @@ func (zkPostgresService zkPostgresRepo) BulkUpsert(tx *sql.Tx, stmt string, data
 	defer preparedStmt.Close()
 
 	for _, row := range data {
-		_, err = preparedStmt.Exec(row...)
+		_, err = preparedStmt.Exec(row.GetArgs())
 		if err != nil {
 			_ = tx.Rollback()
 			zkLogger.Error(LogTag, "failed to perform bulk upsert: ", err)
