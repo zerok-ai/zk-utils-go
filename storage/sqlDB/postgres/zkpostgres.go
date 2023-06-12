@@ -206,22 +206,22 @@ func (zkPostgresService zkPostgresRepo) BulkInsert(tx *sql.Tx, tableName string,
 // InsertInTransaction This method takes a db handle, sql query and DbArgs
 // DbArgs is an interface which defines a method GetAllColumns which returns a slice of struct fields corresponding to columns
 // in db table, The values from this slice is then inserted into the table.
-func (zkPostgresService zkPostgresRepo) InsertInTransaction(tx *sql.Tx, stmt string, data interfaces.DbArgs) error {
+func (zkPostgresService zkPostgresRepo) InsertInTransaction(tx *sql.Tx, stmt string, data interfaces.DbArgs) (sql.Result, error) {
 	preparedStmt, err := tx.Prepare(stmt)
 	if err != nil {
 		zkLogger.Error(LogTag, "Error preparing insert statement:", err)
-		return err
+		return nil, err
 	}
 	defer preparedStmt.Close()
 
 	c := data.GetAllColumns()
-	_, err = preparedStmt.Exec(c)
+	Result, err := preparedStmt.Exec(c...)
 	if err != nil {
 		zkLogger.Error(LogTag, "Error executing insert:", err)
-		return err
+		return nil, err
 	}
 
-	return nil
+	return Result, nil
 }
 
 // BulkUpsert This method takes a transaction, sql query and a slice DbArgs
