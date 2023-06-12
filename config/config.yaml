@@ -1,0 +1,7 @@
+redis:
+  host: localhost
+  port: 6379
+  readTimeout: 20
+  dbs:
+    scenario: 6
+    traces: 0
