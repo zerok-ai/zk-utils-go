@@ -6,18 +6,30 @@ This project is used as a central repository containing common models and fuctio
 
 ## How To Use
 
+
+# zkcommon
+
+This module contains the common utility functions which are useful for all the repositories.
+
 This is a private repo and hence can only be used inside the organisation. To access this repo:
 
-    1. Set GOPRIVATE environment variable
-        export GOPRIVATE=github.com/zerok-ai/zk-utils-go
+- Set GOPRIVATE environment variable
+
+    ```
+    export GOPRIVATE=github.com/zerok-ai/zk-utils-go
+    ```
 
 
-    2. If github personal access token is not configured already configre it and add to ~/.netrc file
-        Ref: https://www.digitalocean.com/community/tutorials/how-to-use-a-private-go-module-in-your-own-project#providing-private-module-credentials-for-https
+- If github personal access token is not configured already configre it and add to ~/.netrc file
+  Ref: https://www.digitalocean.com/community/tutorials/how-to-use-a-private-go-module-in-your-own-project#providing-private-module-credentials-for-https
 
-    3. Run go get github.com/zerok-ai/zk-utils-go into the root dir of project where you require this library
+- Run the following command into the root dir of project where you require this library
 
-    4. Add import "github.com/zerok-ai/zk-utils-go/<required_package>" to access the library 
+    ```
+    go get github.com/zerok-ai/zk-utils-go
+    ``` 
+
+- Add ```import "github.com/zerok-ai/zk-utils-go/<required_package>"``` to access the library
 
 
 # zk-utils-go

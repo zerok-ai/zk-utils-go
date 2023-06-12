@@ -5,5 +5,5 @@ type ZKComparable interface {
 }
 
 type DbArgs interface {
-	GetArgs() []any
+	GetAllColumns() []any
 }

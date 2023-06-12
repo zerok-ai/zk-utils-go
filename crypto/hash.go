@@ -6,10 +6,13 @@ import (
 	"crypto/sha1"
 	"errors"
 	"github.com/google/uuid"
-	zkcommon "github.com/zerok-ai/zk-utils-go/common"
+	"github.com/zerok-ai/zk-utils-go/common"
+	"github.com/zerok-ai/zk-utils-go/logs"
 	"io"
 	"log"
 )
+
+var LogTag = "zk_hash"
 
 func CalculateHash(s string) uuid.UUID {
 	hash := sha1.Sum([]byte(s))
@@ -17,7 +20,8 @@ func CalculateHash(s string) uuid.UUID {
 }
 
 func CompressString(input string) ([]byte, error) {
-	if zkcommon.IsEmpty(input) {
+	if common.IsEmpty(input) {
+		logger.Error(LogTag, "empty string")
 		return nil, errors.New("empty input")
 	}
 	var b bytes.Buffer
@@ -26,15 +30,15 @@ func CompressString(input string) ([]byte, error) {
 
 	_, err := gzipWriter.Write([]byte(input))
 	if err != nil {
+		logger.Error(LogTag, err)
 		return nil, err
 	}
 
 	err = gzipWriter.Close()
 	if err != nil {
+		logger.Error(LogTag, err)
 		return nil, err
 	}
-
-	log.Println("String compressed successfully")
 
 	return b.Bytes(), nil
 }
@@ -48,12 +52,14 @@ func DecompressString(input []byte) (string, error) {
 
 	gzipReader, err := gzip.NewReader(reader)
 	if err != nil {
+		logger.Error(LogTag, err)
 		return "", err
 	}
 	defer gzipReader.Close()
 
 	decompressed, err := io.ReadAll(gzipReader)
 	if err != nil {
+		logger.Error(LogTag, err)
 		return "", err
 	}
 

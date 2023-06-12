@@ -1,4 +1,4 @@
-package zkcommon
+package common
 
 import (
 	"crypto/rand"
@@ -13,7 +13,9 @@ import (
 	zkHttp "github.com/zerok-ai/zk-utils-go/http"
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	zkErrors "github.com/zerok-ai/zk-utils-go/zkerrors"
+	"io"
 	"math"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -81,6 +83,10 @@ func ToSha256String(prefix string, input string, suffix string) string {
 }
 
 // General Utils
+
+func GetFloatFromString(k string, b int) (float64, error) {
+	return strconv.ParseFloat(k, b)
+}
 
 func GetIntegerFromString(k string) (int, error) {
 	return strconv.Atoi(k)
@@ -178,6 +184,7 @@ func IsEmpty(v string) bool {
 	return len(v) == 0
 }
 
+// Round Rounds to nearest like 12.3456 -> 12.35
 func Round(val float64, precision int) float64 {
 	return math.Round(val*(math.Pow10(precision))) / math.Pow10(precision)
 }
@@ -195,4 +202,23 @@ func SetResponseInCtxAndReturn[T any](ctx iris.Context, resp *T, zkError *zkErro
 	ctx.StatusCode(zkHttpResponse.Status)
 	ctx.JSON(zkHttpResponse)
 	return
+}
+
+func GetBytesFromFile(path string) []byte {
+	file, err := os.Open(path)
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return nil
+	}
+	defer file.Close()
+
+	// Read the file content
+	content, err := io.ReadAll(file)
+	if err != nil {
+		fmt.Println("Error reading file:", err)
+		return nil
+	}
+
+	return content
+
 }

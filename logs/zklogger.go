@@ -1,4 +1,4 @@
-package zklogger
+package logger
 
 import (
 	"github.com/zerok-ai/zk-utils-go/logs/config"
