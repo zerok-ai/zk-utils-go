@@ -35,24 +35,24 @@ func Test_StructUtils_NormalInput_ToString_Success(t *testing.T) {
 		},
 	}
 
-	output := zkcommon.ToString(inputStruct)
+	output := common.ToString(inputStruct)
 	assert.Equal(t, inputStructFmtString, *output)
 }
 
 func Test_StructUtils_NilInput_ToString_Success(t *testing.T) {
-	output := zkcommon.ToString(nil)
+	output := common.ToString(nil)
 	assert.Nil(t, output)
 }
 
 func Test_StructUtils_EmptyInput_ToString_Success(t *testing.T) {
-	output := zkcommon.ToString(inputStruct{})
+	output := common.ToString(inputStruct{})
 	assert.Equal(t, "{ { 0}}", *output)
 }
 
 func Test_StructUtils_NormalInput_ToReader_Success(t *testing.T) {
 	inputStructFmtString := "{HelloFrom-inputStruct {HelloFrom-inputStructInner 55}}"
 
-	output := zkcommon.ToReader(inputStructFmtString)
+	output := common.ToReader(inputStructFmtString)
 	buffer := make([]byte, len(inputStructFmtString))
 	_, err := output.Read(buffer)
 	assert.Nil(t, err)
@@ -69,7 +69,7 @@ func Test_StructUtils_NormalInput_ToJsonReader_Success(t *testing.T) {
 		},
 	}
 
-	output := zkcommon.ToJsonReader(inputStruct)
+	output := common.ToJsonReader(inputStruct)
 	buffer := make([]byte, len(inputStructJsonString))
 	_, err := output.Read(buffer)
 	assert.Nil(t, err)
@@ -77,7 +77,7 @@ func Test_StructUtils_NormalInput_ToJsonReader_Success(t *testing.T) {
 }
 
 func Test_StructUtils_NilInput_ToJsonReader_Success(t *testing.T) {
-	output := zkcommon.ToJsonReader(nil)
+	output := common.ToJsonReader(nil)
 	assert.Nil(t, output)
 }
 
@@ -91,12 +91,12 @@ func Test_StructUtils_NormalInput_ToJsonString_Success(t *testing.T) {
 		},
 	}
 
-	output := zkcommon.ToJsonString(inputStruct)
+	output := common.ToJsonString(inputStruct)
 	assert.Equal(t, inputStructJsonString, *output)
 }
 
 func Test_StructUtils_NilInput_ToJsonString_Success(t *testing.T) {
-	output := zkcommon.ToJsonString(nil)
+	output := common.ToJsonString(nil)
 	assert.Nil(t, output)
 }
 
@@ -110,7 +110,7 @@ func Test_StructUtils_NormalInput_FromString_Success(t *testing.T) {
 		},
 	}
 
-	output := zkcommon.FromJsonString(inputStructJsonString, reflect.TypeOf(inputStruct))
+	output := common.FromJsonString(inputStructJsonString, reflect.TypeOf(inputStruct))
 	isDeepEqual := reflect.DeepEqual(output, &inputStruct)
 	assert.Equal(t, true, isDeepEqual)
 }
@@ -125,7 +125,7 @@ func Test_StructUtils_PtrInput_FromString_Success(t *testing.T) {
 		},
 	}
 
-	output := zkcommon.FromJsonString(inputStructJsonString, reflect.TypeOf(&inputStruct))
+	output := common.FromJsonString(inputStructJsonString, reflect.TypeOf(&inputStruct))
 	isDeepEqual := reflect.DeepEqual(output, &inputStruct)
 	assert.Equal(t, true, isDeepEqual)
 }
@@ -133,7 +133,7 @@ func Test_StructUtils_PtrInput_FromString_Success(t *testing.T) {
 func Test_CryptoUtils_NormalInput_ToSha256_Success(t *testing.T) {
 	input := "input-string"
 	expectedSha256 := sha256.Sum256([]byte(input))
-	output := zkcommon.ToSha256(input)
+	output := common.ToSha256(input)
 	assert.Equal(t, expectedSha256, output)
 }
 
@@ -143,7 +143,7 @@ func Test_CryptoUtils_NormalInput_ToSha256String_Success(t *testing.T) {
 	suffix := "suffix"
 	sha256Bytes := sha256.Sum256([]byte(input))
 	expectedOutput := prefix + hex.EncodeToString(sha256Bytes[:]) + suffix
-	output := zkcommon.ToSha256String(prefix, input, suffix)
+	output := common.ToSha256String(prefix, input, suffix)
 	assert.Equal(t, expectedOutput, output)
 }
 
@@ -151,13 +151,13 @@ func Test_CryptoUtils_NormalInput_ToSha256String_Success(t *testing.T) {
 
 func Test_ToPtr_Success(t *testing.T) {
 	var input = "hello"
-	output := zkcommon.ToPtr[string](input)
+	output := common.ToPtr[string](input)
 	assert.Equal(t, &input, output)
 }
 
 func Test_PtrTo_Success(t *testing.T) {
 	var input = "hello"
-	output := zkcommon.PtrTo[string](&input)
+	output := common.PtrTo[string](&input)
 	assert.Equal(t, input, output)
 }
 
@@ -167,20 +167,20 @@ func Test_PtrTo_Failure(t *testing.T) {
 			t.Errorf("The code did not panic")
 		}
 	}()
-	zkcommon.PtrTo[string](nil)
+	common.PtrTo[string](nil)
 }
 
 func Test_GetIntegerFromString_Success(t *testing.T) {
 	input := "55"
 	expectedOutput := 55
-	output, error := zkcommon.GetIntegerFromString(input)
+	output, error := common.GetIntegerFromString(input)
 	assert.Nil(t, error)
 	assert.Equal(t, expectedOutput, output)
 }
 
 func Test_GetIntegerFromString_Failure(t *testing.T) {
 	input := "55t"
-	_, error := zkcommon.GetIntegerFromString(input)
+	_, error := common.GetIntegerFromString(input)
 	assert.NotNil(t, error)
 }
 
@@ -196,14 +196,14 @@ func TestCalculateHash(t *testing.T) {
 
 // TODO: discuss with mudit which one to keep, this or below one
 func TestSortedScenariosHash1(t *testing.T) {
-	unsortedWorkloadJS := string(zkcommon.GetBytesFromFile("files/unsortedWorkloadJs.json"))
+	unsortedWorkloadJS := string(common.GetBytesFromFile("files/unsortedWorkloadJs.json"))
 
 	var wUnsorted model.Workload
 	errUnsorted := json.Unmarshal([]byte(unsortedWorkloadJS), &wUnsorted)
 	assert.NoError(t, errUnsorted)
 	sort.Sort(wUnsorted.Rule.Rules)
 
-	sortedWorkloadJS := string(zkcommon.GetBytesFromFile("files/sortedWorkloadJs.json"))
+	sortedWorkloadJS := string(common.GetBytesFromFile("files/sortedWorkloadJs.json"))
 
 	var wSorted model.Workload
 	errSorted := json.Unmarshal([]byte(sortedWorkloadJS), &wSorted)
@@ -215,7 +215,7 @@ func TestSortedScenariosHash1(t *testing.T) {
 
 // TODO: discuss with mudit which one to keep, this or above one
 func TestSortedScenariosHash2(t *testing.T) {
-	unsortedWorkloadJS := string(zkcommon.GetBytesFromFile("files/unsortedWorkloadJs.json"))
+	unsortedWorkloadJS := string(common.GetBytesFromFile("files/unsortedWorkloadJs.json"))
 	var wUnsorted model.Workload
 	errUnsorted := json.Unmarshal([]byte(unsortedWorkloadJS), &wUnsorted)
 	assert.NoError(t, errUnsorted)
@@ -224,7 +224,7 @@ func TestSortedScenariosHash2(t *testing.T) {
 	x, _ := json.Marshal(wUnsorted)
 	fmt.Print(x)
 
-	sortedWorkloadJS := string(zkcommon.GetBytesFromFile("files/sortedWorkloadJs.json"))
+	sortedWorkloadJS := string(common.GetBytesFromFile("files/sortedWorkloadJs.json"))
 	var wSorted model.Workload
 	errSorted := json.Unmarshal([]byte(sortedWorkloadJS), &wSorted)
 	assert.NoError(t, errSorted)

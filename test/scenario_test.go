@@ -12,7 +12,7 @@ import (
 
 func TestScenarioMarshalUnMarshalSuccess(t *testing.T) {
 	var s model.Scenario
-	validScenarioJsonString := string(zkcommon.GetBytesFromFile("files/validScenarioJsonString.json"))
+	validScenarioJsonString := string(common.GetBytesFromFile("files/validScenarioJsonString.json"))
 
 	err := json.Unmarshal([]byte(validScenarioJsonString), &s)
 	assert.NoError(t, err)
@@ -23,8 +23,8 @@ func TestScenarioMarshalUnMarshalSuccess(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, len(dst.String()), len(sJsonStr))
 
-	nonScenarioJsonString := string(zkcommon.GetBytesFromFile("files/nonScenarioJsonString.json"))
-	emptyScenarioJsonString := string(zkcommon.GetBytesFromFile("files/emptyScenarioJsonString.json"))
+	nonScenarioJsonString := string(common.GetBytesFromFile("files/nonScenarioJsonString.json"))
+	emptyScenarioJsonString := string(common.GetBytesFromFile("files/emptyScenarioJsonString.json"))
 
 	var s2 model.Scenario
 	_ = json.Unmarshal([]byte(nonScenarioJsonString), &s2)
@@ -38,7 +38,7 @@ func TestScenarioMarshalUnMarshalSuccess(t *testing.T) {
 }
 
 func TestSort(t *testing.T) {
-	workloadJS := string(zkcommon.GetBytesFromFile("files/unsortedWorkloadJs.json"))
+	workloadJS := string(common.GetBytesFromFile("files/unsortedWorkloadJs.json"))
 
 	var w model.Workload
 	err := json.Unmarshal([]byte(workloadJS), &w)
@@ -63,12 +63,12 @@ func TestSort(t *testing.T) {
 
 func TestScenarioEqualitySuccess(t *testing.T) {
 	var scenario1 model.Scenario
-	validScenarioJsonString := string(zkcommon.GetBytesFromFile("files/validScenarioJsonString.json"))
+	validScenarioJsonString := string(common.GetBytesFromFile("files/validScenarioJsonString.json"))
 	err := json.Unmarshal([]byte(validScenarioJsonString), &scenario1)
 	assert.NoError(t, err)
 
 	var scenario2 model.Scenario
-	validScenarioJsonString = string(zkcommon.GetBytesFromFile("files/validScenarioJsonString1.json"))
+	validScenarioJsonString = string(common.GetBytesFromFile("files/validScenarioJsonString1.json"))
 	err = json.Unmarshal([]byte(validScenarioJsonString), &scenario2)
 	assert.NoError(t, err)
 

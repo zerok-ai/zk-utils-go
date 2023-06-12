@@ -8,7 +8,6 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
-// Args command-line parameters
 type Args struct {
 	ConfigPath string
 }

@@ -1,4 +1,4 @@
-package zkcommon
+package common
 
 import (
 	"crypto/rand"
