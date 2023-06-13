@@ -8,10 +8,11 @@ import (
 type DatabaseRepo interface {
 	Get(query string, param []any, args []any) error
 	GetAll(query string, param []any) (*sql.Rows, error, func())
-	Insert(query string, data interfaces.DbArgs) (sql.Result, error)
-	BulkInsert(tableName string, columns []string, data []interfaces.DbArgs) error
-	InsertInTransaction(stmt string, data interfaces.DbArgs) (sql.Result, error)
-	Update(stmt string, param []any) (int, error)
-	BulkUpsert(stmt string, data []interfaces.DbArgs) error
-	Delete(query string, param []any) (int, error)
+	//Insert(query string, data interfaces.DbArgs) (sql.Result, error)
+	BulkInsert(stmt *sql.Stmt, data []interfaces.DbArgs) error
+	Insert(stmt *sql.Stmt, data interfaces.DbArgs) (sql.Result, error)
+	Update(stmt *sql.Stmt, param []any) (int, error)
+	BulkUpsert(stmt *sql.Stmt, data []interfaces.DbArgs) error
+	Delete(stmt *sql.Stmt, param []any) (int, error)
+	CreateTransaction() (*sql.Tx, error)
 }
