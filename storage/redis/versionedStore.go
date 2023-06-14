@@ -6,13 +6,15 @@ import (
 	"fmt"
 	"github.com/redis/go-redis/v9"
 	"github.com/zerok-ai/zk-utils-go/interfaces"
-	"github.com/zerok-ai/zk-utils-go/storage/model"
+	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
+	"github.com/zerok-ai/zk-utils-go/storage/redis/config"
 	ticker "github.com/zerok-ai/zk-utils-go/ticker"
 	"sync"
 	"time"
 )
 
 var LATEST = fmt.Errorf("version passed is already latest")
+var LogTag = "redis_versionedStore"
 
 type VersionedStoreConfig struct {
 	RefreshTimeSec int `yaml:"RefreshTimeSec" env:"REFRESH_TIME_SEC" env-description:"Database host"`
@@ -46,7 +48,7 @@ type Version struct {
 	version int
 }
 
-func GetVersionedStore[T interfaces.ZKComparable](redisConfig *model.RedisConfig, dbName string, autoSync bool, model T) (*VersionedStore[T], error) {
+func GetVersionedStore[T interfaces.ZKComparable](redisConfig *config.RedisConfig, dbName string, autoSync bool, model T) (*VersionedStore[T], error) {
 
 	if redisConfig == nil {
 		return nil, fmt.Errorf("redis config not found")
@@ -78,7 +80,7 @@ func (versionStore *VersionedStore[T]) initialize() *VersionedStore[T] {
 	task := func() {
 		err := versionStore.RefreshLocalCache()
 		if err != nil {
-			fmt.Println(err.Error())
+			zkLogger.Error(LogTag, err.Error())
 		}
 	}
 

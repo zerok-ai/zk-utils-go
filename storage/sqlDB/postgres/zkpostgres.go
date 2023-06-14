@@ -3,6 +3,7 @@ package zkpostgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	_ "github.com/lib/pq"
 	"github.com/zerok-ai/zk-utils-go/interfaces"
@@ -24,6 +25,8 @@ var dbInstance *sql.DB
 
 // NewZkPostgresRepo This method returns an instance of DatabaseRepo type where the underlying type is zkPostgresRepo.
 // This instance will be used to call the Postgres implementation of DatabaseRepo methods.
+// If in PostgresConfig no value is passed for MaxConnections, MaxIdleConnections or ConnectionMaxLifetimeInMinutes,
+// the default value of them is 10, 5 and 30 minutes respectively
 func NewZkPostgresRepo(c pgConfig.PostgresConfig) (sqlDB.DatabaseRepo, error) {
 	config = c
 	instance, err := getDBInstance()
@@ -57,6 +60,8 @@ func createConnectionPool(connectionString string, maxConnections int, maxIdleCo
 	return db, nil
 }
 
+// if no value is passed for MaxConnections, MaxIdleConnections or ConnectionMaxLifetimeInMinutes,
+// the default value of them is 10, 5 and 30 minutes respectively
 func getDBInstance() (*sql.DB, error) {
 	var err error
 
@@ -93,6 +98,12 @@ func getDBInstance() (*sql.DB, error) {
 // args[0] = &student.name and args[1] = &student.age, so that the values are persisted in the student object after the
 // function call ends as we are not returning anything other than error
 func (databaseRepo zkPostgresRepo) Get(query string, param []any, args []any) error {
+	if query == "" {
+		err := errors.New("query cannot be empty")
+		zkLogger.Error(LogTag, err)
+		return err
+	}
+
 	db := databaseRepo.Db
 	defer db.Close()
 	row := db.QueryRow(query, param...)
@@ -106,6 +117,11 @@ func (databaseRepo zkPostgresRepo) Get(query string, param []any, args []any) er
 // initialize a slice so that we can set values into its variables.
 // That's why we are returning Rows and handling the rows inside the code.
 func (databaseRepo zkPostgresRepo) GetAll(query string, param []any) (*sql.Rows, error, func()) {
+	if query == "" {
+		err := errors.New("query cannot be empty")
+		zkLogger.Error(LogTag, err)
+		return nil, err, func() {}
+	}
 	db := databaseRepo.Db
 	rows, err := db.Query(query, param...)
 	closeRow := func() {
@@ -118,29 +134,20 @@ func (databaseRepo zkPostgresRepo) GetAll(query string, param []any) (*sql.Rows,
 // DbArgs is an interface which defines a method GetAllColumns which returns a slice of struct fields corresponding to columns
 // in db table, The values from this slice is then inserted into the table.
 func (databaseRepo zkPostgresRepo) Insert(stmt *sql.Stmt, data interfaces.DbArgs) (sql.Result, error) {
-	defer stmt.Close()
-
-	c := data.GetAllColumns()
-	Result, err := stmt.Exec(c...)
-	if err != nil {
-		zkLogger.Error(LogTag, "Error executing insert:", err)
-		return nil, err
-	}
-
-	return Result, nil
+	return databaseRepo.modifyTable(stmt, data.GetAllColumns())
 }
 
 // Update This method takes a transaction, sql query, slice of params where each value in the param provides values to
 // placeholders in the query. For more details of placeholder refer Get or GetAll
 // it returns number of rows modified and error
-func (databaseRepo zkPostgresRepo) Update(stmt *sql.Stmt, param []any) (int, error) {
+func (databaseRepo zkPostgresRepo) Update(stmt *sql.Stmt, param []any) (sql.Result, error) {
 	return databaseRepo.modifyTable(stmt, param)
 }
 
 // Delete This method takes a transaction, sql query, slice of params where each value in the param provides values to
 // placeholders in the query. For more details of placeholder refer Get or GetAll
 // it returns number of rows modified and error
-func (databaseRepo zkPostgresRepo) Delete(stmt *sql.Stmt, param []any) (int, error) {
+func (databaseRepo zkPostgresRepo) Delete(stmt *sql.Stmt, param []any) (sql.Result, error) {
 	return databaseRepo.modifyTable(stmt, param)
 }
 
@@ -150,78 +157,70 @@ func (databaseRepo zkPostgresRepo) Delete(stmt *sql.Stmt, param []any) (int, err
 // Example Upsert Query: INSERT INTO TableA (colA, colB) VALUES ($1, $2) ON CONFLICT (colA) DO NOTHING
 // The above query tries to insert some value to TableA but on conflict, it does nothing, you can also specify what to do
 // incase of a conflict.
-func (databaseRepo zkPostgresRepo) Upsert(stmt *sql.Stmt, data interfaces.DbArgs) error {
-	defer stmt.Close()
-
-	_, err := stmt.Exec(data.GetAllColumns()...)
-	if err != nil {
-		zkLogger.Error(LogTag, "failed to perform bulk upsert: ", err)
-		return err
-	}
-
-	return nil
+func (databaseRepo zkPostgresRepo) Upsert(stmt *sql.Stmt, data interfaces.DbArgs) (sql.Result, error) {
+	return databaseRepo.modifyTable(stmt, data.GetAllColumns())
 }
-
-// Insert This method takes a db handle, sql query and DbArgs
-// DbArgs is an interface which defines a method GetAllColumns which returns a slice of struct fields corresponding to columns
-// in db table, The values from this slice is then inserted into the table.
-//func (databaseRepo zkPostgresRepo) Insert(query string, data interfaces.DbArgs) (sql.Result, error) {
-//	preparedStmt, err := databaseRepo.Db.Prepare(query)
-//	if err != nil {
-//		zkLogger.Error(LogTag, "Error preparing insert statement:", err)
-//		return nil, err
-//	}
-//	defer preparedStmt.Close()
-//
-//	c := data.GetAllColumns()
-//	result, err := preparedStmt.Exec(c)
-//	if err != nil {
-//		zkLogger.Error(LogTag, "Error executing insert statement:", err)
-//		return nil, err
-//	}
-//
-//	return result, nil
-//}
 
 // BulkInsertUsingCopyIn This method takes a transaction, tableName, list of columns and corresponding column values in []DbArgs
 // For more details on DbArgs read Insert
 // Here we are using copyIn which is a very fast operation for bulk Insert
 func (databaseRepo zkPostgresRepo) BulkInsertUsingCopyIn(stmt *sql.Stmt, data []interfaces.DbArgs) error {
+	if stmt == nil {
+		err := errors.New("statement cannot be empty")
+		zkLogger.Error(LogTag, err)
+		return err
+	}
+
 	defer stmt.Close()
+	var results []sql.Result
 
 	for _, d := range data {
 		c := d.GetAllColumns()
-		_, err := stmt.Exec(c...)
+		r, err := stmt.Exec(c...)
+		results = append(results, r)
 		if err != nil {
 			zkLogger.Error(LogTag, "couldn't prepare COPY statement: %v", err)
 			return err
 		}
 	}
 
-	_, err := stmt.Exec()
+	finalResult, err := stmt.Exec()
+	results = append(results, finalResult)
+
 	if err != nil {
-		zkLogger.Error(LogTag, "Error executing copy statement:", err)
+		zkLogger.Error(LogTag, "failed to perform bulk insert using copyIn: ", err)
 		return err
 	}
 
 	return nil
 }
 
-func (databaseRepo zkPostgresRepo) BulkUpsert(stmt *sql.Stmt, data []interfaces.DbArgs) error {
+// BulkUpsert Uses Upsert command to insert or update data. One can also pass ON CONFLICT DO NOTHING in the query and
+// no update will happen if there is a conflict
+func (databaseRepo zkPostgresRepo) BulkUpsert(stmt *sql.Stmt, data []interfaces.DbArgs) ([]sql.Result, error) {
+	if stmt == nil {
+		err := errors.New("statement cannot be empty")
+		zkLogger.Error(LogTag, err)
+		return nil, err
+	}
+
 	defer stmt.Close()
+	var results []sql.Result
 
 	for _, d := range data {
 		c := d.GetAllColumns()
-		_, err := stmt.Exec(c...)
+		r, err := stmt.Exec(c...)
+		results = append(results, r)
 		if err != nil {
 			zkLogger.Error(LogTag, "failed to perform bulk upsert: ", err)
-			return err
+			return results, err
 		}
 	}
 
-	return nil
+	return results, nil
 }
 
+// CreateTransaction Returns a new transaction
 func (databaseRepo zkPostgresRepo) CreateTransaction() (*sql.Tx, error) {
 	ctx := context.Background()
 	tx, err := databaseRepo.Db.BeginTx(ctx, nil)
@@ -233,19 +232,18 @@ func (databaseRepo zkPostgresRepo) CreateTransaction() (*sql.Tx, error) {
 }
 
 // internal method used by update and delete
-func (databaseRepo zkPostgresRepo) modifyTable(stmt *sql.Stmt, param []any) (int, error) {
+func (databaseRepo zkPostgresRepo) modifyTable(stmt *sql.Stmt, param []any) (sql.Result, error) {
+	if stmt == nil {
+		err := errors.New("statement cannot be empty")
+		zkLogger.Error(LogTag, err)
+		return nil, err
+	}
 	defer stmt.Close()
 	res, err := stmt.Exec(param...)
 	if err == nil {
-		count, err := res.RowsAffected()
-		if err == nil {
-			return int(count), nil
-		} else {
-			zkLogger.Error(LogTag, "Error executing update/delete:", err)
-			return 0, err
-		}
+		return res, nil
 	}
 
 	zkLogger.Debug(LogTag, err.Error())
-	return 0, err
+	return nil, err
 }

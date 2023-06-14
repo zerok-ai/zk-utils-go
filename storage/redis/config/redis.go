@@ -1,4 +1,4 @@
-package model
+package config
 
 type RedisConfig struct {
 	Host        string         `yaml:"host" env:"REDIS_HOST" env-description:"Database host"`
