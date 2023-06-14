@@ -133,12 +133,6 @@ func (databaseRepo zkPostgresRepo) Update(stmt *sql.Stmt, param []any) (int, err
 
 // internal method used by update and delete
 func (databaseRepo zkPostgresRepo) modifyTable(stmt *sql.Stmt, param []any) (int, error) {
-	//stmt, err := tx.Prepare(stmt)
-	//if err != nil {
-	//	zkLogger.Error(LogTag, "Error preparing delete/update statement:", err)
-	//	return 0, err
-	//}
-
 	defer stmt.Close()
 	res, err := stmt.Exec(param...)
 	if err == nil {
@@ -180,21 +174,6 @@ func (databaseRepo zkPostgresRepo) modifyTable(stmt *sql.Stmt, param []any) (int
 // For more details on DbArgs read Insert
 // Here we are using copyIn which is a very fast operation for bulk Insert
 func (databaseRepo zkPostgresRepo) BulkInsert(stmt *sql.Stmt, data []interfaces.DbArgs) error {
-	//ctx := context.Background()
-	//tx, err := databaseRepo.Db.BeginTx(ctx, nil)
-	//if err != nil {
-	//	zkLogger.Debug(LogTag, "unable to create txn, "+err.Error())
-	//	return err
-	//}
-	//
-	//// TODO: understand this code below
-	//defer handleTransaction(tx, err)
-	//stmt, err := tx.Prepare(pq.CopyIn(tableName, columns...))
-	//if err != nil {
-	//	zkLogger.Error(LogTag, "Error preparing insert statement:", err)
-	//	return err
-	//}
-
 	defer stmt.Close()
 
 	for _, d := range data {
@@ -215,25 +194,10 @@ func (databaseRepo zkPostgresRepo) BulkInsert(stmt *sql.Stmt, data []interfaces.
 	return nil
 }
 
-// InsertInTransaction This method takes a db handle, sql query and DbArgs
+// Insert This method takes a db handle, sql query and DbArgs
 // DbArgs is an interface which defines a method GetAllColumns which returns a slice of struct fields corresponding to columns
 // in db table, The values from this slice is then inserted into the table.
 func (databaseRepo zkPostgresRepo) Insert(stmt *sql.Stmt, data interfaces.DbArgs) (sql.Result, error) {
-	//ctx := context.Background()
-	//tx, err := databaseRepo.Db.BeginTx(ctx, nil)
-	//if err != nil {
-	//	zkLogger.Debug(LogTag, "unable to create txn, "+err.Error())
-	//	return nil, err
-	//}
-	//
-	//// TODO: understand this code below
-	//defer handleTransaction(tx, err)
-	//
-	//preparedStmt, err := tx.Prepare(stmt)
-	//if err != nil {
-	//	zkLogger.Error(LogTag, "Error preparing insert statement:", err)
-	//	return nil, err
-	//}
 	defer stmt.Close()
 
 	c := data.GetAllColumns()
@@ -246,19 +210,7 @@ func (databaseRepo zkPostgresRepo) Insert(stmt *sql.Stmt, data interfaces.DbArgs
 	return Result, nil
 }
 
-// BulkUpsert This method takes a transaction, sql query and a slice DbArgs
-// For more details on DbArgs read Insert
-// Here we are using Upsert command which gives additional control when inserts operation fail due to conflicts.
-// Example Upsert Query: INSERT INTO TableA (colA, colB) VALUES ($1, $2) ON CONFLICT (colA) DO NOTHING
-// The above query tries to insert some value to TableA but on conflict, it does nothing, you can also specify what to do
-// incase of a conflict.
 func (databaseRepo zkPostgresRepo) BulkUpsert(stmt *sql.Stmt, data []interfaces.DbArgs) error {
-	//preparedStmt, err := tx.Prepare(stmt)
-	//if err != nil {
-	//	zkLogger.Error(LogTag, "Error preparing insert statement:", err)
-	//	return err
-	//}
-
 	defer stmt.Close()
 
 	for _, d := range data {
@@ -273,16 +225,22 @@ func (databaseRepo zkPostgresRepo) BulkUpsert(stmt *sql.Stmt, data []interfaces.
 	return nil
 }
 
-// TODO: understand this code below
-func handleTransaction(tx *sql.Tx, err error) {
-	if p := recover(); p != nil {
-		tx.Rollback()
-		panic(p)
-	} else if err != nil {
-		tx.Rollback()
-	} else {
-		err = tx.Commit()
+// Upsert This method takes a transaction, sql query and a slice DbArgs
+// For more details on DbArgs read Insert
+// Here we are using Upsert command which gives additional control when inserts operation fail due to conflicts.
+// Example Upsert Query: INSERT INTO TableA (colA, colB) VALUES ($1, $2) ON CONFLICT (colA) DO NOTHING
+// The above query tries to insert some value to TableA but on conflict, it does nothing, you can also specify what to do
+// incase of a conflict.
+func (databaseRepo zkPostgresRepo) Upsert(stmt *sql.Stmt, data interfaces.DbArgs) error {
+	defer stmt.Close()
+
+	_, err := stmt.Exec(data.GetAllColumns()...)
+	if err != nil {
+		zkLogger.Error(LogTag, "failed to perform bulk upsert: ", err)
+		return err
 	}
+
+	return nil
 }
 
 func (databaseRepo zkPostgresRepo) CreateTransaction() (*sql.Tx, error) {

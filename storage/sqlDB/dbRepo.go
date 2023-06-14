@@ -12,6 +12,7 @@ type DatabaseRepo interface {
 	BulkInsert(stmt *sql.Stmt, data []interfaces.DbArgs) error
 	Insert(stmt *sql.Stmt, data interfaces.DbArgs) (sql.Result, error)
 	Update(stmt *sql.Stmt, param []any) (int, error)
+	Upsert(stmt *sql.Stmt, data interfaces.DbArgs) error
 	BulkUpsert(stmt *sql.Stmt, data []interfaces.DbArgs) error
 	Delete(stmt *sql.Stmt, param []any) (int, error)
 	CreateTransaction() (*sql.Tx, error)
