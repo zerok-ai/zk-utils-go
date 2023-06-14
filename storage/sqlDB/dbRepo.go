@@ -6,13 +6,14 @@ import (
 )
 
 type DatabaseRepo interface {
-	GetDBInstance() (*sql.DB, error)
-	Get(db *sql.DB, query string, param []any, args []any) error
-	GetAll(db *sql.DB, query string, param []any) (*sql.Rows, error, func())
-	Insert(db *sql.DB, query string, data interfaces.DbArgs) (sql.Result, error)
-	BulkInsert(tx *sql.Tx, tableName string, columns []string, data []interfaces.DbArgs) error
-	InsertInTransaction(tx *sql.Tx, stmt string, data interfaces.DbArgs) error
-	Update(tx *sql.Tx, stmt string, param []any) (int, error)
-	BulkUpsert(tx *sql.Tx, stmt string, data []interfaces.DbArgs) error
-	Delete(tx *sql.Tx, query string, param []any) (int, error)
+	Get(query string, param []any, args []any) error
+	GetAll(query string, param []any) (*sql.Rows, error, func())
+	//Insert(query string, data interfaces.DbArgs) (sql.Result, error)
+	Insert(stmt *sql.Stmt, data interfaces.DbArgs) (sql.Result, error)
+	Update(stmt *sql.Stmt, param []any) (int, error)
+	Delete(stmt *sql.Stmt, param []any) (int, error)
+	Upsert(stmt *sql.Stmt, data interfaces.DbArgs) error
+	BulkInsertUsingCopyIn(stmt *sql.Stmt, data []interfaces.DbArgs) error
+	BulkUpsert(stmt *sql.Stmt, data []interfaces.DbArgs) error
+	CreateTransaction() (*sql.Tx, error)
 }
