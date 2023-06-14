@@ -18,6 +18,10 @@ type zkPostgresRepo struct {
 	Db *sql.DB
 }
 
+var LogTag = "zkpostgres_db_repo"
+var config pgConfig.PostgresConfig
+var dbInstance *sql.DB
+
 // NewZkPostgresRepo This method returns an instance of DatabaseRepo type where the underlying type is zkPostgresRepo.
 // This instance will be used to call the Postgres implementation of DatabaseRepo methods.
 func NewZkPostgresRepo(c pgConfig.PostgresConfig) (sqlDB.DatabaseRepo, error) {
@@ -31,13 +35,6 @@ func NewZkPostgresRepo(c pgConfig.PostgresConfig) (sqlDB.DatabaseRepo, error) {
 	}
 	return zkRepo, nil
 }
-
-var config pgConfig.PostgresConfig
-var LogTag = "zkpostgres_db_repo"
-
-var (
-	dbInstance *sql.DB
-)
 
 // a non exported function to create the connection poll for Postgres
 func createConnectionPool(connectionString string, maxConnections int, maxIdleConnections int, connectionMaxLifetime time.Duration) (*sql.DB, error) {
@@ -117,11 +114,20 @@ func (databaseRepo zkPostgresRepo) GetAll(query string, param []any) (*sql.Rows,
 	return rows, err, closeRow
 }
 
-// Delete This method takes a transaction, sql query, slice of params where each value in the param provides values to
-// placeholders in the query. For more details of placeholder refer Get or GetAll
-// it returns number of rows modified and error
-func (databaseRepo zkPostgresRepo) Delete(stmt *sql.Stmt, param []any) (int, error) {
-	return databaseRepo.modifyTable(stmt, param)
+// Insert This method takes a db handle, sql query and DbArgs
+// DbArgs is an interface which defines a method GetAllColumns which returns a slice of struct fields corresponding to columns
+// in db table, The values from this slice is then inserted into the table.
+func (databaseRepo zkPostgresRepo) Insert(stmt *sql.Stmt, data interfaces.DbArgs) (sql.Result, error) {
+	defer stmt.Close()
+
+	c := data.GetAllColumns()
+	Result, err := stmt.Exec(c...)
+	if err != nil {
+		zkLogger.Error(LogTag, "Error executing insert:", err)
+		return nil, err
+	}
+
+	return Result, nil
 }
 
 // Update This method takes a transaction, sql query, slice of params where each value in the param provides values to
@@ -131,22 +137,29 @@ func (databaseRepo zkPostgresRepo) Update(stmt *sql.Stmt, param []any) (int, err
 	return databaseRepo.modifyTable(stmt, param)
 }
 
-// internal method used by update and delete
-func (databaseRepo zkPostgresRepo) modifyTable(stmt *sql.Stmt, param []any) (int, error) {
+// Delete This method takes a transaction, sql query, slice of params where each value in the param provides values to
+// placeholders in the query. For more details of placeholder refer Get or GetAll
+// it returns number of rows modified and error
+func (databaseRepo zkPostgresRepo) Delete(stmt *sql.Stmt, param []any) (int, error) {
+	return databaseRepo.modifyTable(stmt, param)
+}
+
+// Upsert This method takes a transaction, sql query and a slice DbArgs
+// For more details on DbArgs read Insert
+// Here we are using Upsert command which gives additional control when inserts operation fail due to conflicts.
+// Example Upsert Query: INSERT INTO TableA (colA, colB) VALUES ($1, $2) ON CONFLICT (colA) DO NOTHING
+// The above query tries to insert some value to TableA but on conflict, it does nothing, you can also specify what to do
+// incase of a conflict.
+func (databaseRepo zkPostgresRepo) Upsert(stmt *sql.Stmt, data interfaces.DbArgs) error {
 	defer stmt.Close()
-	res, err := stmt.Exec(param...)
-	if err == nil {
-		count, err := res.RowsAffected()
-		if err == nil {
-			return int(count), nil
-		} else {
-			zkLogger.Error(LogTag, "Error executing update/delete:", err)
-			return 0, err
-		}
+
+	_, err := stmt.Exec(data.GetAllColumns()...)
+	if err != nil {
+		zkLogger.Error(LogTag, "failed to perform bulk upsert: ", err)
+		return err
 	}
 
-	zkLogger.Debug(LogTag, err.Error())
-	return 0, err
+	return nil
 }
 
 // Insert This method takes a db handle, sql query and DbArgs
@@ -170,10 +183,10 @@ func (databaseRepo zkPostgresRepo) modifyTable(stmt *sql.Stmt, param []any) (int
 //	return result, nil
 //}
 
-// BulkInsert This method takes a transaction, tableName, list of columns and corresponding column values in []DbArgs
+// BulkInsertUsingCopyIn This method takes a transaction, tableName, list of columns and corresponding column values in []DbArgs
 // For more details on DbArgs read Insert
 // Here we are using copyIn which is a very fast operation for bulk Insert
-func (databaseRepo zkPostgresRepo) BulkInsert(stmt *sql.Stmt, data []interfaces.DbArgs) error {
+func (databaseRepo zkPostgresRepo) BulkInsertUsingCopyIn(stmt *sql.Stmt, data []interfaces.DbArgs) error {
 	defer stmt.Close()
 
 	for _, d := range data {
@@ -194,22 +207,6 @@ func (databaseRepo zkPostgresRepo) BulkInsert(stmt *sql.Stmt, data []interfaces.
 	return nil
 }
 
-// Insert This method takes a db handle, sql query and DbArgs
-// DbArgs is an interface which defines a method GetAllColumns which returns a slice of struct fields corresponding to columns
-// in db table, The values from this slice is then inserted into the table.
-func (databaseRepo zkPostgresRepo) Insert(stmt *sql.Stmt, data interfaces.DbArgs) (sql.Result, error) {
-	defer stmt.Close()
-
-	c := data.GetAllColumns()
-	Result, err := stmt.Exec(c...)
-	if err != nil {
-		zkLogger.Error(LogTag, "Error executing insert:", err)
-		return nil, err
-	}
-
-	return Result, nil
-}
-
 func (databaseRepo zkPostgresRepo) BulkUpsert(stmt *sql.Stmt, data []interfaces.DbArgs) error {
 	defer stmt.Close()
 
@@ -225,24 +222,6 @@ func (databaseRepo zkPostgresRepo) BulkUpsert(stmt *sql.Stmt, data []interfaces.
 	return nil
 }
 
-// Upsert This method takes a transaction, sql query and a slice DbArgs
-// For more details on DbArgs read Insert
-// Here we are using Upsert command which gives additional control when inserts operation fail due to conflicts.
-// Example Upsert Query: INSERT INTO TableA (colA, colB) VALUES ($1, $2) ON CONFLICT (colA) DO NOTHING
-// The above query tries to insert some value to TableA but on conflict, it does nothing, you can also specify what to do
-// incase of a conflict.
-func (databaseRepo zkPostgresRepo) Upsert(stmt *sql.Stmt, data interfaces.DbArgs) error {
-	defer stmt.Close()
-
-	_, err := stmt.Exec(data.GetAllColumns()...)
-	if err != nil {
-		zkLogger.Error(LogTag, "failed to perform bulk upsert: ", err)
-		return err
-	}
-
-	return nil
-}
-
 func (databaseRepo zkPostgresRepo) CreateTransaction() (*sql.Tx, error) {
 	ctx := context.Background()
 	tx, err := databaseRepo.Db.BeginTx(ctx, nil)
@@ -251,4 +230,22 @@ func (databaseRepo zkPostgresRepo) CreateTransaction() (*sql.Tx, error) {
 		return nil, err
 	}
 	return tx, nil
+}
+
+// internal method used by update and delete
+func (databaseRepo zkPostgresRepo) modifyTable(stmt *sql.Stmt, param []any) (int, error) {
+	defer stmt.Close()
+	res, err := stmt.Exec(param...)
+	if err == nil {
+		count, err := res.RowsAffected()
+		if err == nil {
+			return int(count), nil
+		} else {
+			zkLogger.Error(LogTag, "Error executing update/delete:", err)
+			return 0, err
+		}
+	}
+
+	zkLogger.Debug(LogTag, err.Error())
+	return 0, err
 }
