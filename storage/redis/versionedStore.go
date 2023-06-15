@@ -46,28 +46,24 @@ type Version struct {
 	version int
 }
 
-func GetVersionedStore[T interfaces.ZKComparable](redisConfig *config.RedisConfig, dbName string, autoSync bool, model T) (*VersionedStore[T], error) {
+func GetVersionedStore[T interfaces.ZKComparable](redisConfig config.RedisConfig, dbName string, autoSync bool, model T) *VersionedStore[T] {
 
-	if redisConfig == nil {
-		return nil, fmt.Errorf("redis config not found")
-	}
-	readTimeout := time.Duration(redisConfig.ReadTimeout) * time.Second
 	_redisClient := redis.NewClient(&redis.Options{
 		Addr:        fmt.Sprint(redisConfig.Host, ":", redisConfig.Port),
 		Password:    "",
 		DB:          redisConfig.DBs[dbName],
-		ReadTimeout: readTimeout,
+		ReadTimeout: time.Duration(redisConfig.ReadTimeout) * time.Second,
 	})
 
-	versionStore := (&VersionedStore[T]{
+	versionStore := &VersionedStore[T]{
 		redisClient:        _redisClient,
 		versionHashSetName: "zk_value_version",
 		localVersions:      map[string]string{},
 		localKeyValueCache: map[string]*T{},
 		AutoSync:           autoSync,
-	}).initialize(dbName)
+	}
 
-	return versionStore, nil
+	return versionStore.initialize(dbName)
 }
 
 var filterPullTickInterval time.Duration = 2 * time.Minute
@@ -219,10 +215,12 @@ func (versionStore *VersionedStore[T]) valuesForKeysFromDB(keys []string) ([]*T,
 		switch value := opt[i].(type) {
 		case string:
 			if err := json.Unmarshal([]byte(value), &valToAppend); err != nil {
+				fmt.Println("Error unmarshalling string value: ", err.Error())
 				valToAppend = nil
 			}
 		case []byte:
 			if err := json.Unmarshal(value, &valToAppend); err != nil {
+				fmt.Println("Error unmarshalling byte value: ", err.Error())
 				valToAppend = nil
 			}
 		default:
