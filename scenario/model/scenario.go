@@ -8,7 +8,6 @@ import (
 	"github.com/zerok-ai/zk-utils-go/interfaces"
 	"reflect"
 	"sort"
-	"strconv"
 )
 
 type Scenario struct {
@@ -190,30 +189,7 @@ func (r RuleLeaf) LessThan(other RuleLeaf) bool {
 	}
 
 	if *r.Value != *other.Value {
-
-		if r.Value == nil {
-			return true
-		}
-
-		obj1 := *r.Value
-		obj2 := *other.Value
-
-		type1 := reflect.TypeOf(obj1)
-		type2 := reflect.TypeOf(obj2)
-
-		if type1 != type2 {
-			return false
-		}
-
-		if val, ok := obj1.(bool); ok {
-			return strconv.FormatBool(val) < strconv.FormatBool(obj2.(bool))
-		} else if val, ok := obj1.(float64); ok {
-			return strconv.FormatFloat(val, 'f', -1, 64) < strconv.FormatFloat(obj2.(float64), 'f', -1, 64)
-		} else if val, ok := obj1.(string); ok {
-			return val < obj2.(string)
-		} else {
-			fmt.Println("unsupported type")
-		}
+		return *r.Value < *other.Value
 	}
 
 	return false
@@ -222,7 +198,7 @@ func (r RuleLeaf) LessThan(other RuleLeaf) bool {
 type DataType string
 type InputTypes string
 type OperatorTypes string
-type ValueTypes any
+type ValueTypes string
 type Protocol string
 
 type Rules []Rule
