@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/redis/go-redis/v9"
 	"github.com/zerok-ai/zk-utils-go/interfaces"
+	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/storage/redis/config"
 	ticker "github.com/zerok-ai/zk-utils-go/ticker"
 	"sync"
@@ -13,6 +14,7 @@ import (
 )
 
 var LATEST = fmt.Errorf("version passed is already latest")
+var LogTag = "redis_versionedStore"
 
 type VersionedStoreConfig struct {
 	RefreshTimeSec int `yaml:"RefreshTimeSec" env:"REFRESH_TIME_SEC" env-description:"Database host"`
@@ -78,7 +80,7 @@ func (versionStore *VersionedStore[T]) initialize(tickerName string) *VersionedS
 	task := func() {
 		err := versionStore.RefreshLocalCache()
 		if err != nil {
-			fmt.Println(err.Error())
+			zkLogger.Error(LogTag, err.Error())
 		}
 	}
 

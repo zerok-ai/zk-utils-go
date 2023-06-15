@@ -14,12 +14,12 @@ import (
 
 var LogTag = "zk_hash"
 
-func CalculateHash(s string) uuid.UUID {
+func CalculateHashNewSHA2(s string) uuid.UUID {
 	hash := sha1.Sum([]byte(s))
 	return uuid.NewSHA1(uuid.Nil, hash[:])
 }
 
-func CompressString(input string) ([]byte, error) {
+func CompressStringGzip(input string) ([]byte, error) {
 	if common.IsEmpty(input) {
 		logger.Error(LogTag, "empty string")
 		return nil, errors.New("empty input")
@@ -43,7 +43,7 @@ func CompressString(input string) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func DecompressString(input []byte) (string, error) {
+func DecompressStringGzip(input []byte) (string, error) {
 	if input == nil || len(input) == 0 {
 		return "", errors.New("empty input")
 	}

@@ -64,7 +64,7 @@ func (zkHttpResponseBuilder _zkHttpResponseBuilder[T]) Data(data *T) _zkHttpResp
 }
 
 func (zkHttpResponseBuilder _zkHttpResponseBuilder[T]) Debug(key string, value any) _zkHttpResponseBuilder[T] {
-	if !config.HTTP_DEBUG || value == nil {
+	if !config.HttpDebug || value == nil {
 		return zkHttpResponseBuilder
 	}
 	if zkHttpResponseBuilder.ZkHttpResponse.Debug == nil {
@@ -126,7 +126,7 @@ func (zkHttpResponseBuilder _zkHttpResponseBuilder[T]) Build() ZkHttpResponse[T]
 func (zkHttpError *ZkHttpError) Build(zkErrorType zkerrors.ZkErrorType, param *string, stack any) {
 	zkHttpError.Kind = zkErrorType.Type
 	zkHttpError.Message = zkErrorType.Message
-	if config.HTTP_DEBUG {
+	if config.HttpDebug {
 		zkHttpError.Stack = stack
 	}
 	if param != nil {
