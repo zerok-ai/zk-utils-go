@@ -22,6 +22,8 @@ import (
 	"time"
 )
 
+var LogTag = "common_utils"
+
 func ToString(iInstance interface{}) *string {
 	if iInstance == nil {
 		return nil
@@ -111,30 +113,12 @@ func GenerateRandomToken(length int) (string, error) {
 
 	_, err := rand.Read(tokenBytes)
 	if err != nil {
-		fmt.Printf("Error while creating random bytes of length %v, err %v.\n", length, err)
+		zkLogger.Error(LogTag, "Error while creating random bytes of length %v, err %v.\n", length, err)
 		return "", err
 	}
 
 	token := base64.StdEncoding.EncodeToString(tokenBytes)
-
-	fmt.Println("Random token:", token)
-
 	return token, nil
-}
-
-func CheckSqlError(err error, logTag string) *zkErrors.ZkError {
-	switch err {
-	case sql.ErrNoRows:
-		fmt.Println("No rows were returned!")
-		zkError := zkErrors.ZkErrorBuilder{}.Build(zkErrors.ZkErrorNotFound, nil)
-		return &zkError
-	case nil:
-		return nil
-	default:
-		zkError := zkErrors.ZkErrorBuilder{}.Build(zkErrors.ZkErrorInternalServer, nil)
-		zkLogger.Debug(logTag, "unable to scan rows", err)
-		return &zkError
-	}
 }
 
 func RollbackTransaction(tx *sql.Tx, logTag string) (bool, *zkErrors.ZkError) {
@@ -207,7 +191,7 @@ func SetResponseInCtxAndReturn[T any](ctx iris.Context, resp *T, zkError *zkErro
 func GetBytesFromFile(path string) []byte {
 	file, err := os.Open(path)
 	if err != nil {
-		fmt.Println("Error opening file:", err)
+		zkLogger.Error(LogTag, "Error opening file:", err)
 		return nil
 	}
 	defer file.Close()
@@ -215,7 +199,7 @@ func GetBytesFromFile(path string) []byte {
 	// Read the file content
 	content, err := io.ReadAll(file)
 	if err != nil {
-		fmt.Println("Error reading file:", err)
+		zkLogger.Error(LogTag, "Error reading file:", err)
 		return nil
 	}
 

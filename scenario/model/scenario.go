@@ -2,13 +2,15 @@ package model
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/zerok-ai/zk-utils-go/crypto"
 	"github.com/zerok-ai/zk-utils-go/interfaces"
+	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"reflect"
 	"sort"
 )
+
+var LogTag = "scenario_model"
 
 type Scenario struct {
 	Version    string               `json:"version"`
@@ -247,7 +249,7 @@ func (r Rules) Equals(other Rules) bool {
 	for index, value := range other {
 		val := r[index]
 		if !value.Equals(val) {
-			fmt.Printf("in Rules Equals: Rule at index %d is not same\n", index)
+			zkLogger.Error(LogTag, "in Rules Equals: Rule at index %d is not same\n", index)
 			return false
 		}
 	}
@@ -278,6 +280,6 @@ type Condition string
 func WorkLoadUUID(w Workload) uuid.UUID {
 	w.Rule.Rules.Sort()
 	jStr, _ := json.Marshal(w)
-	id := crypto.CalculateHash(string(jStr))
+	id := crypto.CalculateHashNewSHA2(string(jStr))
 	return id
 }

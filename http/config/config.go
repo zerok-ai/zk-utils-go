@@ -1,9 +1,9 @@
 package config
 
-var HTTP_DEBUG bool = false
+var HttpDebug = false
 
-func Init(http_debug bool) {
-	HTTP_DEBUG = http_debug
+func Init(httpDebug bool) {
+	HttpDebug = httpDebug
 }
 
 type HttpConfig struct {

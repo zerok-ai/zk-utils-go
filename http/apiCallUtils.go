@@ -225,7 +225,7 @@ func (zkApiUtils zkApiUtils) ExtractUrlParam(name string, responseUnescaped stri
 }
 
 func (zkApiUtils zkApiUtils) ExtractUrlParamFromResponse(name string, response http.Response) string {
-	responseData, err := ioutil.ReadAll(response.Body)
+	responseData, err := io.ReadAll(response.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
