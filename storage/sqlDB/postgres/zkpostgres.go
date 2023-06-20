@@ -30,13 +30,10 @@ var dbInstance *sql.DB
 func NewZkPostgresRepo(c pgConfig.PostgresConfig) (sqlDB.DatabaseRepo, error) {
 	config = c
 	instance, err := getDBInstance()
-	if err != nil {
-		return zkPostgresRepo{}, nil
-	}
 	zkRepo := zkPostgresRepo{
 		Db: instance,
 	}
-	return zkRepo, nil
+	return zkRepo, err
 }
 
 // a non exported function to create the connection poll for Postgres
