@@ -73,6 +73,16 @@ func FromJsonString(iString string, iType reflect.Type) interface{} {
 	return iTypeInterface
 }
 
+func ToFloat32(input string) (float32, error) {
+	str := "3.14"
+	f, err := strconv.ParseFloat(str, 32)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return float32(0.0), err
+	}
+	return float32(f), nil
+}
+
 // String Utils
 
 func ToSha256(input string) [sha256.Size]byte {

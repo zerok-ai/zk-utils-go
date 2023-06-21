@@ -13,11 +13,13 @@ import (
 var LogTag = "scenario_model"
 
 type Scenario struct {
-	Version    string               `json:"version"`
-	ScenarioId string               `json:"scenario_id"`
-	Enabled    bool                 `json:"enabled"`
-	Workloads  *map[string]Workload `json:"workloads"`
-	Filter     Filter               `json:"filter"`
+	Version   string               `json:"version"`
+	Id        string               `json:"scenario_id"`
+	Title     string               `json:"scenario_title"`
+	Type      string               `json:"scenario_type"`
+	Enabled   bool                 `json:"enabled"`
+	Workloads *map[string]Workload `json:"workloads"`
+	Filter    Filter               `json:"filter"`
 }
 
 func (s Scenario) Equals(otherInterface interfaces.ZKComparable) bool {
@@ -27,7 +29,7 @@ func (s Scenario) Equals(otherInterface interfaces.ZKComparable) bool {
 		return false
 	}
 
-	if s.Version != other.Version || s.ScenarioId != other.ScenarioId || s.Enabled != other.Enabled {
+	if s.Version != other.Version || s.Title != other.Title || s.Id != other.Id || s.Type != other.Type || s.Enabled != other.Enabled {
 		return false
 	}
 
