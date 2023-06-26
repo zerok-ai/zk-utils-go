@@ -1,5 +1,7 @@
 {
   "version": "",
+  "scenario_title": "",
+  "scenario_type": "",
   "scenario_id": "",
   "enabled": false,
   "workloads": null,

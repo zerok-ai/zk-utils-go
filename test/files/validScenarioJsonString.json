@@ -1,4 +1,6 @@
 {
+  "scenario_title": "sc1",
+  "scenario_type": "user",
   "version": "23423",
   "scenario_id": "myid",
   "enabled": true,
@@ -24,7 +26,6 @@
             "type": "rule_group",
             "condition": "OR",
             "rules": [
-
               {
                 "id": "req_path",
                 "type": "rule",

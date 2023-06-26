@@ -25,74 +25,95 @@ type VersionedStore[T interfaces.ZKComparable] struct {
 	versionHashSetName string
 	localVersions      map[string]string
 	localKeyValueCache map[string]*T
-	AutoSync           bool
 
 	tickerTask *ticker.TickerTask
 	mutex      sync.Mutex
 }
 
+func GetVersionedStore[T interfaces.ZKComparable](redisConfig *config.RedisConfig, dbName string, syncTimeInterval time.Duration) (*VersionedStore[T], error) {
+	if redisConfig == nil {
+		return nil, fmt.Errorf("redis config not found")
+	}
+	readTimeout := time.Duration(redisConfig.ReadTimeout) * time.Second
+	_redisClient := redis.NewClient(&redis.Options{
+		Addr:        fmt.Sprint(redisConfig.Host, ":", redisConfig.Port),
+		Password:    "",
+		DB:          redisConfig.DBs[dbName],
+		ReadTimeout: readTimeout,
+	})
+
+	versionStore := (&VersionedStore[T]{
+		redisClient:        _redisClient,
+		versionHashSetName: "zk_value_version",
+		localVersions:      map[string]string{},
+		localKeyValueCache: map[string]*T{},
+	}).initialize(dbName, syncTimeInterval)
+
+	return versionStore, nil
+}
+
+func (versionStore *VersionedStore[T]) initialize(tickerName string, syncTimeInterval time.Duration) *VersionedStore[T] {
+
+	// trigger recurring filter pull
+	task := func() {
+		err := versionStore.refreshLocalCache()
+		if err != nil {
+			zkLogger.Error(LogTag, err)
+		}
+	}
+	versionStore.tickerTask = ticker.GetNewTickerTask(tickerName, syncTimeInterval, task).Start()
+
+	return versionStore
+}
+
 func (versionStore *VersionedStore[T]) safeAddToLocalVersionMap(key string, value string) {
 	versionStore.mutex.Lock()
-	versionStore.mutex.Unlock()
+	defer versionStore.mutex.Unlock()
 	versionStore.localVersions[key] = value
 }
 
 func (versionStore *VersionedStore[T]) safeAddToLocalKeyValueCacheMap(key string, value *T) {
 	versionStore.mutex.Lock()
-	versionStore.mutex.Unlock()
+	defer versionStore.mutex.Unlock()
 	versionStore.localKeyValueCache[key] = value
 }
 
-type Version struct {
-	key     string
-	version int
-}
+// setToLocalCache refreshes the local cache from the remote store using the variables passed to the
+// method. If the variables are nil, it will fetch the values from the remote store before setting them
+// in the local cache.
+func (versionStore *VersionedStore[T]) setToLocalCache(key string, value *T, version *string) (*T, *string, error) {
 
-func GetVersionedStore[T interfaces.ZKComparable](redisConfig config.RedisConfig, dbName string, autoSync bool, model T) *VersionedStore[T] {
-
-	_redisClient := redis.NewClient(&redis.Options{
-		Addr:        fmt.Sprint(redisConfig.Host, ":", redisConfig.Port),
-		Password:    "",
-		DB:          redisConfig.DBs[dbName],
-		ReadTimeout: time.Duration(redisConfig.ReadTimeout) * time.Second,
-	})
-
-	versionStore := &VersionedStore[T]{
-		redisClient:        _redisClient,
-		versionHashSetName: "zk_value_version",
-		localVersions:      map[string]string{},
-		localKeyValueCache: map[string]*T{},
-		AutoSync:           autoSync,
-	}
-
-	return versionStore.initialize(dbName)
-}
-
-var filterPullTickInterval time.Duration = 2 * time.Minute
-
-func (versionStore *VersionedStore[T]) initialize(tickerName string) *VersionedStore[T] {
-
-	// trigger recurring filter pull
-	task := func() {
-		err := versionStore.RefreshLocalCache()
+	if version == nil {
+		// get the version from remote store
+		versionFromStore, err := versionStore.getVersionFromDB(key)
 		if err != nil {
-			zkLogger.Error(LogTag, err.Error())
+			return value, version, err
 		}
+		version = &versionFromStore
 	}
 
-	if versionStore.AutoSync {
-		ticker.GetNewTickerTask(tickerName, filterPullTickInterval, task)
-	}
-	task()
+	// set the version in local store
+	versionStore.safeAddToLocalVersionMap(key, *version)
 
-	return versionStore
+	if value == nil {
+		// get the value from remote store
+		valueFromStore, err := versionStore.getValueFromDB(key)
+		if err != nil {
+			return value, version, err
+		}
+		value = valueFromStore
+	}
+
+	// set the value in local store
+	versionStore.safeAddToLocalKeyValueCacheMap(key, value)
+	return value, version, nil
 }
 
 func (versionStore *VersionedStore[T]) GetAllValues() map[string]*T {
 	return versionStore.localKeyValueCache
 }
 
-func (versionStore *VersionedStore[T]) Value(key string) (*T, error) {
+func (versionStore *VersionedStore[T]) GetValue(key string) (*T, error) {
 
 	// get the value from local store
 	localVal := versionStore.localKeyValueCache[key]
@@ -100,95 +121,13 @@ func (versionStore *VersionedStore[T]) Value(key string) (*T, error) {
 		return localVal, nil
 	}
 
-	var valueFromStore *T
-	var err error
-	// get the version and value from remote store
-	versionFromStore, err := versionStore.getVersionFromDB(key)
-	if err == nil {
-		versionStore.safeAddToLocalVersionMap(key, versionFromStore)
-		valueFromStore, err = versionStore.valueFromStore(key)
-		if err == nil {
-			versionStore.safeAddToLocalKeyValueCacheMap(key, valueFromStore)
-		}
-	}
+	valueFromStore, _, err := versionStore.setToLocalCache(key, nil, nil)
 
 	return valueFromStore, err
 }
 
-func (versionStore *VersionedStore[T]) SetValue(key string, value T) error {
-	rdb := versionStore.redisClient
-
-	// 1. check if the local value is different from the new value
-	localVal := versionStore.localKeyValueCache[key]
-	if localVal != nil && (*localVal).Equals(value) {
-		return LATEST
-	}
-
-	// 2. get the value from remote and return if it matches the new value
-	remoteVal := rdb.Get(context.Background(), key)
-	if err := remoteVal.Err(); err == nil {
-		var remoteT *T
-		if err := json.Unmarshal([]byte(remoteVal.Val()), &remoteT); err != nil {
-			return err
-		}
-
-		if (*remoteT).Equals(value) {
-			return LATEST
-		}
-	} else if err != redis.Nil {
-		return err
-	}
-
-	// 3. set value in remote store
-	// a. create a Redis transaction: this doesn't support rollback
-	ctx := context.Background()
-	tx := rdb.TxPipeline()
-
-	// b. run set command
-	bytes, err := json.Marshal(value)
-	if err != nil {
-		return err
-	}
-	valueToWrite := string(bytes)
-	tx.Set(ctx, key, valueToWrite, 0)
-	tx.HIncrBy(ctx, versionStore.versionHashSetName, key, 1)
-
-	// c. Execute the transaction
-	if _, err := tx.Exec(ctx); err != nil {
-		return err
-	}
-
-	//4. update value in local cache
-	versionStore.safeAddToLocalKeyValueCacheMap(key, &value)
-	var newVersion string
-	newVersion, err = versionStore.version(key)
-	if err == nil {
-		versionStore.safeAddToLocalVersionMap(key, newVersion)
-	} else {
-		//	not sure what to do here
-	}
-
-	return nil
-}
-
-func (versionStore *VersionedStore[T]) getVersionFromDB(key string) (string, error) {
-	rdb := versionStore.redisClient
-
-	// get the old value
-	result := rdb.HGet(context.Background(), versionStore.versionHashSetName, key)
-	return result.Val(), result.Err()
-}
-
-func (versionStore *VersionedStore[T]) getAllVersionsFromDB() (map[string]string, error) {
-	rdb := versionStore.redisClient
-
-	// get the old value
-	versions := rdb.HGetAll(context.Background(), versionStore.versionHashSetName)
-	return versions.Val(), versions.Err()
-}
-
 // value Get Redis `GET key` command. It returns storage.LATEST error when oldVersion==<version in the store>.
-func (versionStore *VersionedStore[T]) valueFromStore(key string) (*T, error) {
+func (versionStore *VersionedStore[T]) getValueFromDB(key string) (*T, error) {
 	rdb := versionStore.redisClient
 
 	// get the value
@@ -202,7 +141,7 @@ func (versionStore *VersionedStore[T]) valueFromStore(key string) (*T, error) {
 	return value, err
 }
 
-func (versionStore *VersionedStore[T]) valuesForKeysFromDB(keys []string) ([]*T, error) {
+func (versionStore *VersionedStore[T]) getMultipleValuesFromDB(keys []string) ([]*T, error) {
 	rdb := versionStore.redisClient
 
 	// get the values
@@ -217,12 +156,10 @@ func (versionStore *VersionedStore[T]) valuesForKeysFromDB(keys []string) ([]*T,
 		switch value := opt[i].(type) {
 		case string:
 			if err := json.Unmarshal([]byte(value), &valToAppend); err != nil {
-				fmt.Println("Error unmarshalling string value: ", err.Error())
 				valToAppend = nil
 			}
 		case []byte:
 			if err := json.Unmarshal(value, &valToAppend); err != nil {
-				fmt.Println("Error unmarshalling byte value: ", err.Error())
 				valToAppend = nil
 			}
 		default:
@@ -233,12 +170,59 @@ func (versionStore *VersionedStore[T]) valuesForKeysFromDB(keys []string) ([]*T,
 	return sliceToReturn, err
 }
 
-func (versionStore *VersionedStore[T]) version(key string) (string, error) {
+func (versionStore *VersionedStore[T]) SetValue(key string, value T) error {
+
+	// 1. check if the previous value is different from the new value
+	localVal, _ := versionStore.GetValue(key)
+	if localVal != nil && (*localVal).Equals(value) {
+		return LATEST
+	}
+
+	// 2. set value in remote store
+	return versionStore.setValueForced(key, value)
+}
+
+func (versionStore *VersionedStore[T]) setValueForced(key string, value T) error {
+
+	rdb := versionStore.redisClient
+
+	// a. create a Redis transaction: this doesn't support rollback
+	ctx := context.Background()
+	tx := rdb.TxPipeline()
+
+	// b. run set command for value and version
+	bytes, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+	valueToWrite := string(bytes)
+	tx.Set(ctx, key, valueToWrite, 0)
+	tx.HIncrBy(ctx, versionStore.versionHashSetName, key, 1)
+
+	// c. Execute the transaction
+	if _, err := tx.Exec(ctx); err != nil {
+		return err
+	}
+
+	// d. reset value in local cache
+	_, _, err = versionStore.setToLocalCache(key, &value, nil)
+	return err
+}
+
+func (versionStore *VersionedStore[T]) getVersionFromDB(key string) (string, error) {
 	rdb := versionStore.redisClient
 
 	// get the old value
 	version := rdb.HGet(context.Background(), versionStore.versionHashSetName, key)
 	return version.Val(), version.Err()
+}
+
+func (versionStore *VersionedStore[T]) getAllVersionsFromDB() (map[string]string, error) {
+	rdb := versionStore.redisClient
+
+	// get the old value
+	versions := rdb.HGetAll(context.Background(), versionStore.versionHashSetName)
+	return versions.Val(), versions.Err()
 }
 
 func (versionStore *VersionedStore[T]) Delete(key string) error {
@@ -264,7 +248,7 @@ func (versionStore *VersionedStore[T]) Length() (int64, error) {
 	return versionStore.redisClient.HLen(context.Background(), versionStore.versionHashSetName).Result()
 }
 
-func (versionStore *VersionedStore[T]) RefreshLocalCache() error {
+func (versionStore *VersionedStore[T]) refreshLocalCache() error {
 
 	// 1. get the new localVersions for all the keys
 	versionsFromDB, err := versionStore.getAllVersionsFromDB()
@@ -291,7 +275,7 @@ func (versionStore *VersionedStore[T]) RefreshLocalCache() error {
 	}
 
 	// 3. get the values which are not present locally or are old
-	newRawDataPair, err := versionStore.valuesForKeysFromDB(missingOrOldDataKeys)
+	newRawDataPair, err := versionStore.getMultipleValuesFromDB(missingOrOldDataKeys)
 	if err != nil {
 		return fmt.Errorf("error in fetching new data for cache: %v", err)
 	}
@@ -301,6 +285,8 @@ func (versionStore *VersionedStore[T]) RefreshLocalCache() error {
 	}
 
 	// 4. assign the new objects to filter processors
+	versionStore.mutex.Lock()
+	defer versionStore.mutex.Unlock()
 	versionStore.localKeyValueCache = newDataPair
 	versionStore.localVersions = versionsFromDB
 	return nil
