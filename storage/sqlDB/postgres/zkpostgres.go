@@ -244,3 +244,7 @@ func (databaseRepo zkPostgresRepo) modifyTable(stmt *sql.Stmt, param []any) (sql
 	zkLogger.Debug(LogTag, err.Error())
 	return nil, err
 }
+
+func (databaseRepo zkPostgresRepo) Close() error {
+	return databaseRepo.Db.Close()
+}

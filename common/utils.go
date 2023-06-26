@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/kataras/iris/v12"
+	"github.com/lib/pq"
 	zkHttp "github.com/zerok-ai/zk-utils-go/http"
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	zkErrors "github.com/zerok-ai/zk-utils-go/zkerrors"
@@ -185,9 +186,9 @@ func Round(val float64, precision int) float64 {
 
 func SetResponseInCtxAndReturn[T any](ctx iris.Context, resp *T, zkError *zkErrors.ZkError) {
 	if zkError != nil {
-		z := &zkHttp.ZkHttpResponseBuilder[T]{}
-		z.WithZkErrorType(zkError.Error).Build()
-		ctx.StatusCode(zkError.Error.Status)
+		zkHttpResponse := zkHttp.ZkHttpResponseBuilder[T]{}.WithZkErrorType(zkError.Error).Build()
+		ctx.StatusCode(zkHttpResponse.Status)
+		ctx.JSON(zkHttpResponse)
 		return
 	}
 
@@ -214,5 +215,22 @@ func GetBytesFromFile(path string) []byte {
 	}
 
 	return content
+}
 
+func GetStmtForCopyIn(tx *sql.Tx, tableName string, columns []string) (*sql.Stmt, error) {
+	stmt, err := tx.Prepare(pq.CopyIn(tableName, columns...))
+	if err != nil {
+		zkLogger.Error(LogTag, "Error preparing insert statement:", err)
+		return nil, err
+	}
+	return stmt, nil
+}
+
+func GetStmtRawQuery(tx *sql.Tx, stmt string) (*sql.Stmt, error) {
+	preparedStmt, err := tx.Prepare(stmt)
+	if err != nil {
+		zkLogger.Error(LogTag, "Error preparing insert statement:", err)
+		return nil, err
+	}
+	return preparedStmt, nil
 }

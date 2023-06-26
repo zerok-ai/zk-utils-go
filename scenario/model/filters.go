@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/zerok-ai/zk-utils-go/interfaces"
 	"sort"
 )
 
@@ -19,7 +20,12 @@ type Filter struct {
 	WorkloadIds *WorkloadIds `json:"workload_ids,omitempty"`
 }
 
-func (f Filter) Equals(other Filter) bool {
+func (f Filter) Equals(otherInterface interfaces.ZKComparable) bool {
+	other, ok := otherInterface.(Filter)
+	if !ok {
+		return false
+	}
+
 	if f.Type != other.Type || f.Condition != other.Condition {
 		return false
 	}

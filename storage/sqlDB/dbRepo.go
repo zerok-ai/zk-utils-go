@@ -15,4 +15,5 @@ type DatabaseRepo interface {
 	BulkInsertUsingCopyIn(stmt *sql.Stmt, data []interfaces.DbArgs) error
 	BulkUpsert(stmt *sql.Stmt, data []interfaces.DbArgs) ([]sql.Result, error)
 	CreateTransaction() (*sql.Tx, error)
+	Close() error
 }
