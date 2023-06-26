@@ -53,7 +53,10 @@ func (s *StoreSuite) SetupSuite() {
 		ConnectionMaxLifetimeInMinutes: 0,
 	}
 
-	r := zkpostgres.NewZkPostgresRepo(c)
+	r, err := zkpostgres.NewZkPostgresRepo(c)
+	if err != nil {
+		log.Fatal("unable to connect to db")
+	}
 	s.dbRepo = r
 }
 
