@@ -5,7 +5,7 @@ import (
 	"github.com/kataras/iris/v12"
 	zklogger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/zkerrors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"reflect"
 )
@@ -32,7 +32,7 @@ func GenerateHttpCookie(name string, value string) *http.Cookie {
 func ReadRequestBody(ctx iris.Context) {
 	var zkHttpResponse ZkHttpResponse[any]
 	request := ctx.Request()
-	requestBodyInBytes, err := ioutil.ReadAll(request.Body)
+	requestBodyInBytes, err := io.ReadAll(request.Body)
 
 	if err != nil {
 
@@ -90,6 +90,8 @@ func ValidateRequestBody(ctx iris.Context, bodyType reflect.Type) {
 	ctx.Next()
 }
 
+// ValidateObject TODO: Move validation logic used above and here to a common method
+// Can be done once we integrate this with zk-auth
 func ValidateObject(ctx iris.Context, s interface{}) {
 	var validate = validator.New()
 	err := validate.Struct(s)
@@ -108,45 +110,6 @@ func ValidateObject(ctx iris.Context, s interface{}) {
 		return
 	}
 	// ctx.Values().Set(HTTP_UTILS_REQUEST_INTERFACE, s)
-
-	ctx.Next()
-}
-
-func Validate(ctx iris.Context, bodyType reflect.Type) {
-	if bodyType.Kind() == reflect.Ptr {
-		bodyType = bodyType.Elem()
-	}
-	bodyInterface := reflect.New(bodyType).Interface()
-
-	err := ctx.ReadJSON(bodyInterface)
-	if err != nil {
-		zklogger.Error(LOG_TAG, err)
-		zkHttpResponse := ZkHttpResponseBuilder[any]{}.WithZkErrorType(zkerrors.ZkErrorBadRequest).
-			Debug("actual", "Error while reading request body").
-			Build()
-		ctx.StopWithJSON(zkHttpResponse.Status, zkHttpResponse)
-		return
-	} else {
-		var validate = validator.New()
-		err := validate.Struct(bodyInterface)
-		var zkErrorParamToMessage zkerrors.ZkErrorParamToMessage = map[string]string{}
-		if err != nil {
-			for _, err := range err.(validator.ValidationErrors) {
-				message := zkerrors.MessageFromValidation(err)
-				// log.Println("err.Field()==", err.Field())
-				// log.Println("err.Param()==", err.Tag())
-				zkErrorParamToMessage[err.Field()] = message
-			}
-		}
-		if len(zkErrorParamToMessage) > 0 {
-			zkHttpResponse := ZkHttpResponseBuilder[any]{}.WithZkErrorType(zkerrors.ZkErrorBadRequest).
-				ErrorInfo("validations", zkErrorParamToMessage).
-				Build()
-			ctx.StopWithJSON(zkHttpResponse.Status, zkHttpResponse)
-			return
-		}
-		ctx.Values().Set(HTTP_UTILS_REQUEST_INTERFACE, bodyInterface)
-	}
 
 	ctx.Next()
 }

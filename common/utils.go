@@ -50,7 +50,6 @@ func ToJsonString(iInstance interface{}) *string {
 	}
 	bytes, error := json.Marshal(iInstance)
 	if error != nil {
-		//TODO:Refactor
 		return nil
 	} else {
 		iString := string(bytes)

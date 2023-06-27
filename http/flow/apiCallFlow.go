@@ -7,7 +7,6 @@ import (
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/zkerrors"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -15,11 +14,14 @@ import (
 	"strings"
 )
 
+// JsonExtractor This interface is used to extract key-values from the response
+// Any custom value extraction logic can be provided here. The returned key-value map can be used by apiCalFlow
+// further to execute the next set of APIs
 type JsonExtractor interface {
 	ExtractIdentifier(string, any) map[string]string
 }
 
-// For now we dont need a validation as such
+// ApiOperationValidator For now we don't need a validation as such
 // We can throw an error if an expected cookie or key doesn't appear after an operation
 // Can be extended further to add proper validations, if required
 type ApiOperationValidator interface {
@@ -57,8 +59,8 @@ func (apiCallFlow ApiCallFlow) Execute(initParams map[string]any) (map[string]ht
 		return nil, nil, &zkError
 	}
 
-	var processedCookies map[string]http.Cookie = make(map[string]http.Cookie)
-	var processedKeys map[string]string = make(map[string]string)
+	var processedCookies = make(map[string]http.Cookie)
+	var processedKeys = make(map[string]string)
 
 	for index, apiCallOperation := range *apiCallOperations {
 		zkLogger.Info(zkHttp.LOG_TAG, "$$$$$$$$$$$ STARTING OPERATION "+fmt.Sprint(index+1)+" $$$$$$$$$$$$")
@@ -97,7 +99,7 @@ func (apiCallOperation ApiCallOperation) Execute(initParams map[string]any,
 	var jsonParamsToBeReturned *map[string]string
 	var headerParamsToBeReturned *map[string]string
 
-	if apiCallOperation.CookiesToBeExtracted != nil {
+	if apiCallOperation.CookiesToBeExtracted != nil && len(*apiCallOperation.CookiesToBeExtracted) > 0 {
 		if len(response.Cookies()) == 0 && hardStopOnMiss {
 			zkError := zkerrors.ZkErrorBuilder{}.Build(zkerrors.ZkErrorInternalServer, "Got empty cookies in response for "+
 				apiCallOperation.ApiCallUnit.Url)
@@ -112,36 +114,25 @@ func (apiCallOperation ApiCallOperation) Execute(initParams map[string]any,
 	}
 
 	if apiCallOperation.ResponseUrlParamsToBeExtracted != nil {
-		urlParamsToBeReturned = &map[string]string{}
-		responseData, err := ioutil.ReadAll(response.Body)
+		responseData, err := io.ReadAll(response.Body)
 		if err != nil {
 			log.Fatal(err)
 		}
 		val, err := url.QueryUnescape(string(responseData))
 		for _, element := range *apiCallOperation.ResponseUrlParamsToBeExtracted {
-			(*urlParamsToBeReturned)[element] = zkApiUtils.ExtractUrlParam(element, val)
-		}
-
-		for k, v := range *urlParamsToBeReturned {
-			processedKeys[k] = v
+			processedKeys[element] = zkApiUtils.ExtractUrlParam(element, val)
 		}
 	}
 
 	if apiCallOperation.HeaderUrlParamsToBeExtracted != nil {
-		headerParamsToBeReturned = &map[string]string{}
 		for headerKey, keyToBeExtracted := range *apiCallOperation.HeaderUrlParamsToBeExtracted {
 			headerValue := response.Header[headerKey]
-			(*headerParamsToBeReturned)[keyToBeExtracted] = zkApiUtils.ExtractUrlParam(keyToBeExtracted, headerValue[0])
-		}
-
-		for k, v := range *headerParamsToBeReturned {
-			processedKeys[k] = v
+			processedKeys[keyToBeExtracted] = zkApiUtils.ExtractUrlParam(keyToBeExtracted, headerValue[0])
 		}
 	}
 
 	if apiCallOperation.ResponseJsonParamsToBeExtracted != nil {
-		jsonParamsToBeReturned = &map[string]string{}
-		responseData, err := ioutil.ReadAll(response.Body)
+		responseData, err := io.ReadAll(response.Body)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -150,12 +141,8 @@ func (apiCallOperation ApiCallOperation) Execute(initParams map[string]any,
 			keyValueMap := jsonExtractor.ExtractIdentifier(element, responseData)
 
 			for k, v := range keyValueMap {
-				(*jsonParamsToBeReturned)[k] = v
+				processedKeys[k] = v
 			}
-		}
-
-		for k, v := range *jsonParamsToBeReturned {
-			processedKeys[k] = v
 		}
 	}
 
@@ -184,6 +171,9 @@ func (apiCallUnit ApiCallUnit) Execute(initParams map[string]any, processedCooki
 	return httpResponse, zkErr
 }
 
+// Initialize The urls, request params and request body - everything can be parameterised
+// In this function, we sanitise everything by replacing the parameters with the appropriate values
+// before starting the execution
 func (apiCallUnit ApiCallUnit) Initialize(initParams map[string]any, processedCookies map[string]http.Cookie,
 	processedKeys map[string]string) (string, string, []http.Cookie) {
 	rawCookies := apiCallUnit.Cookies
@@ -214,9 +204,23 @@ func (apiCallUnit ApiCallUnit) Initialize(initParams map[string]any, processedCo
 
 	//Process Url
 	url := apiCallUnit.Url
+	url = apiCallUnit.SanitiseString(url, initParams, processedKeys)
+
+	//Process Request Body
+	var request string = ""
+	if apiCallUnit.RequestBody != nil {
+		request = *apiCallUnit.RequestBody
+		request = apiCallUnit.SanitiseString(request, initParams, processedKeys)
+	}
+
+	return request, url, cookies
+}
+
+func (apiCallUnit ApiCallUnit) SanitiseString(stringToBeSanitised string, initParams map[string]any, 
+		processedKeys map[string]string) string {
 	//https://stackoverflow.com/a/40586418/4666116
 	rex := regexp.MustCompile(`{{[^}]+}}`)
-	allParams := rex.FindAllStringSubmatch(url, -1)
+	allParams := rex.FindAllStringSubmatch(stringToBeSanitised, -1)
 
 	for _, param := range allParams {
 		paramName := param[0]
@@ -227,28 +231,8 @@ func (apiCallUnit ApiCallUnit) Initialize(initParams map[string]any, processedCo
 		if !paramValuePresent {
 			paramValue, _ = initParams[paramName].(string)
 		}
-		url = strings.Replace(url, "{{"+paramName+"}}", paramValue, -1)
+		stringToBeSanitised = strings.Replace(stringToBeSanitised, "{{"+paramName+"}}", paramValue, -1)
 	}
-
-	//Process Url
-	var request string = ""
-	if apiCallUnit.RequestBody != nil {
-		request = *apiCallUnit.RequestBody
-		//https://stackoverflow.com/a/40586418/4666116
-		allParams = rex.FindAllStringSubmatch(request, -1)
-
-		for _, param := range allParams {
-			paramName := param[0]
-			paramName = strings.Replace(paramName, "{", "", -1)
-			paramName = strings.Replace(paramName, "}", "", -1)
-
-			paramValue, paramValuePresent := processedKeys[paramName]
-			if !paramValuePresent {
-				paramValue, _ = initParams[paramName].(string)
-			}
-			request = strings.Replace(request, "{{"+paramName+"}}", paramValue, -1)
-		}
-	}
-
-	return request, url, cookies
+	return stringToBeSanitised;
 }
+

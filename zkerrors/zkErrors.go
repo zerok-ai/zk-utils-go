@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+// ZkErrorType Defines all the default zk error types available
 type ZkErrorType struct {
 	Message  string `json:"message"`
 	Type     string `json:"type"`

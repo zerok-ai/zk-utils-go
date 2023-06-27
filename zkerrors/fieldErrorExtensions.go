@@ -1,6 +1,5 @@
 package zkerrors
 
-//TODO: Move to zkerrors
 import (
 	"fmt"
 
