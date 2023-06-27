@@ -66,6 +66,11 @@ func (versionStore *VersionedStore[T]) initialize(tickerName string, syncTimeInt
 	return versionStore
 }
 
+func (versionStore *VersionedStore[T]) Close() {
+	versionStore.tickerTask.Stop()
+	versionStore.redisClient.Close()
+}
+
 func (versionStore *VersionedStore[T]) safeAddToLocalVersionMap(key string, value string) {
 	versionStore.mutex.Lock()
 	defer versionStore.mutex.Unlock()
