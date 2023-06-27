@@ -95,9 +95,6 @@ func (apiCallOperation ApiCallOperation) Execute(initParams map[string]any,
 	// 	zkLogger.Debug(zkhttpUtils.LOG_TAG, "err2", err2)
 	// }
 	var cookiesToBeReturned *map[string]http.Cookie
-	var urlParamsToBeReturned *map[string]string
-	var jsonParamsToBeReturned *map[string]string
-	var headerParamsToBeReturned *map[string]string
 
 	if apiCallOperation.CookiesToBeExtracted != nil && len(*apiCallOperation.CookiesToBeExtracted) > 0 {
 		if len(response.Cookies()) == 0 && hardStopOnMiss {
@@ -216,8 +213,8 @@ func (apiCallUnit ApiCallUnit) Initialize(initParams map[string]any, processedCo
 	return request, url, cookies
 }
 
-func (apiCallUnit ApiCallUnit) SanitiseString(stringToBeSanitised string, initParams map[string]any, 
-		processedKeys map[string]string) string {
+func (apiCallUnit ApiCallUnit) SanitiseString(stringToBeSanitised string, initParams map[string]any,
+	processedKeys map[string]string) string {
 	//https://stackoverflow.com/a/40586418/4666116
 	rex := regexp.MustCompile(`{{[^}]+}}`)
 	allParams := rex.FindAllStringSubmatch(stringToBeSanitised, -1)
@@ -233,6 +230,5 @@ func (apiCallUnit ApiCallUnit) SanitiseString(stringToBeSanitised string, initPa
 		}
 		stringToBeSanitised = strings.Replace(stringToBeSanitised, "{{"+paramName+"}}", paramValue, -1)
 	}
-	return stringToBeSanitised;
+	return stringToBeSanitised
 }
-
