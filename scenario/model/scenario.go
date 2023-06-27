@@ -2,12 +2,14 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/zerok-ai/zk-utils-go/crypto"
 	"github.com/zerok-ai/zk-utils-go/interfaces"
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"reflect"
 	"sort"
+	"strconv"
 )
 
 var LogTag = "scenario_model"
@@ -33,6 +35,9 @@ func (s Scenario) Equals(otherInterface interfaces.ZKComparable) bool {
 		return false
 	}
 
+	if (s.Workloads == nil && other.Workloads != nil) || (s.Workloads != nil && other.Workloads == nil) {
+		return false
+	}
 	if len(*s.Workloads) != len(*other.Workloads) {
 		return false
 	}
@@ -54,7 +59,12 @@ func (s Scenario) Equals(otherInterface interfaces.ZKComparable) bool {
 }
 
 func (s Scenario) Less(other Scenario) bool {
-	return s != other
+
+	if strconv.FormatBool(s.Enabled) < strconv.FormatBool(other.Enabled) || s.Id < other.Id || s.Version < other.Version {
+		return true
+	}
+
+	return false
 }
 
 type Workload struct {
@@ -82,7 +92,12 @@ type Rule struct {
 	*RuleLeaf
 }
 
+func (r Rule) String() string {
+	return fmt.Sprintf("Rule{Type: %s, RuleGroup: %v, RuleLeaf: %v}", r.Type, r.RuleGroup, r.RuleLeaf)
+}
+
 func (r Rule) Equals(other Rule) bool {
+
 	if r.Type != other.Type {
 		return false
 	}
@@ -95,11 +110,11 @@ func (r Rule) Equals(other Rule) bool {
 		return false
 	}
 
-	if r.RuleGroup != nil && !(*r.RuleGroup).Equals(*other.RuleGroup) {
+	if r.RuleGroup != nil && other.RuleGroup != nil && !(*r.RuleGroup).Equals(*other.RuleGroup) {
 		return false
 	}
 
-	if r.RuleLeaf != nil && !(*r.RuleLeaf).Equals(*other.RuleLeaf) {
+	if r.RuleLeaf != nil && other.RuleLeaf != nil && !(*r.RuleLeaf).Equals(*other.RuleLeaf) {
 		return false
 	}
 
@@ -112,6 +127,12 @@ type RuleGroup struct {
 }
 
 func (r RuleGroup) Equals(other RuleGroup) bool {
+
+	if r.Condition == nil && other.Condition != nil {
+		return false
+	} else if r.Condition != nil && other.Condition == nil {
+		return false
+	}
 
 	if *r.Condition != *other.Condition {
 		return false
@@ -127,6 +148,13 @@ func (r RuleGroup) Equals(other RuleGroup) bool {
 }
 
 func (r RuleGroup) LessThan(other RuleGroup) bool {
+
+	if r.Condition == nil && other.Condition != nil {
+		return true
+	} else if r.Condition != nil && other.Condition == nil {
+		return false
+	}
+
 	if *r.Condition < *other.Condition {
 		return true
 	}
@@ -139,13 +167,23 @@ func (r RuleGroup) LessThan(other RuleGroup) bool {
 		if r.Rules[i].Type < other.Rules[i].Type {
 			return true
 		} else if r.Rules[i].Type == other.Rules[i].Type {
-			if r.Rules[i].RuleLeaf != nil && (*r.Rules[i].RuleLeaf).LessThan(*other.Rules[i].RuleLeaf) {
+
+			if r.Rules[i].RuleGroup != nil && other.Rules[i].RuleGroup == nil {
+				return false
+			} else if r.Rules[i].RuleGroup == nil && other.Rules[i].RuleGroup != nil {
+				return true
+			} else if r.Rules[i].RuleGroup != nil && other.Rules[i].RuleGroup != nil && (*r.Rules[i].RuleGroup).LessThan(*other.Rules[i].RuleGroup) {
 				return true
 			}
 
-			if r.Rules[i].RuleGroup != nil && (*r.Rules[i].RuleGroup).LessThan(*other.Rules[i].RuleGroup) {
+			if r.Rules[i].RuleLeaf != nil && other.Rules[i].RuleLeaf == nil {
+				return true
+			} else if r.Rules[i].RuleLeaf == nil && other.Rules[i].RuleLeaf != nil {
+				return false
+			} else if r.Rules[i].RuleLeaf != nil && other.Rules[i].RuleLeaf != nil && (*r.Rules[i].RuleLeaf).LessThan(*other.Rules[i].RuleLeaf) {
 				return true
 			}
+
 		}
 	}
 
@@ -158,8 +196,11 @@ type RuleLeaf struct {
 	Datatype *DataType      `json:"datatype,omitempty"`
 	Input    *InputTypes    `json:"input,omitempty"`
 	Operator *OperatorTypes `json:"operator,omitempty"`
-	Key      *string        `json:"key,omitempty"`
 	Value    *ValueTypes    `json:"value,omitempty"`
+}
+
+func (r RuleLeaf) String() string {
+	return fmt.Sprintf("RuleLeaf{ID: %v, Field: %v, Datatype: %v, Input: %v, Operator: %v, Value: %v}", *r.ID, *r.Field, *r.Datatype, *r.Input, *r.Operator, *r.Value)
 }
 
 func (r RuleLeaf) Equals(other RuleLeaf) bool {
@@ -168,35 +209,76 @@ func (r RuleLeaf) Equals(other RuleLeaf) bool {
 
 func (r RuleLeaf) LessThan(other RuleLeaf) bool {
 
-	if *r.ID != *other.ID {
-		return *r.ID < *other.ID
+	comparison := stringCompare(r.ID, other.ID)
+	if comparison != 0 {
+		return comparison < 0
 	}
 
-	if *r.Field != *other.Field {
-		return *r.Field < *other.Field
+	comparison = stringCompare(r.Field, other.Field)
+	if comparison != 0 {
+		return comparison < 0
 	}
 
-	if *r.Datatype != *other.Datatype {
-		return *r.Datatype < *other.Datatype
+	if r.Datatype == nil && other.Datatype != nil {
+		return true
+	} else if r.Datatype != nil && other.Datatype == nil {
+		return false
+	} else if r.Datatype != nil && other.Datatype != nil && *r.Datatype != *other.Datatype {
+		if *r.Datatype < *other.Datatype {
+			return true
+		}
+		return false
 	}
 
-	if *r.Input != *other.Input {
-		return *r.Input < *other.Input
+	if r.Input == nil && other.Input != nil {
+		return true
+	} else if r.Input != nil && other.Input == nil {
+		return false
+	} else if r.Input != nil && other.Input != nil && *r.Input != *other.Input {
+		if *r.Input < *other.Input {
+			return true
+		}
+		return false
 	}
 
-	if *r.Operator != *other.Operator {
-		return *r.Operator < *other.Operator
+	if r.Operator == nil && other.Operator != nil {
+		return true
+	} else if r.Operator != nil && other.Operator == nil {
+		return false
+	} else if r.Operator != nil && other.Operator != nil && *r.Operator != *other.Operator {
+		if *r.Operator < *other.Operator {
+			return true
+		}
+		return false
 	}
 
-	if *r.Key != *other.Key {
-		return *r.Key < *other.Key
+	if r.Value == nil && other.Value != nil {
+		return true
+	} else if r.Value != nil && other.Value == nil {
+		return false
+	} else if r.Value != nil && other.Value != nil && *r.Value != *other.Value {
+		if *r.Value < *other.Value {
+			return true
+		}
+		return false
 	}
-
-	if *r.Value != *other.Value {
-		return *r.Value < *other.Value
-	}
-
+	fmt.Println("before returning false")
 	return false
+}
+
+func stringCompare(a *string, b *string) int {
+	if a == nil && b != nil {
+		return -1
+	} else if a != nil && b == nil {
+		return 1
+	} else if (a == nil && b == nil) || *a == *b {
+		return 0
+	}
+
+	if *a < *b {
+		return -1
+	}
+	return 1
 }
 
 type DataType string
@@ -218,11 +300,23 @@ func (r Rules) Less(i, j int) bool {
 	}
 
 	if rule.Type == other.Type {
-		if rule.RuleLeaf != nil {
-			return (*rule.RuleLeaf).LessThan(*other.RuleLeaf)
-		} else if rule.RuleGroup != nil {
+
+		if rule.RuleGroup == nil && other.RuleGroup != nil {
+			return true
+		} else if rule.RuleGroup != nil && other.RuleGroup == nil {
+			return false
+		} else if rule.RuleGroup != nil && other.RuleGroup != nil {
 			return (*rule.RuleGroup).LessThan(*other.RuleGroup)
 		}
+
+		if rule.RuleLeaf == nil && other.RuleLeaf != nil {
+			return true
+		} else if rule.RuleLeaf != nil && other.RuleLeaf == nil {
+			return false
+		} else if rule.RuleLeaf != nil && other.RuleLeaf != nil {
+			return (*rule.RuleLeaf).LessThan(*other.RuleLeaf)
+		}
+
 	}
 
 	return false

@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"fmt"
 	"github.com/zerok-ai/zk-utils-go/logs/config"
 	"log"
 )
@@ -61,7 +62,7 @@ var (
 	colorInfo  string = colorBlue
 	colorError string = colorRed
 	colorWarn  string = colorYellow
-	colorDebug string = colorReset
+	colorDebug string = colorGreen
 	colorFatal string = colorPurple
 )
 
@@ -69,20 +70,40 @@ func Debug(tag string, messages ...any) {
 	Log(_DEBUG_LEVEL, tag, messages...)
 }
 
+func DebugF(tag string, format string, messages ...any) {
+	LogF(_DEBUG_LEVEL, tag, format, messages...)
+}
+
 func Info(tag string, messages ...any) {
 	Log(_INFO_LEVEL, tag, messages...)
+}
+
+func InfoF(tag string, format string, messages ...any) {
+	LogF(_INFO_LEVEL, tag, format, messages...)
 }
 
 func Warn(tag string, messages ...any) {
 	Log(_WARN_LEVEL, tag, messages...)
 }
 
+func WarnF(tag string, format string, messages ...any) {
+	LogF(_WARN_LEVEL, tag, format, messages...)
+}
+
 func Error(tag string, messages ...any) {
 	Log(_ERROR_LEVEL, tag, messages...)
 }
 
+func ErrorF(tag string, format string, messages ...any) {
+	LogF(_ERROR_LEVEL, tag, format, messages...)
+}
+
 func Fatal(tag string, messages ...any) {
 	Log(_FATAL_LEVEL, tag, messages...)
+}
+
+func FatalF(tag string, format string, messages ...any) {
+	LogF(_FATAL_LEVEL, tag, format, messages...)
 }
 
 func Log(level logLevel, tag string, messages ...any) {
@@ -98,6 +119,24 @@ func Log(level logLevel, tag string, messages ...any) {
 		newMessages = append(newMessages, colorReset)
 		log.Println(newMessages...)
 
+		// messages = append([]interface{}{ "["+level.Label+"]", tag, "|" }, messages...)
+		// log.Println(messages...)
+	}
+}
+
+func LogF(level logLevel, tag string, format string, messages ...any) {
+	var newMessages []interface{}
+	if minLogLevel.Value <= level.Value {
+		if addColors {
+			newMessages = append([]interface{}{level.Color, "[" + level.Label + "]"})
+		} else {
+			newMessages = append([]interface{}{"[" + level.Label + "]"})
+		}
+		newMessages = append(newMessages, tag, "|")
+		formattedLogMessage := fmt.Sprintf(format, messages...)
+		newMessages = append(newMessages, formattedLogMessage)
+		newMessages = append(newMessages, colorReset)
+		log.Println(newMessages...)
 		// messages = append([]interface{}{ "["+level.Label+"]", tag, "|" }, messages...)
 		// log.Println(messages...)
 	}

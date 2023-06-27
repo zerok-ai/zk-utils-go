@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/zerok-ai/zk-utils-go/zkerrors"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -82,19 +81,19 @@ func (zkApiUtils zkApiUtils) Go(method string, urlToBeCalled string,
 
 func (zkApiUtils zkApiUtils) Post(urlToBeCalled string,
 	requestBody io.Reader) (*http.Response, *zkerrors.ZkError) {
-	return zkApiUtils.makeRawApiCallV3("POST", urlToBeCalled, requestBody)
+	return zkApiUtils.Go("POST", urlToBeCalled, requestBody)
 }
 
 func (zkApiUtils zkApiUtils) Get(urlToBeCalled string) (*http.Response, *zkerrors.ZkError) {
-	return zkApiUtils.makeRawApiCallV3("GET", urlToBeCalled, nil)
+	return zkApiUtils.Go("GET", urlToBeCalled, nil)
 }
 
 func (zkApiUtils zkApiUtils) Delete(urlToBeCalled string, requestBody io.Reader) (*http.Response, *zkerrors.ZkError) {
-	return zkApiUtils.makeRawApiCallV3("DELETE", urlToBeCalled, requestBody)
+	return zkApiUtils.Go("DELETE", urlToBeCalled, requestBody)
 }
 
 func (zkApiUtils zkApiUtils) Put(urlToBeCalled string, requestBody io.Reader) (*http.Response, *zkerrors.ZkError) {
-	return zkApiUtils.makeRawApiCallV3("PUT", urlToBeCalled, requestBody)
+	return zkApiUtils.Go("PUT", urlToBeCalled, requestBody)
 }
 
 func (zkApiUtils zkApiUtils) makeRawApiCallV3(method string, urlToBeCalled string,
@@ -171,7 +170,7 @@ func (zkApiUtils zkApiUtils) MakeApiCall(client http.Client, urlToBeCalled strin
 	var urlParamsToBeReturned map[string]string = map[string]string{}
 
 	if urlParamsToBeExtracted != nil {
-		responseData, err := ioutil.ReadAll(response.Body)
+		responseData, err := io.ReadAll(response.Body)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -199,7 +198,14 @@ func (zkApiUtils zkApiUtils) ExtractCookies(cookiesToBeExtracted []string, cooki
 func (zkApiUtils zkApiUtils) ExtractCookie(name string, cookies []*http.Cookie) http.Cookie {
 	var foundCookie http.Cookie
 	for _, element := range cookies {
+		if element == nil {
+			continue
+		}
 		cookieName := element.Name
+		// We are checking only against '*' as this is format that we defined
+		// For example: The config yaml file can contain the following to use a regex:
+		// 		  - cookiesExtract:
+		//      		- csrf_token.*
 		if strings.Contains(name, "*") {
 			match, _ := regexp.MatchString(name, cookieName)
 			if match {

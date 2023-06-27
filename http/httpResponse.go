@@ -5,7 +5,6 @@ import (
 	"github.com/zerok-ai/zk-utils-go/zkerrors"
 )
 
-// TODO: Move to zkhttp
 type ZkHttpError struct {
 	Kind    string          `json:"kind,omitempty"`
 	Message string          `json:"message,omitempty"`

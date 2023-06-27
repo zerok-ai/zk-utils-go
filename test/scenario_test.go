@@ -39,6 +39,7 @@ func TestScenarioMarshalUnMarshalSuccess(t *testing.T) {
 
 func TestSort(t *testing.T) {
 	workloadJS := string(common.GetBytesFromFile("files/unsortedWorkloadJs.json"))
+	print("workloadJS: ", workloadJS, "\n")
 
 	var w model.Workload
 	err := json.Unmarshal([]byte(workloadJS), &w)
@@ -73,6 +74,6 @@ func TestScenarioEqualitySuccess(t *testing.T) {
 	assert.NoError(t, err)
 
 	log.Default().Println("Checking equality using equals = ", scenario1.Equals(scenario2))
-	log.Default().Println("Calling assert ")
+
 	assert.Equal(t, scenario1, scenario2)
 }

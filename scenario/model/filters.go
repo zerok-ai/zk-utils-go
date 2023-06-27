@@ -56,8 +56,24 @@ func (f Filter) LessThan(other Filter) bool {
 
 	if f.Type == other.Type {
 		if f.Type == WORKLOAD {
+			// do null checks
+			if f.WorkloadIds == nil && other.WorkloadIds != nil {
+				return true
+			} else if f.WorkloadIds != nil && other.WorkloadIds == nil {
+				return false
+			} else if f.WorkloadIds == nil && other.WorkloadIds == nil {
+				return false
+			}
 			return (*f.WorkloadIds).LessThan(*other.WorkloadIds)
 		} else if f.Type == FILTER {
+			// do null checks
+			if f.Filters == nil && other.Filters != nil {
+				return true
+			} else if f.Filters != nil && other.Filters == nil {
+				return false
+			} else if f.Filters == nil && other.Filters == nil {
+				return false
+			}
 			return (*f.Filters).LessThan(*other.Filters)
 		}
 	}
@@ -95,6 +111,9 @@ func (f Filters) Equals(other Filters) bool {
 }
 
 func (f Filters) LessThan(other Filters) bool {
+
+	f.sort()
+	other.sort()
 
 	if len(f) != len(other) {
 		return len(f) < len(other)
@@ -137,6 +156,10 @@ func (s WorkloadIds) Equals(other WorkloadIds) bool {
 	return true
 }
 func (s WorkloadIds) LessThan(other WorkloadIds) bool {
+
+	// sort and check equality
+	sort.Strings(s)
+	sort.Strings(other)
 
 	for i := 0; i < len(s) && i < len(other); i++ {
 		if s[i] < other[i] {
