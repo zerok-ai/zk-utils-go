@@ -7,32 +7,36 @@ import (
 
 // TickerTask create a struct to hold the ticker and the task
 type TickerTask struct {
-	ticker  *time.Ticker
-	name    string
-	task    func()
-	counter int
+	ticker   *time.Ticker
+	name     string
+	task     func()
+	counter  int
+	interval time.Duration
 }
 
 func GetNewTickerTask(name string, interval time.Duration, task func()) *TickerTask {
 	return &TickerTask{
-		ticker: time.NewTicker(interval),
-		task:   task,
-		name:   name,
+		ticker:   time.NewTicker(interval),
+		task:     task,
+		name:     name,
+		interval: interval,
 	}
 }
 
 func (tt TickerTask) Start() *TickerTask {
 	go func() {
 		runTaskAndFlushPendingTasks(tt)
-		for {
-			select {
-			case <-tt.ticker.C:
-				// Perform the task
-				fmt.Printf("tick (%s) - %d\n", tt.name, tt.counter)
-				tt.counter = tt.counter + 1
-				runTaskAndFlushPendingTasks(tt)
+		time.AfterFunc(tt.interval, func() {
+			for {
+				select {
+				case <-tt.ticker.C:
+					// Perform the task
+					fmt.Printf("tick (%s) - %d\n", tt.name, tt.counter)
+					tt.counter = tt.counter + 1
+					runTaskAndFlushPendingTasks(tt)
+				}
 			}
-		}
+		})
 	}()
 	return &tt
 }
