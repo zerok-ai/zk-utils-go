@@ -23,24 +23,27 @@ func GetNewTickerTask(name string, interval time.Duration, task func()) *TickerT
 
 func (tt TickerTask) Start() *TickerTask {
 	go func() {
+		runTaskAndFlushPendingTasks(tt)
 		for {
 			select {
 			case <-tt.ticker.C:
 				// Perform the task
 				fmt.Printf("tick (%s) - %d\n", tt.name, tt.counter)
 				tt.counter = tt.counter + 1
-				tt.task()
-
-				//If there are multiple ticks available, flush all for now
-				for len(tt.ticker.C) > 0 {
-					<-tt.ticker.C
-					fmt.Println("Skipping tick due to slow processing")
-				}
+				runTaskAndFlushPendingTasks(tt)
 			}
 		}
 	}()
-	tt.task()
 	return &tt
+}
+
+func runTaskAndFlushPendingTasks(tt TickerTask) {
+	tt.task()
+	//If there are multiple ticks available, flush all for now
+	for len(tt.ticker.C) > 0 {
+		<-tt.ticker.C
+		fmt.Println("Skipping tick due to slow processing")
+	}
 }
 
 func (tt TickerTask) Stop() *TickerTask {

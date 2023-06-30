@@ -68,7 +68,10 @@ func (versionStore *VersionedStore[T]) initialize(tickerName string, syncTimeInt
 
 func (versionStore *VersionedStore[T]) Close() {
 	versionStore.tickerTask.Stop()
-	versionStore.redisClient.Close()
+	err := versionStore.redisClient.Close()
+	if err != nil {
+		return
+	}
 }
 
 func (versionStore *VersionedStore[T]) safeAddToLocalVersionMap(key string, value string) {
