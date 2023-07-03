@@ -248,6 +248,12 @@ func (versionStore *VersionedStore[T]) Delete(key string) error {
 	if _, err := tx.Exec(ctx); err != nil {
 		return err
 	}
+
+	versionStore.mutex.Lock()
+	defer versionStore.mutex.Unlock()
+	delete(versionStore.localVersions, key)
+	delete(versionStore.localKeyValueCache, key)
+
 	return nil
 }
 
