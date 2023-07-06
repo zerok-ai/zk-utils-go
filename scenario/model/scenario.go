@@ -15,14 +15,14 @@ import (
 var LogTag = "scenario_model"
 
 type Scenario struct {
-	Version       string               `json:"version"`
-	Id            string               `json:"scenario_id"`
-	Title         string               `json:"scenario_title"`
-	Type          string               `json:"scenario_type"`
-	Enabled       bool                 `json:"enabled"`
-	Workloads     *map[string]Workload `json:"workloads"`
-	Filter        Filter               `json:"filter"`
-	IssueGrouping []IssueGroup         `json:"issue_grouping"`
+	Version   string               `json:"version"`
+	Id        string               `json:"scenario_id"`
+	Title     string               `json:"scenario_title"`
+	Type      string               `json:"scenario_type"`
+	Enabled   bool                 `json:"enabled"`
+	Workloads *map[string]Workload `json:"workloads"`
+	Filter    Filter               `json:"filter"`
+	GroupBy   []GroupBy            `json:"group_by"`
 }
 
 func (s Scenario) Equals(otherInterface interfaces.ZKComparable) bool {
@@ -36,12 +36,19 @@ func (s Scenario) Equals(otherInterface interfaces.ZKComparable) bool {
 		return false
 	}
 
-	if (s.IssueGrouping == nil && other.IssueGrouping != nil) || (s.IssueGrouping != nil && other.IssueGrouping == nil) {
+	if (s.GroupBy == nil && other.GroupBy != nil) || (s.GroupBy != nil && other.GroupBy == nil) {
 		return false
 	}
 
-	if s.IssueGrouping != nil && other.IssueGrouping != nil && (len(s.IssueGrouping) != len(other.IssueGrouping)) {
+	if s.GroupBy != nil && other.GroupBy != nil && (len(s.GroupBy) != len(other.GroupBy)) {
 		return false
+	}
+
+	for i, groupBy := range s.GroupBy {
+		otherGroupBy := other.GroupBy[i]
+		if !groupBy.Equals(otherGroupBy) {
+			return false
+		}
 	}
 
 	if (s.Workloads == nil && other.Workloads != nil) || (s.Workloads != nil && other.Workloads == nil) {
@@ -64,17 +71,10 @@ func (s Scenario) Equals(otherInterface interfaces.ZKComparable) bool {
 		return false
 	}
 
-	for i, issueGroup := range s.IssueGrouping {
-		otherIssueGroup := other.IssueGrouping[i]
-		if !issueGroup.Equals(otherIssueGroup) {
-			return false
-		}
-	}
-
 	return true
 }
 
-func (ig IssueGroup) Equals(other IssueGroup) bool {
+func (ig GroupBy) Equals(other GroupBy) bool {
 	if ig.WorkloadId == other.WorkloadId && ig.Title == other.Title && ig.Hash == other.Hash {
 		return true
 	}
@@ -404,7 +404,7 @@ func WorkLoadUUID(w Workload) uuid.UUID {
 	return id
 }
 
-type IssueGroup struct {
+type GroupBy struct {
 	WorkloadId string `json:"workload_id"`
 	Title      string `json:"title"`
 	Hash       string `json:"hash"`
