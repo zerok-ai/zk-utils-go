@@ -15,13 +15,14 @@ import (
 var LogTag = "scenario_model"
 
 type Scenario struct {
-	Version   string               `json:"version"`
-	Id        string               `json:"scenario_id"`
-	Title     string               `json:"scenario_title"`
-	Type      string               `json:"scenario_type"`
-	Enabled   bool                 `json:"enabled"`
-	Workloads *map[string]Workload `json:"workloads"`
-	Filter    Filter               `json:"filter"`
+	Version       string               `json:"version"`
+	Id            string               `json:"scenario_id"`
+	Title         string               `json:"scenario_title"`
+	Type          string               `json:"scenario_type"`
+	Enabled       bool                 `json:"enabled"`
+	Workloads     *map[string]Workload `json:"workloads"`
+	Filter        Filter               `json:"filter"`
+	IssueGrouping []IssueGroup         `json:"issue_grouping"`
 }
 
 func (s Scenario) Equals(otherInterface interfaces.ZKComparable) bool {
@@ -32,6 +33,14 @@ func (s Scenario) Equals(otherInterface interfaces.ZKComparable) bool {
 	}
 
 	if s.Version != other.Version || s.Title != other.Title || s.Id != other.Id || s.Type != other.Type || s.Enabled != other.Enabled {
+		return false
+	}
+
+	if (s.IssueGrouping == nil && other.IssueGrouping != nil) || (s.IssueGrouping != nil && other.IssueGrouping == nil) {
+		return false
+	}
+
+	if s.IssueGrouping != nil && other.IssueGrouping != nil && (len(s.IssueGrouping) != len(other.IssueGrouping)) {
 		return false
 	}
 
@@ -55,7 +64,22 @@ func (s Scenario) Equals(otherInterface interfaces.ZKComparable) bool {
 		return false
 	}
 
+	for i, issueGroup := range s.IssueGrouping {
+		otherIssueGroup := other.IssueGrouping[i]
+		if !issueGroup.Equals(otherIssueGroup) {
+			return false
+		}
+	}
+
 	return true
+}
+
+func (ig IssueGroup) Equals(other IssueGroup) bool {
+	if ig.WorkloadId == other.WorkloadId && ig.Title == other.Title && ig.Hash == other.Hash {
+		return true
+	}
+
+	return false
 }
 
 func (s Scenario) Less(other Scenario) bool {
@@ -378,4 +402,10 @@ func WorkLoadUUID(w Workload) uuid.UUID {
 	jStr, _ := json.Marshal(w)
 	id := crypto.CalculateHashNewSHA2(string(jStr))
 	return id
+}
+
+type IssueGroup struct {
+	WorkloadId string `json:"workload_id"`
+	Title      string `json:"title"`
+	Hash       string `json:"hash"`
 }
