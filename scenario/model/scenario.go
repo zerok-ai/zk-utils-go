@@ -22,6 +22,7 @@ type Scenario struct {
 	Enabled   bool                 `json:"enabled"`
 	Workloads *map[string]Workload `json:"workloads"`
 	Filter    Filter               `json:"filter"`
+	GroupBy   []GroupBy            `json:"group_by"`
 }
 
 func (s Scenario) Equals(otherInterface interfaces.ZKComparable) bool {
@@ -33,6 +34,21 @@ func (s Scenario) Equals(otherInterface interfaces.ZKComparable) bool {
 
 	if s.Version != other.Version || s.Title != other.Title || s.Id != other.Id || s.Type != other.Type || s.Enabled != other.Enabled {
 		return false
+	}
+
+	if (s.GroupBy == nil && other.GroupBy != nil) || (s.GroupBy != nil && other.GroupBy == nil) {
+		return false
+	}
+
+	if s.GroupBy != nil && other.GroupBy != nil && (len(s.GroupBy) != len(other.GroupBy)) {
+		return false
+	}
+
+	for i, groupBy := range s.GroupBy {
+		otherGroupBy := other.GroupBy[i]
+		if !groupBy.Equals(otherGroupBy) {
+			return false
+		}
 	}
 
 	if (s.Workloads == nil && other.Workloads != nil) || (s.Workloads != nil && other.Workloads == nil) {
@@ -56,6 +72,14 @@ func (s Scenario) Equals(otherInterface interfaces.ZKComparable) bool {
 	}
 
 	return true
+}
+
+func (ig GroupBy) Equals(other GroupBy) bool {
+	if ig.WorkloadId == other.WorkloadId && ig.Title == other.Title && ig.Hash == other.Hash {
+		return true
+	}
+
+	return false
 }
 
 func (s Scenario) Less(other Scenario) bool {
@@ -378,4 +402,10 @@ func WorkLoadUUID(w Workload) uuid.UUID {
 	jStr, _ := json.Marshal(w)
 	id := crypto.CalculateHashNewSHA2(string(jStr))
 	return id
+}
+
+type GroupBy struct {
+	WorkloadId string `json:"workload_id"`
+	Title      string `json:"title"`
+	Hash       string `json:"hash"`
 }
