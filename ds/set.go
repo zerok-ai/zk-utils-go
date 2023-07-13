@@ -1,30 +1,30 @@
 package ds
 
-type Set map[string]bool
+type Set[T comparable] map[T]bool
 
-func (s Set) Add(key string) Set {
+func (s Set[T]) Add(key T) Set[T] {
 	s[key] = true
 	return s
 }
 
-func (s Set) AddBulk(keys []string) Set {
+func (s Set[T]) AddBulk(keys []T) Set[T] {
 	for _, key := range keys {
 		s[key] = true
 	}
 	return s
 }
 
-func (s Set) Remove(key string) Set {
+func (s Set[T]) Remove(key T) Set[T] {
 	delete(s, key)
 	return s
 }
 
-func (s Set) Contains(key string) bool {
+func (s Set[T]) Contains(key T) bool {
 	_, ok := s[key]
 	return ok
 }
 
-func (s Set) Equals(other Set) bool {
+func (s Set[T]) Equals(other Set[T]) bool {
 	if len(s) != len(other) {
 		return false
 	}
@@ -36,8 +36,8 @@ func (s Set) Equals(other Set) bool {
 	return true
 }
 
-func (s Set) Union(other Set) Set {
-	union := make(Set)
+func (s Set[T]) Union(other Set[T]) Set[T] {
+	union := make(Set[T])
 	for key, _ := range s {
 		union.Add(key)
 	}
@@ -47,8 +47,8 @@ func (s Set) Union(other Set) Set {
 	return union
 }
 
-func (s Set) Intersection(other Set) Set {
-	intersection := make(Set)
+func (s Set[T]) Intersection(other Set[T]) Set[T] {
+	intersection := make(Set[T])
 	for key, _ := range s {
 		if other.Contains(key) {
 			intersection.Add(key)
@@ -57,8 +57,8 @@ func (s Set) Intersection(other Set) Set {
 	return intersection
 }
 
-func (s Set) GetAll() []string {
-	keys := make([]string, 0)
+func (s Set[T]) GetAll() []T {
+	keys := make([]T, 0)
 	for key, _ := range s {
 		keys = append(keys, key)
 	}
