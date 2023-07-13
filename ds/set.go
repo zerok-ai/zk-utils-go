@@ -2,12 +2,21 @@ package ds
 
 type Set map[string]bool
 
-func (s Set) Add(key string) {
+func (s Set) Add(key string) Set {
 	s[key] = true
+	return s
 }
 
-func (s Set) Remove(key string) {
+func (s Set) AddBulk(keys []string) Set {
+	for _, key := range keys {
+		s[key] = true
+	}
+	return s
+}
+
+func (s Set) Remove(key string) Set {
 	delete(s, key)
+	return s
 }
 
 func (s Set) Contains(key string) bool {
