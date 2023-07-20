@@ -23,6 +23,7 @@ type Scenario struct {
 	Workloads *map[string]Workload `json:"workloads"`
 	Filter    Filter               `json:"filter"`
 	GroupBy   []GroupBy            `json:"group_by"`
+	RateLimit []RateLimit          `json:"rate_limit"`
 }
 
 func (s Scenario) Equals(otherInterface interfaces.ZKComparable) bool {
@@ -44,9 +45,32 @@ func (s Scenario) Equals(otherInterface interfaces.ZKComparable) bool {
 		return false
 	}
 
+	sort.Slice(s.GroupBy, func(i, j int) bool {
+		return s.GroupBy[i].LessThan(s.GroupBy[j])
+	})
+
 	for i, groupBy := range s.GroupBy {
 		otherGroupBy := other.GroupBy[i]
 		if !groupBy.Equals(otherGroupBy) {
+			return false
+		}
+	}
+
+	if (s.RateLimit == nil && other.RateLimit != nil) || (s.RateLimit != nil && other.RateLimit == nil) {
+		return false
+	}
+
+	if s.RateLimit != nil && other.RateLimit != nil && (len(s.RateLimit) != len(other.RateLimit)) {
+		return false
+	}
+
+	sort.Slice(s.RateLimit, func(i, j int) bool {
+		return s.RateLimit[i].LessThan(s.RateLimit[j])
+	})
+
+	for i, rateLimit := range s.RateLimit {
+		otherRateLimit := other.RateLimit[i]
+		if !rateLimit.Equals(otherRateLimit) {
 			return false
 		}
 	}
@@ -74,8 +98,16 @@ func (s Scenario) Equals(otherInterface interfaces.ZKComparable) bool {
 	return true
 }
 
-func (ig GroupBy) Equals(other GroupBy) bool {
-	if ig.WorkloadId == other.WorkloadId && ig.Title == other.Title && ig.Hash == other.Hash {
+func (g GroupBy) Equals(other GroupBy) bool {
+	if g.WorkloadId == other.WorkloadId && g.Title == other.Title && g.Hash == other.Hash {
+		return true
+	}
+
+	return false
+}
+
+func (r RateLimit) Equals(o RateLimit) bool {
+	if r.BucketMaxSize == o.BucketMaxSize && r.BucketRefillSize == o.BucketRefillSize && r.TickDuration == o.TickDuration {
 		return true
 	}
 
@@ -408,4 +440,44 @@ type GroupBy struct {
 	WorkloadId string `json:"workload_id"`
 	Title      string `json:"title"`
 	Hash       string `json:"hash"`
+}
+
+func (g GroupBy) LessThan(other GroupBy) bool {
+	if g.WorkloadId < other.WorkloadId {
+		return true
+	}
+	if g.WorkloadId == other.WorkloadId {
+		if g.Title < other.Title {
+			return true
+		}
+		if g.Title == other.Title {
+			if g.Hash < other.Hash {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+type RateLimit struct {
+	BucketMaxSize    int    `json:"bucket_max_size"`
+	BucketRefillSize int    `json:"bucket_refill_size"`
+	TickDuration     string `json:"tick_duration"`
+}
+
+func (r RateLimit) LessThan(other RateLimit) bool {
+	if r.BucketMaxSize < other.BucketMaxSize {
+		return true
+	}
+	if r.BucketMaxSize == other.BucketMaxSize {
+		if r.BucketRefillSize < other.BucketRefillSize {
+			return true
+		}
+		if r.BucketRefillSize == other.BucketRefillSize {
+			if r.TickDuration < other.TickDuration {
+				return true
+			}
+		}
+	}
+	return false
 }
