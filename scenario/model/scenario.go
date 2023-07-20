@@ -23,6 +23,13 @@ type Scenario struct {
 	Workloads *map[string]Workload `json:"workloads"`
 	Filter    Filter               `json:"filter"`
 	GroupBy   []GroupBy            `json:"group_by"`
+	RateLimit []RateLimit          `json:"rate_limit"`
+}
+
+type RateLimit struct {
+	BucketMaxSize    int    `json:"bucket_max_size"`
+	BucketRefillSize int    `json:"bucket_refill_size"`
+	TickDuration     string `json:"tick_duration"`
 }
 
 func (s Scenario) Equals(otherInterface interfaces.ZKComparable) bool {
@@ -47,6 +54,21 @@ func (s Scenario) Equals(otherInterface interfaces.ZKComparable) bool {
 	for i, groupBy := range s.GroupBy {
 		otherGroupBy := other.GroupBy[i]
 		if !groupBy.Equals(otherGroupBy) {
+			return false
+		}
+	}
+
+	if (s.RateLimit == nil && other.RateLimit != nil) || (s.RateLimit != nil && other.RateLimit == nil) {
+		return false
+	}
+
+	if s.RateLimit != nil && other.RateLimit != nil && (len(s.RateLimit) != len(other.RateLimit)) {
+		return false
+	}
+
+	for i, rateLimit := range s.RateLimit {
+		otherRateLimit := other.RateLimit[i]
+		if !rateLimit.Equals(otherRateLimit) {
 			return false
 		}
 	}
@@ -76,6 +98,14 @@ func (s Scenario) Equals(otherInterface interfaces.ZKComparable) bool {
 
 func (ig GroupBy) Equals(other GroupBy) bool {
 	if ig.WorkloadId == other.WorkloadId && ig.Title == other.Title && ig.Hash == other.Hash {
+		return true
+	}
+
+	return false
+}
+
+func (r RateLimit) Equals(o RateLimit) bool {
+	if r.BucketMaxSize == o.BucketMaxSize && r.BucketRefillSize == o.BucketRefillSize && r.TickDuration == o.TickDuration {
 		return true
 	}
 
