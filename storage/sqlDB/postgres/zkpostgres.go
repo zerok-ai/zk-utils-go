@@ -19,6 +19,10 @@ type zkPostgresRepo struct {
 	Db *sql.DB
 }
 
+func (databaseRepo zkPostgresRepo) GetDb() *sql.DB {
+	return databaseRepo.Db
+}
+
 var LogTag = "zkpostgres_db_repo"
 var config pgConfig.PostgresConfig
 var dbInstance *sql.DB

@@ -6,6 +6,7 @@ import (
 )
 
 type DatabaseRepo interface {
+	GetDb() *sql.DB
 	Get(query string, param []any, args []any) error
 	GetAll(query string, param []any) (*sql.Rows, error, func())
 	Insert(stmt *sql.Stmt, data interfaces.DbArgs) (sql.Result, error)
