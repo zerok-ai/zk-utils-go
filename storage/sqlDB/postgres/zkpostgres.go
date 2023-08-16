@@ -19,8 +19,14 @@ type zkPostgresRepo struct {
 	Db *sql.DB
 }
 
-func (databaseRepo zkPostgresRepo) GetDb() *sql.DB {
-	return databaseRepo.Db
+func (databaseRepo zkPostgresRepo) InsertWithReturnRow(stmt *sql.Stmt, param []any) (*sql.Row, error) {
+	if stmt == nil {
+		err := errors.New("statement cannot be empty")
+		zkLogger.Error(LogTag, err)
+		return nil, err
+	}
+	defer stmt.Close()
+	return stmt.QueryRow(param...), nil
 }
 
 var LogTag = "zkpostgres_db_repo"
