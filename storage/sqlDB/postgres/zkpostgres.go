@@ -27,7 +27,7 @@ func (databaseRepo zkPostgresRepo) InsertWithReturnRow(stmt *sql.Stmt, param []a
 	}
 	defer stmt.Close()
 	row := stmt.QueryRow(param...)
-	return row.Scan(args)
+	return row.Scan(args...)
 }
 
 var LogTag = "zkpostgres_db_repo"
