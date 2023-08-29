@@ -113,7 +113,6 @@ func (databaseRepo zkPostgresRepo) Get(query string, param []any, args []any) er
 	}
 
 	db := databaseRepo.Db
-	defer db.Close()
 	row := db.QueryRow(query, param...)
 	return row.Scan(args...)
 }
