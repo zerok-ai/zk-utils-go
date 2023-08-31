@@ -14,6 +14,7 @@ type Args struct {
 
 // ProcessArgs processes and handles CLI arguments
 func ProcessArgs[T any](cfg *T) error {
+	fmt.Println("reading configs")
 	var a Args
 
 	flagSet := flag.NewFlagSet("server", 1)
