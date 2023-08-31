@@ -5,6 +5,7 @@ type RedisConfig struct {
 	Port        string         `yaml:"port" env:"REDIS_PORT" env-description:"Database port"`
 	DBs         map[string]int `yaml:"dbs" env:"REDIS_DB" env-description:"Database to load"`
 	ReadTimeout int            `yaml:"readTimeout"`
+	Password    string         `yaml:"password" env:"REDIS_PASSWORD" env-description:"Redis password"`
 }
 
 type DB struct {
