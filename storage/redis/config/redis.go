@@ -5,7 +5,7 @@ type RedisConfig struct {
 	Port        string         `yaml:"port"`
 	DBs         map[string]int `yaml:"dbs"`
 	ReadTimeout int            `yaml:"readTimeout"`
-	Password    string         `yaml:"password" env:"REDIS_PASSWORD" env-description:"Redis password"`
+	Password    string         `yaml:"password" env:"ZK_REDIS_PASSWORD" env-description:"Redis password"`
 }
 
 type DB struct {
