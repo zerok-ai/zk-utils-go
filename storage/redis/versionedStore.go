@@ -257,6 +257,8 @@ func (versionStore *VersionedStore[T]) Length() (int64, error) {
 
 func (versionStore *VersionedStore[T]) refreshLocalCache() error {
 
+	zkLogger.Debug(LogTag, "Triggered refreshLocalCache.")
+
 	// 1. get the new localVersions for all the keys
 	versionsFromDB, err := versionStore.getAllVersionsFromDB()
 	if err != nil {
@@ -276,6 +278,9 @@ func (versionStore *VersionedStore[T]) refreshLocalCache() error {
 		}
 		missingOrOldDataKeys = append(missingOrOldDataKeys, key)
 	}
+
+	zkLogger.Debug(LogTag, "MissingOrOldKeys ", missingOrOldDataKeys)
+
 	// 2.1 nothing new, go home
 	if len(missingOrOldDataKeys) == 0 {
 		return nil
@@ -286,10 +291,15 @@ func (versionStore *VersionedStore[T]) refreshLocalCache() error {
 	if err != nil {
 		return fmt.Errorf("error in fetching new data for cache: %v", err)
 	}
+
+	zkLogger.Debug(LogTag, "newRawDataPair ", newRawDataPair)
+
 	// populate new cache
 	for i, v := range newRawDataPair {
 		newDataPair[missingOrOldDataKeys[i]] = v
 	}
+
+	zkLogger.Debug(LogTag, "newDataPair ", newDataPair)
 
 	// 4. assign the new objects to filter processors
 	versionStore.mutex.Lock()
