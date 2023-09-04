@@ -265,6 +265,8 @@ func (versionStore *VersionedStore[T]) refreshLocalCache() error {
 		return fmt.Errorf("error in getting localVersions for values: %v", err)
 	}
 
+	zkLogger.Debug(LogTag, "VersionFromDB ", versionsFromDB)
+
 	// 2. collect the data points which have the same versionFromDb in a new map
 	newDataPair := make(map[string]*T)
 	var missingOrOldDataKeys []string
