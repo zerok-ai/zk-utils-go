@@ -175,6 +175,7 @@ func (versionStore *VersionedStore[T]) SetValue(key string, value T) error {
 
 	// 1. check if the previous value is different from the new value
 	localVal, _ := versionStore.GetValue(key)
+	zkLogger.Debug(LogTag, "Local Value ", localVal)
 	if localVal != nil && (*localVal).Equals(value) {
 		return LATEST
 	}
@@ -191,17 +192,25 @@ func (versionStore *VersionedStore[T]) setValueForced(key string, value T) error
 	ctx := context.Background()
 	tx := rdb.TxPipeline()
 
+	zkLogger.Debug(LogTag, "Created transaction pipline.")
+
 	// b. run set command for value and version
 	bytes, err := json.Marshal(value)
 	if err != nil {
 		return err
 	}
 	valueToWrite := string(bytes)
+
+	zkLogger.Debug(LogTag, "Value to write is ", valueToWrite)
+
 	tx.Set(ctx, key, valueToWrite, 0)
 	tx.HIncrBy(ctx, versionStore.versionHashSetName, key, 1)
 
+	zkLogger.Debug(LogTag, "Queries added to tx.")
+
 	// c. Execute the transaction
 	if _, err := tx.Exec(ctx); err != nil {
+		zkLogger.Debug(LogTag, err.Error())
 		return err
 	}
 
