@@ -282,23 +282,19 @@ func (versionStore *VersionedStore[T]) refreshLocalCache() error {
 	}
 
 	zkLogger.Debug(LogTag, "MissingOrOldKeys ", missingOrOldDataKeys)
+	if len(missingOrOldDataKeys) > 0 {
+		// 3. get the values which are not present locally or are old
+		newRawDataPair, err := versionStore.getMultipleValuesFromDB(missingOrOldDataKeys)
+		if err != nil {
+			return fmt.Errorf("error in fetching new data for cache: %v", err)
+		}
 
-	// 2.1 nothing new, go home
-	if len(missingOrOldDataKeys) == 0 {
-		return nil
-	}
+		zkLogger.Debug(LogTag, "newRawDataPair ", newRawDataPair)
 
-	// 3. get the values which are not present locally or are old
-	newRawDataPair, err := versionStore.getMultipleValuesFromDB(missingOrOldDataKeys)
-	if err != nil {
-		return fmt.Errorf("error in fetching new data for cache: %v", err)
-	}
-
-	zkLogger.Debug(LogTag, "newRawDataPair ", newRawDataPair)
-
-	// populate new cache
-	for i, v := range newRawDataPair {
-		newDataPair[missingOrOldDataKeys[i]] = v
+		// populate new cache
+		for i, v := range newRawDataPair {
+			newDataPair[missingOrOldDataKeys[i]] = v
+		}
 	}
 
 	zkLogger.Debug(LogTag, "newDataPair ", newDataPair)
