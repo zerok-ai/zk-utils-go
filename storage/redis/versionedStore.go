@@ -13,6 +13,8 @@ import (
 	"time"
 )
 
+var redisPrefix = "{tagPrefix}:"
+
 var LATEST = fmt.Errorf("version passed is already latest")
 var LogTag = "redis_versionedStore"
 
@@ -37,7 +39,7 @@ func GetVersionedStore[T interfaces.ZKComparable](redisConfig *config.RedisConfi
 
 	versionStore := (&VersionedStore[T]{
 		redisClient:        config.GetRedisConnection(dbName, *redisConfig),
-		versionHashSetName: "zk_value_version",
+		versionHashSetName: redisPrefix + "zk_value_version",
 		localVersions:      map[string]string{},
 		localKeyValueCache: map[string]*T{},
 	}).initialize(dbName, syncTimeInterval)
@@ -131,6 +133,8 @@ func (versionStore *VersionedStore[T]) GetValue(key string) (*T, error) {
 func (versionStore *VersionedStore[T]) getValueFromDB(key string) (*T, error) {
 	rdb := versionStore.redisClient
 
+	key = key + redisPrefix
+
 	// get the value
 	opt := rdb.Get(context.Background(), key)
 	err := opt.Err()
@@ -144,6 +148,10 @@ func (versionStore *VersionedStore[T]) getValueFromDB(key string) (*T, error) {
 
 func (versionStore *VersionedStore[T]) getMultipleValuesFromDB(keys []string) ([]*T, error) {
 	rdb := versionStore.redisClient
+
+	for i, val := range keys {
+		keys[i] = redisPrefix + val
+	}
 
 	// get the values
 	opt, err := rdb.MGet(context.Background(), keys...).Result()
@@ -188,6 +196,8 @@ func (versionStore *VersionedStore[T]) setValueForced(key string, value T) error
 
 	rdb := versionStore.redisClient
 
+	key = redisPrefix + key
+
 	// a. create a Redis transaction: this doesn't support rollback
 	ctx := context.Background()
 	tx := rdb.TxPipeline()
@@ -220,6 +230,7 @@ func (versionStore *VersionedStore[T]) setValueForced(key string, value T) error
 }
 
 func (versionStore *VersionedStore[T]) getVersionFromDB(key string) (string, error) {
+	key = redisPrefix + key
 	rdb := versionStore.redisClient
 
 	// get the old value
@@ -236,6 +247,7 @@ func (versionStore *VersionedStore[T]) getAllVersionsFromDB() (map[string]string
 }
 
 func (versionStore *VersionedStore[T]) Delete(key string) error {
+	key = redisPrefix + key
 	rdb := versionStore.redisClient
 
 	// create a transaction
