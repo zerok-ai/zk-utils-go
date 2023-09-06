@@ -3,8 +3,6 @@ on:
   push:
     tags: #r/<ENVIRONMENT>/<DOCKER-TAG-OR-VERSION>
       - 'prod/**'
-env:
-  APP_NAME: ${{ vars.APP_NAME }}
 #  # Uncomment the following code for testing
 #  workflow_dispatch:
 #    inputs:
