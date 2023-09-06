@@ -1,0 +1,7 @@
+apiVersion: v1
+data:
+  redisHost: {{ .Values.global.redis.host }}
+kind: ConfigMap
+metadata:
+  name: zk-app-init-container
+  namespace: zk-client
