@@ -8,7 +8,7 @@ import (
 )
 
 type RedisConfig struct {
-	Host        string         `yaml:"host"`
+	Host        string         `yaml:"host" env:"ZK_REDIS_HOST" env-description:"Redis HOST"`
 	Port        string         `yaml:"port"`
 	DBs         map[string]int `yaml:"dbs"`
 	ReadTimeout int            `yaml:"readTimeout"`
@@ -22,6 +22,9 @@ type DB struct {
 func GetRedisConnection(dbName string, redisConfig RedisConfig) *redis.Client {
 	readTimeout := time.Duration(redisConfig.ReadTimeout) * time.Second
 	password := os.Getenv("ZK_REDIS_PASSWORD")
+	//host := os.Getenv("ZK_REDIS_HOST")
+	fmt.Print("config.ZK_REDIS_PASSWORD=" + redisConfig.Password)
+	fmt.Print("config.ZK_REDIS_HOST=" + redisConfig.Host)
 	return redis.NewClient(&redis.Options{
 		Addr:        fmt.Sprint(redisConfig.Host, ":", redisConfig.Port),
 		Password:    password,
