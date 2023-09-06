@@ -3,5 +3,5 @@ data:
   redisHost: {{ .Values.global.redis.host }}
 kind: ConfigMap
 metadata:
-  name: zk-app-init-container
+  name: zk-redis-config
   namespace: zk-client
