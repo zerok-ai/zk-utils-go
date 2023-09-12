@@ -226,6 +226,22 @@ func (versionStore *VersionedStore[T]) getAllVersionsFromDB() (map[string]string
 	return versions.Val(), versions.Err()
 }
 
+func (versionStore *VersionedStore[T]) DeleteAllKeys() error {
+	versions, err := versionStore.getAllVersionsFromDB()
+	if err != nil {
+		zkLogger.Error(LogTag, "Error while get all version from db ", err)
+		return err
+	}
+	for key, _ := range versions {
+		err := versionStore.Delete(key)
+		if err != nil {
+			zkLogger.Error(LogTag, "Error while deleting key ", key, " from db ", err)
+			return err
+		}
+	}
+	return nil
+}
+
 func (versionStore *VersionedStore[T]) Delete(key string) error {
 	rdb := versionStore.redisClient
 
