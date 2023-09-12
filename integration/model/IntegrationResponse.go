@@ -2,6 +2,7 @@ package model
 
 import (
 	"encoding/json"
+	"github.com/zerok-ai/zk-utils-go/interfaces"
 	"time"
 )
 
@@ -27,4 +28,12 @@ type IntegrationResponseObj struct {
 	Deleted        bool            `json:"deleted"`
 	Disabled       bool            `json:"disabled"`
 	MetricServer   bool            `json:"metric_server"`
+}
+
+func (i IntegrationResponseObj) Equals(otherInterface interfaces.ZKComparable) bool {
+	other, ok := otherInterface.(IntegrationResponseObj)
+	if !ok {
+		return false
+	}
+	return i.ID == other.ID
 }
