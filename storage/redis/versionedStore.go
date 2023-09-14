@@ -55,6 +55,7 @@ func (versionStore *VersionedStore[T]) initialize(tickerName string, syncTimeInt
 		}
 	}
 	versionStore.tickerTask = ticker.GetNewTickerTask(tickerName, syncTimeInterval, task).Start()
+	task()
 
 	return versionStore
 }
