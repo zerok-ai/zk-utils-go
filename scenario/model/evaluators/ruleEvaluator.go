@@ -67,11 +67,6 @@ func (re BaseRuleEvaluator) init() RuleEvaluator {
 
 func (re BaseRuleEvaluator) EvalRule(r model.Rule, store DataStore) (bool, error) {
 
-	ruleEvaluator := re.ruleEvaluators[r.Type]
-	if ruleEvaluator == nil {
-		return false, fmt.Errorf("ruleEvaluator not found for type: %s", r.Type)
-	}
-
 	err := re.validate(r, store)
 	if err != nil {
 		return false, err
@@ -79,6 +74,16 @@ func (re BaseRuleEvaluator) EvalRule(r model.Rule, store DataStore) (bool, error
 
 	handled, value, err := re.handleCommonOperators(r, store)
 	if !handled {
+
+		r, store, err = re.handlePath(r, store)
+		if err != nil {
+			return false, err
+		}
+
+		ruleEvaluator := re.ruleEvaluators[r.Type]
+		if ruleEvaluator == nil {
+			return false, fmt.Errorf("ruleEvaluator not found for type: %s", r.Type)
+		}
 		return ruleEvaluator.EvalRule(r, store)
 	}
 
@@ -112,4 +117,9 @@ func (re BaseRuleEvaluator) validate(r model.Rule, store DataStore) error {
 		return fmt.Errorf("value for id: %s not found in store", *id)
 	}
 	return nil
+}
+
+func (re BaseRuleEvaluator) handlePath(r model.Rule, store DataStore) (model.Rule, DataStore, error) {
+
+	return r, store, nil
 }
