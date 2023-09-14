@@ -247,12 +247,14 @@ func (r RuleGroup) LessThan(other RuleGroup) bool {
 }
 
 type RuleLeaf struct {
-	ID       *string        `json:"id,omitempty"`
-	Field    *string        `json:"field,omitempty"`
-	Datatype *DataType      `json:"datatype,omitempty"`
-	Input    *InputTypes    `json:"input,omitempty"`
-	Operator *OperatorTypes `json:"operator,omitempty"`
-	Value    *ValueTypes    `json:"value,omitempty"`
+	ID         *string        `json:"id,omitempty"`
+	Field      *string        `json:"field,omitempty"`
+	Datatype   *DataType      `json:"datatype,omitempty"`
+	Input      *InputTypes    `json:"input,omitempty"`
+	Operator   *OperatorTypes `json:"operator,omitempty"`
+	Value      *ValueTypes    `json:"value,omitempty"`
+	JsonPath   *string        `json:"json_path,omitempty"`
+	ArrayIndex *string        `json:"array_index,omitempty"`
 }
 
 func (r RuleLeaf) String() string {
@@ -318,6 +320,17 @@ func (r RuleLeaf) LessThan(other RuleLeaf) bool {
 		}
 		return false
 	}
+
+	comparison = stringCompare(r.JsonPath, other.JsonPath)
+	if comparison != 0 {
+		return comparison < 0
+	}
+
+	comparison = stringCompare(r.ArrayIndex, other.ArrayIndex)
+	if comparison != 0 {
+		return comparison < 0
+	}
+
 	fmt.Println("before returning false")
 	return false
 }

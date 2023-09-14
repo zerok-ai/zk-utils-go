@@ -1,7 +1,9 @@
 package evaluators
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/jmespath/go-jmespath"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
 )
 
@@ -120,6 +122,37 @@ func (re BaseRuleEvaluator) validate(r model.Rule, store DataStore) error {
 }
 
 func (re BaseRuleEvaluator) handlePath(r model.Rule, store DataStore) (model.Rule, DataStore, error) {
+
+	jsonPath := r.JsonPath
+	if jsonPath != nil {
+		valueFromStore, _ := store[*r.ID]
+
+		// Define a map to store the parsed JSON data
+		var data map[string]interface{}
+
+		// Unmarshal the JSON data into the map
+		err := json.Unmarshal([]byte(valueFromStore), &data)
+		if err != nil {
+			return r, store, fmt.Errorf("error unmarshalling json_path for id: %s  %v", r.ID, err)
+		}
+
+		//load json from valueFromStore
+		valueAtPath, err := jmespath.Search(*jsonPath, valueFromStore)
+		if err != nil {
+			return r, store, fmt.Errorf("value for id: %s not found in store at path:%s ", *r.ID, *jsonPath)
+		}
+
+		newId := *r.ID + *jsonPath
+		r.ID = &newId
+		store[*r.ID] = valueAtPath.(string)
+
+		return r, store, nil
+	}
+
+	//TODO handle array index
+	if r.ArrayIndex == nil {
+		return r, store, nil
+	}
 
 	return r, store, nil
 }

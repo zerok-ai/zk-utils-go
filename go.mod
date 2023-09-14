@@ -6,6 +6,7 @@ require (
 	github.com/go-playground/validator/v10 v10.14.0
 	github.com/google/uuid v1.3.0
 	github.com/ilyakaznacheev/cleanenv v1.4.2
+	github.com/jmespath/go-jmespath v0.4.0
 	github.com/kataras/iris/v12 v12.2.0
 	github.com/lib/pq v1.10.9
 	github.com/redis/go-redis/v9 v9.0.5
