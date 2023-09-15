@@ -133,7 +133,7 @@ func (re BaseRuleEvaluator) handlePath(r model.Rule, store DataStore) (model.Rul
 		// Unmarshal the JSON data into the map
 		err := json.Unmarshal([]byte(valueFromStore), &data)
 		if err != nil {
-			return r, store, fmt.Errorf("error unmarshalling json_path for id: %s  %v", r.ID, err)
+			return r, store, fmt.Errorf("error unmarshalling json_path for id: %s  %v", *r.ID, err)
 		}
 
 		//load json from valueFromStore
