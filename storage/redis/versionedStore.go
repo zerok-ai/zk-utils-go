@@ -230,11 +230,31 @@ func (versionStore *VersionedStore[T]) DeleteAllKeys() error {
 	rdb := versionStore.redisClient
 	zkLogger.Debug(LogTag, "Deleting all keys from db.")
 
-	_, err := rdb.FlushDB(context.Background()).Result()
+	versions, err := versionStore.getAllVersionsFromDB()
+
 	if err != nil {
-		zkLogger.Error(LogTag, "Error while deleting all keys from db ", err)
+		zkLogger.Error(LogTag, "Error while getting all version from db.")
 		return err
 	}
+
+	keysArr := []string{}
+	for key, _ := range versions {
+		keysArr = append(keysArr, key)
+	}
+
+	// create a transaction
+	ctx := context.Background()
+	tx := rdb.TxPipeline()
+
+	// delete version
+	tx.HDel(context.Background(), versionStore.versionHashSetName, keysArr...)
+	tx.Del(context.Background(), keysArr...)
+
+	// Execute the transaction
+	if _, err := tx.Exec(ctx); err != nil {
+		return err
+	}
+
 	versionStore.mutex.Lock()
 	defer versionStore.mutex.Unlock()
 	versionStore.localVersions = map[string]string{}
