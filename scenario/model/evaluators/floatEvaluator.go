@@ -19,6 +19,10 @@ func (re FloatRuleEvaluator) EvalRule(r model.Rule, store DataStore) (bool, erro
 
 	// get the values assuming that the rule object is valid
 	operator := string(*r.Operator)
+	_, ok := store[*r.ID]
+	if !ok {
+		return false, fmt.Errorf("value for id: %s not found in store", *r.ID)
+	}
 
 	//	switch on operator
 	switch operator {
@@ -75,7 +79,7 @@ func (re FloatRuleEvaluator) EvalRule(r model.Rule, store DataStore) (bool, erro
 
 	}
 
-	return false, fmt.Errorf("invalid operator: %s", operator)
+	return false, fmt.Errorf("float: invalid operator: %s", operator)
 }
 
 func (re FloatRuleEvaluator) getValuesFromCSString(csv string) []float64 {

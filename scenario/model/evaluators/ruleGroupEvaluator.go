@@ -14,7 +14,12 @@ func (re RuleGroupEvaluator) EvalRule(r model.Rule, store DataStore) (bool, erro
 
 	// evaluate all the rules
 	condition := *r.Condition
-	result := false
+	result := true // default is true for both `AND` and `OR` to work
+	if condition == model.AND {
+		result = true
+	} else {
+		result = false
+	}
 	for _, rule := range r.Rules {
 		ok, err := re.baseRuleEvaluator.EvalRule(rule, store)
 		if err != nil {

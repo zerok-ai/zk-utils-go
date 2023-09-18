@@ -1,0 +1,35 @@
+{
+  "service": "namespace/service-name",
+  "trace_role": "server",
+  "protocol": "HTTP",
+  "rule": {
+    "type": "rule_group",
+    "condition": "OR",
+    "rules": [
+      {
+        "type": "rule",
+        "id": "let's meet",
+        "datatype": "bool",
+        "operator": "equal",
+        "value": "true",
+        "field": "field",
+        "input": "input"
+      },
+      {
+        "type": "rule_group",
+        "condition": "AND",
+        "rules": [
+          {
+            "type": "rule",
+            "id": "today",
+            "datatype": "bool",
+            "operator": "equal",
+            "value": "true",
+            "field": "field",
+            "input": "input"
+          }
+        ]
+      }
+    ]
+  }
+}

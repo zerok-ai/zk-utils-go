@@ -19,7 +19,11 @@ func (re StringRuleEvaluator) EvalRule(r model.Rule, store DataStore) (bool, err
 	// get the values assuming that the rule object is valid
 	operator := string(*r.Operator)
 	valueFromRule := string(*r.Value)
-	valueFromStore, _ := store[*r.ID]
+
+	valueFromStore, ok := store[*r.ID]
+	if !ok {
+		return false, fmt.Errorf("value for id: %s not found in store", *r.ID)
+	}
 
 	//	switch on operator
 	switch operator {
@@ -65,5 +69,5 @@ func (re StringRuleEvaluator) EvalRule(r model.Rule, store DataStore) (bool, err
 
 	}
 
-	return false, fmt.Errorf("invalid operator: %s", operator)
+	return false, fmt.Errorf("string: invalid operator: %s", operator)
 }

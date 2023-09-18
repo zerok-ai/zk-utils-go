@@ -1,0 +1,14 @@
+{
+  "service": "namespace/service-name",
+  "trace_role": "server",
+  "protocol": "HTTP",
+  "rule": {
+    "type": "rule",
+    "id": "let's meet",
+    "datatype": "bool",
+    "operator": "not_equal",
+    "value": "true",
+    "field": "field",
+    "input": "input"
+  }
+}

@@ -14,9 +14,11 @@ const (
 	typeKeyValue           = "key-value"
 	typeInteger            = "integer"
 	typeFloat              = "float"
+	typeBool               = "bool"
 	typeWorkLoadIdentifier = "workload-identifier"
 
-	operatorExists = "exists"
+	operatorExists    = "exists"
+	operatorNotExists = "not_exists"
 
 	operatorMatches          = "matches"
 	operatorDoesNotMatch     = "does_not_match"
@@ -50,9 +52,8 @@ type BaseRuleEvaluator struct {
 	ruleEvaluators map[string]RuleEvaluator
 }
 
-func NewRuleEvaluator(dataSource DataStore) RuleEvaluator {
+func NewRuleEvaluator() RuleEvaluator {
 	return BaseRuleEvaluator{
-		dataSource:     dataSource,
 		ruleEvaluators: make(map[string]RuleEvaluator),
 	}.init()
 }
@@ -63,18 +64,27 @@ func (re BaseRuleEvaluator) init() RuleEvaluator {
 	re.ruleEvaluators[typeString] = StringRuleEvaluator{}.init()
 	re.ruleEvaluators[typeInteger] = IntegerRuleEvaluator{}.init()
 	re.ruleEvaluators[typeFloat] = FloatRuleEvaluator{}.init()
+	re.ruleEvaluators[typeBool] = BooleanEvaluator{}.init()
 
 	return re
 }
 
 func (re BaseRuleEvaluator) EvalRule(r model.Rule, store DataStore) (bool, error) {
 
-	err := re.validate(r, store)
-	if err != nil {
-		return false, err
-	}
+	handled, value := false, false
+	var err error
+	var evaluator string
+	if r.Type != model.RULE_GROUP {
+		err = re.validate(r, store)
+		if err != nil {
+			return false, err
+		}
 
-	handled, value, err := re.handleCommonOperators(r, store)
+		handled, value, err = re.handleCommonOperators(r, store)
+		evaluator = string(*r.RuleLeaf.Datatype)
+	} else {
+		evaluator = model.RULE_GROUP
+	}
 	if !handled {
 
 		r, store, err = re.handlePath(r, store)
@@ -82,7 +92,7 @@ func (re BaseRuleEvaluator) EvalRule(r model.Rule, store DataStore) (bool, error
 			return false, err
 		}
 
-		ruleEvaluator := re.ruleEvaluators[r.Type]
+		ruleEvaluator := re.ruleEvaluators[evaluator]
 		if ruleEvaluator == nil {
 			return false, fmt.Errorf("ruleEvaluator not found for type: %s", r.Type)
 		}
@@ -101,6 +111,9 @@ func (re BaseRuleEvaluator) handleCommonOperators(r model.Rule, store DataStore)
 	case operatorExists:
 		_, ok := store[*r.ID]
 		return true, ok, nil
+	case operatorNotExists:
+		_, ok := store[*r.ID]
+		return true, !ok, nil
 	}
 
 	return false, false, nil
@@ -110,22 +123,32 @@ func (re BaseRuleEvaluator) validate(r model.Rule, store DataStore) error {
 	id := r.ID
 	operator := r.Operator
 	valueFromRule := r.Value
-	if id == nil || valueFromRule == nil || operator == nil {
-		return fmt.Errorf("id or value or operator is nil")
+	dataType := r.Datatype
+	if id == nil {
+		return fmt.Errorf("id is nil")
+	} else if operator == nil {
+		return fmt.Errorf("operator is nil")
+	} else if valueFromRule == nil {
+		return fmt.Errorf("value is nil")
+	} else if dataType == nil {
+		return fmt.Errorf("datatype is nil")
 	}
 
-	_, ok := store[*id]
-	if !ok {
-		return fmt.Errorf("value for id: %s not found in store", *id)
-	}
 	return nil
 }
 
 func (re BaseRuleEvaluator) handlePath(r model.Rule, store DataStore) (model.Rule, DataStore, error) {
 
-	jsonPath := r.JsonPath
+	var jsonPath, arrayIndex *string = nil, nil
+	if r.RuleLeaf != nil {
+		jsonPath = r.RuleLeaf.JsonPath
+		arrayIndex = r.RuleLeaf.ArrayIndex
+	}
 	if jsonPath != nil {
-		valueFromStore, _ := store[*r.ID]
+		valueFromStore, ok := store[*r.ID]
+		if !ok {
+			return r, store, fmt.Errorf("value for id: %s not found in store", *r.ID)
+		}
 
 		// Define a map to store the parsed JSON data
 		var data map[string]interface{}
@@ -150,7 +173,7 @@ func (re BaseRuleEvaluator) handlePath(r model.Rule, store DataStore) (model.Rul
 	}
 
 	//TODO handle array index
-	if r.ArrayIndex == nil {
+	if arrayIndex != nil {
 		return r, store, nil
 	}
 
