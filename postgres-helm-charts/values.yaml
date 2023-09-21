@@ -18,6 +18,7 @@ postgresql:
     initdb:
       scripts:
         init.sql: |
+          CREATE DATABASE gpt;
           CREATE DATABASE pl;
           \c pl
           
