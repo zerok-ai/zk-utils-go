@@ -145,28 +145,37 @@ func (re BaseRuleEvaluator) handlePath(r model.Rule, store DataStore) (model.Rul
 		arrayIndex = r.RuleLeaf.ArrayIndex
 	}
 	if jsonPath != nil {
-		valueFromStore, ok := store[*r.ID]
+		valueFromStore, ok := store[*r.RuleLeaf.ID]
 		if !ok {
 			return r, store, fmt.Errorf("value for id: %s not found in store", *r.ID)
 		}
 
-		// Define a map to store the parsed JSON data
-		var data map[string]interface{}
+		// Define a map to store the parsed JSON jsonObject
+		var jsonObject map[string]interface{}
 
-		// Unmarshal the JSON data into the map
-		err := json.Unmarshal([]byte(valueFromStore), &data)
+		// Unmarshal the JSON jsonObject into the map
+		err := json.Unmarshal([]byte(valueFromStore), &jsonObject)
 		if err != nil {
 			return r, store, fmt.Errorf("error unmarshalling json_path for id: %s  %v", *r.ID, err)
 		}
 
 		//load json from valueFromStore
-		valueAtPath, err := jmespath.Search(*jsonPath, valueFromStore)
+		valueAtPath, err := jmespath.Search(*jsonPath, jsonObject)
 		if err != nil {
 			return r, store, fmt.Errorf("value for id: %s not found in store at path:%s ", *r.ID, *jsonPath)
 		}
 
 		newId := *r.ID + *jsonPath
 		r.ID = &newId
+		if valueAtPath == nil {
+			if string(*r.Datatype) == typeInteger || string(*r.Datatype) == typeFloat {
+				valueAtPath = "0"
+			} else if string(*r.Datatype) == typeBool {
+				valueAtPath = "false"
+			} else {
+				valueAtPath = ""
+			}
+		}
 		store[*r.ID] = valueAtPath.(string)
 
 		return r, store, nil

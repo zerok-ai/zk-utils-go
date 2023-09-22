@@ -18,7 +18,7 @@ func (re IntegerRuleEvaluator) init() RuleEvaluator {
 func (re IntegerRuleEvaluator) EvalRule(r model.Rule, store DataStore) (bool, error) {
 
 	// get the values assuming that the rule object is valid
-	operator := string(*r.Operator)
+	operator := string(*r.RuleLeaf.Operator)
 	_, ok := store[*r.ID]
 	if !ok {
 		return false, fmt.Errorf("value for id: %s not found in store", *r.ID)
@@ -136,11 +136,11 @@ func (re IntegerRuleEvaluator) isValuePresentInCSV(r model.Rule, store DataStore
 }
 
 func (re IntegerRuleEvaluator) valueFromRuleAndStore(r model.Rule, store DataStore) (int, int, error) {
-	valueFromRule, err := strconv.Atoi(string(*r.Value))
+	valueFromRule, err := strconv.Atoi(string(*r.RuleLeaf.Value))
 	if err != nil {
 		return 0, 0, fmt.Errorf("error converting rule value %s to integer: %v", string(*r.Value), err)
 	}
-	valueFromStore, err1 := strconv.Atoi(store[*r.ID])
+	valueFromStore, err1 := strconv.Atoi(store[*r.RuleLeaf.ID])
 	if err1 != nil {
 		return 0, 0, fmt.Errorf("error converting store value %s to integer: %v", string(*r.Value), err1)
 	}

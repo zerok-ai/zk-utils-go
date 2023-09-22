@@ -20,9 +20,9 @@ func (re BooleanEvaluator) EvalRule(r model.Rule, store DataStore) (bool, error)
 		return false, err
 	}
 
-	value, ok := store[*r.ID]
+	value, ok := store[*r.RuleLeaf.ID]
 	if !ok {
-		return false, fmt.Errorf("value for id: %s not found in store", *r.ID)
+		return false, fmt.Errorf("value for id: %s not found in store", *r.RuleLeaf.ID)
 	}
 	valueFromStore, err1 := getBooleanValue(value)
 	if err1 != nil {

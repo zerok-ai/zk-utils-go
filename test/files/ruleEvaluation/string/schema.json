@@ -95,6 +95,16 @@
         "value": "Tom,Dick,Harry",
         "field": "field",
         "input": "input"
+      },
+      {
+        "type": "rule",
+        "id": "address",
+        "json_path": "zip1",
+        "datatype": "string",
+        "operator": "equal",
+        "value": "560001",
+        "field": "field",
+        "input": "input"
       }
     ]
   }

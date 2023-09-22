@@ -7,5 +7,6 @@
   "city": "bangalore",
   "country": "india",
   "name": "funky science rover stories",
-  "author": "Jane Austen"
+  "author": "Jane Austen",
+  "address": "{\n    \"street\": \"1234 Main St\",\n    \"city\": \"Bangalore\",\n    \"state\": \"Karnataka\",\n    \"zip\": \"560001\"\n}"
 }

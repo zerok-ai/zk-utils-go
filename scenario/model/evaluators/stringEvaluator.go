@@ -17,12 +17,12 @@ func (re StringRuleEvaluator) init() RuleEvaluator {
 func (re StringRuleEvaluator) EvalRule(r model.Rule, store DataStore) (bool, error) {
 
 	// get the values assuming that the rule object is valid
-	operator := string(*r.Operator)
-	valueFromRule := string(*r.Value)
+	operator := string(*r.RuleLeaf.Operator)
+	valueFromRule := string(*r.RuleLeaf.Value)
 
-	valueFromStore, ok := store[*r.ID]
+	valueFromStore, ok := store[*r.RuleLeaf.ID]
 	if !ok {
-		return false, fmt.Errorf("value for id: %s not found in store", *r.ID)
+		return false, fmt.Errorf("value for id: %s not found in store", *r.RuleLeaf.ID)
 	}
 
 	//	switch on operator
