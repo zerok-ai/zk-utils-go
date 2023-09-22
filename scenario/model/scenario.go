@@ -124,6 +124,7 @@ func (s Scenario) Less(other Scenario) bool {
 }
 
 type Workload struct {
+	Executor  string    `json:"executor"`
 	Service   string    `json:"service,omitempty"`
 	TraceRole TraceRole `json:"trace_role,omitempty"`
 	Protocol  Protocol  `json:"protocol,omitempty"`
@@ -131,7 +132,7 @@ type Workload struct {
 }
 
 func (wr Workload) Equals(other Workload) bool {
-	if wr.Service != other.Service || wr.TraceRole != other.TraceRole || wr.Protocol != other.Protocol {
+	if wr.Executor != other.Executor || wr.Service != other.Service || wr.TraceRole != other.TraceRole || wr.Protocol != other.Protocol {
 		return false
 	}
 
