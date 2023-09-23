@@ -8,7 +8,7 @@
     "rules": [
       {
         "type": "rule",
-        "id": "let's meet",
+        "id": "let_us_meet",
         "datatype": "bool",
         "operator": "equal",
         "value": "true",

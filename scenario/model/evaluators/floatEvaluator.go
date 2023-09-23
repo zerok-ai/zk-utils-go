@@ -19,10 +19,6 @@ func (re FloatRuleEvaluator) EvalRule(r model.Rule, store DataStore) (bool, erro
 
 	// get the values assuming that the rule object is valid
 	operator := string(*r.Operator)
-	_, ok := store[*r.RuleLeaf.ID]
-	if !ok {
-		return false, fmt.Errorf("value for id: %s not found in store", *r.RuleLeaf.ID)
-	}
 
 	//	switch on operator
 	switch operator {
@@ -98,11 +94,32 @@ func (re FloatRuleEvaluator) getValuesFromCSString(csv string) []float64 {
 	return retArr
 }
 
+func getFloat64(value interface{}) (float64, error) {
+
+	// convert value to float
+	if value == nil {
+		return 0, fmt.Errorf("invalid float value: %s", value)
+	}
+
+	if floatValue, ok := value.(float64); ok {
+		return floatValue, nil
+	}
+
+	strValue := fmt.Sprintf("%v", value)
+	floatValue, err := strconv.ParseFloat(strValue, 64)
+	if err != nil {
+		return 0, fmt.Errorf("invalid float value: %s", strValue)
+	}
+
+	return floatValue, nil
+}
+
 func (re FloatRuleEvaluator) isValueInRange(r model.Rule, store DataStore) (bool, error) {
 	operator := string(*r.Operator)
-	valueFromStore, err1 := strconv.ParseFloat(store[*r.RuleLeaf.ID], 64)
+	valueFromStore, err1 := getFloat64(getValueFromStore(r, store))
+
 	if err1 != nil {
-		return false, fmt.Errorf("error converting store value %s to integer: %v", string(*r.RuleLeaf.Value), err1)
+		return false, fmt.Errorf("range: error converting store value %s to integer: %v", string(*r.RuleLeaf.Value), err1)
 	}
 	numbers := re.getValuesFromCSString(string(*r.RuleLeaf.Value))
 	if len(numbers) != 2 {
@@ -114,9 +131,9 @@ func (re FloatRuleEvaluator) isValueInRange(r model.Rule, store DataStore) (bool
 func (re FloatRuleEvaluator) isValuePresentInCSV(r model.Rule, store DataStore) bool {
 
 	csv := string(*r.RuleLeaf.Value)
-	value, err1 := strconv.ParseFloat(store[*r.RuleLeaf.ID], 64)
+	value, err1 := getFloat64(getValueFromStore(r, store))
 	if err1 != nil {
-		logger.Error(loggerTag, "error converting store value %s to integer: %v", string(*r.RuleLeaf.Value), err1)
+		logger.Error(loggerTag, "csv-float: error converting store value %s to integer: %v", string(*r.RuleLeaf.Value), err1)
 		return false
 	}
 
@@ -136,13 +153,13 @@ func (re FloatRuleEvaluator) isValuePresentInCSV(r model.Rule, store DataStore) 
 }
 
 func (re FloatRuleEvaluator) valueFromRuleAndStore(r model.Rule, store DataStore) (float64, float64, error) {
-	valueFromRule, err := strconv.ParseFloat(string(*r.RuleLeaf.Value), 64)
+	valueFromRule, err := getFloat64(string(*r.RuleLeaf.Value))
 	if err != nil {
 		return 0, 0, fmt.Errorf("error converting rule value %s to float: %v", string(*r.RuleLeaf.Value), err)
 	}
-	valueFromStore, err1 := strconv.ParseFloat(store[*r.RuleLeaf.ID], 64)
+	valueFromStore, err1 := getFloat64(getValueFromStore(r, store))
 	if err1 != nil {
-		return 0, 0, fmt.Errorf("error converting store value %s to float: %v", string(*r.RuleLeaf.Value), err1)
+		return 0, 0, fmt.Errorf("value-float: error converting store value %s to float: %v", string(*r.RuleLeaf.Value), err1)
 	}
 	return valueFromRule, valueFromStore, nil
 }

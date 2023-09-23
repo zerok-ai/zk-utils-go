@@ -20,8 +20,15 @@ func (re StringRuleEvaluator) EvalRule(r model.Rule, store DataStore) (bool, err
 	operator := string(*r.RuleLeaf.Operator)
 	valueFromRule := string(*r.RuleLeaf.Value)
 
-	valueFromStore, ok := store[*r.RuleLeaf.ID]
-	if !ok {
+	var valueFromStore string
+	ok := true
+	valTemp := getValueFromStore(r, store)
+	if valTemp != nil {
+		valueFromStore, ok = valTemp.(string)
+	}
+
+	// if the value is not found in the store, or can't be converted to string, return false
+	if valTemp == nil || !ok {
 		return false, fmt.Errorf("value for id: %s not found in store", *r.RuleLeaf.ID)
 	}
 

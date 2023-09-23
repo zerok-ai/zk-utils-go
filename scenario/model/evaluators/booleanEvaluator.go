@@ -20,11 +20,7 @@ func (re BooleanEvaluator) EvalRule(r model.Rule, store DataStore) (bool, error)
 		return false, err
 	}
 
-	value, ok := store[*r.RuleLeaf.ID]
-	if !ok {
-		return false, fmt.Errorf("value for id: %s not found in store", *r.RuleLeaf.ID)
-	}
-	valueFromStore, err1 := getBooleanValue(value)
+	valueFromStore, err1 := getBooleanValue(getValueFromStore(r, store))
 	if err1 != nil {
 		return false, err1
 	}
@@ -43,7 +39,21 @@ func (re BooleanEvaluator) EvalRule(r model.Rule, store DataStore) (bool, error)
 	return false, fmt.Errorf("bool: invalid operator: %s", operator)
 }
 
-func getBooleanValue(strValue string) (bool, error) {
+func getBooleanValue(value interface{}) (bool, error) {
+	// convert strValue to bool
+	if value == nil {
+		return false, fmt.Errorf("nil-value: invalid boolean value: %s", value)
+	}
+
+	if boolValue, ok := value.(bool); ok {
+		return boolValue, nil
+	}
+
+	strValue, ok := value.(string)
+	if !ok {
+		return false, fmt.Errorf("typecast-string: invalid boolean value: %s", value)
+	}
+
 	if strValue == "true" {
 		return true, nil
 	} else if strValue == "false" {

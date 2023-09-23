@@ -1,9 +1,9 @@
 package evaluators
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/jmespath/go-jmespath"
+	logger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
 )
 
@@ -41,7 +41,7 @@ const (
 	operatorNotBetween       = "not_between"
 )
 
-type DataStore map[string]string
+type DataStore map[string]interface{}
 type RuleEvaluator interface {
 	init() RuleEvaluator
 	EvalRule(rule model.Rule, store DataStore) (bool, error)
@@ -86,12 +86,7 @@ func (re BaseRuleEvaluator) EvalRule(r model.Rule, store DataStore) (bool, error
 		evaluator = model.RULE_GROUP
 	}
 	if !handled {
-
-		r, store, err = re.handlePath(r, store)
-		if err != nil {
-			return false, err
-		}
-
+		// run through the specific rule evaluators
 		ruleEvaluator := re.ruleEvaluators[evaluator]
 		if ruleEvaluator == nil {
 			return false, fmt.Errorf("ruleEvaluator not found for type: %s", r.Type)
@@ -109,14 +104,22 @@ func (re BaseRuleEvaluator) handleCommonOperators(r model.Rule, store DataStore)
 	//	switch on operator
 	switch operator {
 	case operatorExists:
-		_, ok := store[*r.ID]
-		return true, ok, nil
+		return true, getValueFromStore(r, store) != nil, nil
 	case operatorNotExists:
-		_, ok := store[*r.ID]
-		return true, !ok, nil
+		return true, getValueFromStore(r, store) == nil, nil
 	}
 
 	return false, false, nil
+}
+
+func getValueFromStore(r model.Rule, store DataStore) interface{} {
+	path := *r.RuleLeaf.ID
+	value, err := jmespath.Search(path, map[string]interface{}(store))
+	if err != nil {
+		logger.Error(loggerTag, "error searching for path: ", path, " in store: ", store, " error: ", err)
+		return nil
+	}
+	return value
 }
 
 func (re BaseRuleEvaluator) validate(r model.Rule, store DataStore) error {
@@ -137,54 +140,54 @@ func (re BaseRuleEvaluator) validate(r model.Rule, store DataStore) error {
 	return nil
 }
 
-func (re BaseRuleEvaluator) handlePath(r model.Rule, store DataStore) (model.Rule, DataStore, error) {
-
-	var jsonPath, arrayIndex *string = nil, nil
-	if r.RuleLeaf != nil {
-		jsonPath = r.RuleLeaf.JsonPath
-		arrayIndex = r.RuleLeaf.ArrayIndex
-	}
-	if jsonPath != nil {
-		valueFromStore, ok := store[*r.RuleLeaf.ID]
-		if !ok {
-			return r, store, fmt.Errorf("value for id: %s not found in store", *r.ID)
-		}
-
-		// Define a map to store the parsed JSON jsonObject
-		var jsonObject map[string]interface{}
-
-		// Unmarshal the JSON jsonObject into the map
-		err := json.Unmarshal([]byte(valueFromStore), &jsonObject)
-		if err != nil {
-			return r, store, fmt.Errorf("error unmarshalling json_path for id: %s  %v", *r.ID, err)
-		}
-
-		//load json from valueFromStore
-		valueAtPath, err := jmespath.Search(*jsonPath, jsonObject)
-		if err != nil {
-			return r, store, fmt.Errorf("value for id: %s not found in store at path:%s ", *r.ID, *jsonPath)
-		}
-
-		newId := *r.ID + *jsonPath
-		r.ID = &newId
-		if valueAtPath == nil {
-			if string(*r.Datatype) == typeInteger || string(*r.Datatype) == typeFloat {
-				valueAtPath = "0"
-			} else if string(*r.Datatype) == typeBool {
-				valueAtPath = "false"
-			} else {
-				valueAtPath = ""
-			}
-		}
-		store[*r.ID] = valueAtPath.(string)
-
-		return r, store, nil
-	}
-
-	//TODO handle array index
-	if arrayIndex != nil {
-		return r, store, nil
-	}
-
-	return r, store, nil
-}
+//func (re BaseRuleEvaluator) handlePath(r model.Rule, store DataStore) (model.Rule, DataStore, error) {
+//
+//	var jsonPath, arrayIndex *string = nil, nil
+//	if r.RuleLeaf != nil {
+//		jsonPath = r.RuleLeaf.JsonPath
+//		arrayIndex = r.RuleLeaf.ArrayIndex
+//	}
+//	if jsonPath != nil {
+//		valueFromStore, ok := store[*r.RuleLeaf.ID]
+//		if !ok {
+//			return r, store, fmt.Errorf("value for id: %s not found in store", *r.ID)
+//		}
+//
+//		//// Define a map to store the parsed JSON jsonObject
+//		//var jsonObject map[string]interface{}
+//		//
+//		//// Unmarshal the JSON jsonObject into the map
+//		//err := json.Unmarshal([]byte(valueFromStore), &jsonObject)
+//		//if err != nil {
+//		//	return r, store, fmt.Errorf("error unmarshalling json_path for id: %s  %v", *r.ID, err)
+//		//}
+//
+//		//load json from valueFromStore
+//		valueAtPath, err := jmespath.Search(*jsonPath, valueFromStore)
+//		if err != nil {
+//			return r, store, fmt.Errorf("value for id: %s not found in store at path:%s ", *r.ID, *jsonPath)
+//		}
+//
+//		newId := *r.ID + *jsonPath
+//		r.ID = &newId
+//		if valueAtPath == nil {
+//			if string(*r.Datatype) == typeInteger || string(*r.Datatype) == typeFloat {
+//				valueAtPath = "0"
+//			} else if string(*r.Datatype) == typeBool {
+//				valueAtPath = "false"
+//			} else {
+//				valueAtPath = ""
+//			}
+//		}
+//		store[*r.ID] = valueAtPath.(string)
+//
+//		return r, store, nil
+//	}
+//
+//	//TODO handle array index
+//	if arrayIndex != nil {
+//		return r, store, nil
+//	}
+//
+//	return r, store, nil
+//}

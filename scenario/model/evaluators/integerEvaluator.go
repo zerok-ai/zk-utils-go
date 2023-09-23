@@ -19,10 +19,6 @@ func (re IntegerRuleEvaluator) EvalRule(r model.Rule, store DataStore) (bool, er
 
 	// get the values assuming that the rule object is valid
 	operator := string(*r.RuleLeaf.Operator)
-	_, ok := store[*r.ID]
-	if !ok {
-		return false, fmt.Errorf("value for id: %s not found in store", *r.ID)
-	}
 
 	//	switch on operator
 	switch operator {
@@ -82,27 +78,45 @@ func (re IntegerRuleEvaluator) EvalRule(r model.Rule, store DataStore) (bool, er
 	return false, fmt.Errorf("integer: invalid operator: %s", operator)
 }
 
-func (re IntegerRuleEvaluator) getValuesFromCSString(csv string) []int {
-	retArr := make([]int, 0)
+func (re IntegerRuleEvaluator) getValuesFromCSString(csv string) []int64 {
+	retArr := make([]int64, 0)
 	stringSet := strings.Split(csv, ",")
 
 	for _, part := range stringSet {
-		number, err := strconv.Atoi(part)
+		number, err := getInteger64(part)
 		if err != nil {
 			logger.Error(loggerTag, "error converting %s to integer: %v", stringSet[0], err)
 			continue
 		}
-		retArr = append(retArr, number)
+		retArr = append(retArr, int64(number))
 	}
 
 	return retArr
 }
 
+func getInteger64(value interface{}) (int64, error) {
+	// convert value to int64
+	if value == nil {
+		return 0, fmt.Errorf("invalid integer value: %s", value)
+	}
+
+	if intValue, ok := value.(int64); ok {
+		return intValue, nil
+	}
+
+	strValue := fmt.Sprintf("%v", value)
+	intValue, err := strconv.ParseInt(strValue, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("invalid integer value: %s", strValue)
+	}
+	return intValue, nil
+}
+
 func (re IntegerRuleEvaluator) isValueInRange(r model.Rule, store DataStore) (bool, error) {
 	operator := string(*r.Operator)
-	valueFromStore, err1 := strconv.Atoi(store[*r.ID])
+	valueFromStore, err1 := getInteger64(store[*r.ID])
 	if err1 != nil {
-		return false, fmt.Errorf("error converting store value %s to integer: %v", string(*r.Value), err1)
+		return false, fmt.Errorf("range-int: error converting store value %s to integer: %v", string(*r.Value), err1)
 	}
 	numbers := re.getValuesFromCSString(string(*r.Value))
 	if len(numbers) != 2 {
@@ -113,17 +127,17 @@ func (re IntegerRuleEvaluator) isValueInRange(r model.Rule, store DataStore) (bo
 
 func (re IntegerRuleEvaluator) isValuePresentInCSV(r model.Rule, store DataStore) bool {
 
-	csv := string(*r.Value)
-	value, err1 := strconv.Atoi(store[*r.ID])
+	value, err1 := getInteger64(store[*r.ID])
 	if err1 != nil {
-		logger.Error(loggerTag, "error converting store value %s to integer: %v", string(*r.Value), err1)
+		logger.Error(loggerTag, "csv: error converting store value %s to integer: %v", string(*r.Value), err1)
 		return false
 	}
 
+	csv := string(*r.Value)
 	stringSet := strings.Split(csv, ",")
 
 	for _, part := range stringSet {
-		number, err := strconv.Atoi(part)
+		number, err := getInteger64(part)
 		if err != nil {
 			logger.Error(loggerTag, "error converting %s to integer: %v", stringSet[0], err)
 			continue
@@ -135,14 +149,14 @@ func (re IntegerRuleEvaluator) isValuePresentInCSV(r model.Rule, store DataStore
 	return false
 }
 
-func (re IntegerRuleEvaluator) valueFromRuleAndStore(r model.Rule, store DataStore) (int, int, error) {
-	valueFromRule, err := strconv.Atoi(string(*r.RuleLeaf.Value))
+func (re IntegerRuleEvaluator) valueFromRuleAndStore(r model.Rule, store DataStore) (int64, int64, error) {
+	valueFromRule, err := getInteger64(*r.RuleLeaf.Value)
 	if err != nil {
 		return 0, 0, fmt.Errorf("error converting rule value %s to integer: %v", string(*r.Value), err)
 	}
-	valueFromStore, err1 := strconv.Atoi(store[*r.RuleLeaf.ID])
+	valueFromStore, err1 := getInteger64(getValueFromStore(r, store))
 	if err1 != nil {
-		return 0, 0, fmt.Errorf("error converting store value %s to integer: %v", string(*r.Value), err1)
+		return 0, 0, fmt.Errorf("value-int: error converting store value %s to integer: %v", string(*r.Value), err1)
 	}
 	return valueFromRule, valueFromStore, nil
 }

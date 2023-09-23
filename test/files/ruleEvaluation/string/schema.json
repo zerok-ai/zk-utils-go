@@ -98,8 +98,7 @@
       },
       {
         "type": "rule",
-        "id": "address",
-        "json_path": "zip1",
+        "id": "address.zip",
         "datatype": "string",
         "operator": "equal",
         "value": "560001",

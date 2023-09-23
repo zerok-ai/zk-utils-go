@@ -1,5 +1,5 @@
 {
-  "let's meet": "true",
+  "let_us_meet": "true",
   "today": "false",
   "max_taxi_fare": "45.23",
   "time_in_epoch": "1695010573",
@@ -8,5 +8,10 @@
   "country": "india",
   "name": "funky science rover stories",
   "author": "Jane Austen",
-  "address": "{\n    \"street\": \"1234 Main St\",\n    \"city\": \"Bangalore\",\n    \"state\": \"Karnataka\",\n    \"zip\": \"560001\"\n}"
+  "address": {
+    "street": "1234 Main St",
+    "city": "Bangalore",
+    "state": "Karnataka",
+    "zip": "560001"
+  }
 }
