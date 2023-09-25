@@ -8,5 +8,7 @@
   "filter": {
     "type": "",
     "condition": ""
-  }
+  },
+  "group_by": null,
+  "rate_limit": null
 }
