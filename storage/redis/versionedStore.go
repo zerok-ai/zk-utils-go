@@ -249,6 +249,8 @@ func (versionStore *VersionedStore[T]) DeleteAllKeys() error {
 		keysArr = append(keysArr, key)
 	}
 
+	zkLogger.Debug(LogTag, "Deleting keys ", keysArr)
+
 	// create a transaction
 	ctx := context.Background()
 	tx := rdb.TxPipeline()
