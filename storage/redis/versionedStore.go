@@ -233,6 +233,8 @@ func (versionStore *VersionedStore[T]) DeleteAllKeys() error {
 
 	versions, err := versionStore.getAllVersionsFromDB()
 
+	zkLogger.Debug(LogTag, "Existing version are ", versions)
+
 	if len(versions) == 0 {
 		return nil
 	}
