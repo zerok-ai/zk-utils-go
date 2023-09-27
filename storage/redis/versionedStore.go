@@ -233,6 +233,10 @@ func (versionStore *VersionedStore[T]) DeleteAllKeys() error {
 
 	versions, err := versionStore.getAllVersionsFromDB()
 
+	if len(versions) == 0 {
+		return nil
+	}
+
 	if err != nil {
 		zkLogger.Error(LogTag, "Error while getting all version from db.")
 		return err
@@ -241,10 +245,6 @@ func (versionStore *VersionedStore[T]) DeleteAllKeys() error {
 	keysArr := []string{}
 	for key, _ := range versions {
 		keysArr = append(keysArr, key)
-	}
-
-	if len(keysArr) == 0 {
-		return nil
 	}
 
 	// create a transaction
