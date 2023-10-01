@@ -18,6 +18,7 @@ import (
 	"math"
 	"os"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -196,6 +197,20 @@ func SetResponseInCtxAndReturn[T any](ctx iris.Context, resp *T, zkError *zkErro
 	ctx.StatusCode(zkHttpResponse.Status)
 	ctx.JSON(zkHttpResponse)
 	return
+}
+
+func ExtractRegexStringFromString(target, jsonExtractPattern string) string {
+
+	// Compile the regular expressions
+	jsonExtractRegex := regexp.MustCompile(jsonExtractPattern)
+
+	// Extract response_payload and message using regular expressions
+	message := jsonExtractRegex.FindStringSubmatch(target)
+
+	if len(message) > 1 {
+		return message[1]
+	}
+	return ""
 }
 
 func GetBytesFromFile(path string) []byte {

@@ -2,13 +2,11 @@ package evaluators
 
 import (
 	"fmt"
-	"github.com/jmespath/go-jmespath"
-	logger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
 )
 
 const (
-	loggerTag = "scenario-evaluator"
+	LoggerTag = "scenario-evaluator"
 
 	typeString             = "string"
 	typeKeyValue           = "key-value"
@@ -41,24 +39,53 @@ const (
 	operatorNotBetween       = "not_between"
 )
 
-type DataStore map[string]interface{}
-type RuleEvaluator interface {
-	init() RuleEvaluator
-	EvalRule(rule model.Rule, store DataStore) (bool, error)
+type DataStore map[string]string
+
+func (ds DataStore) String() string {
+	str := "{"
+	for k, v := range ds {
+		str += fmt.Sprintf("%s:%s,", k, v)
+	}
+	str += "}"
+	return str
 }
 
-type BaseRuleEvaluator struct {
+type RuleEvaluatorInternal interface {
+	init() RuleEvaluatorInternal
+	EvalRule(rule model.Rule, valueStore map[string]interface{}) (bool, error)
+}
+
+type RuleEvaluator struct {
 	dataSource     DataStore
-	ruleEvaluators map[string]RuleEvaluator
+	ruleEvaluators map[string]RuleEvaluatorInternal
+}
+
+func getIDFromIDStore(rule model.Rule, idStore DataStore) string {
+
+	// get the id
+	id := *rule.RuleLeaf.ID
+
+	// get the actual id from the idStore. If not found, use the id as is
+	value, ok := idStore[id]
+	if !ok {
+		value = id
+	}
+
+	jsonPath := rule.RuleLeaf.JsonPath
+	if jsonPath != nil {
+		value = value + *jsonPath
+	}
+
+	return value
 }
 
 func NewRuleEvaluator() RuleEvaluator {
-	return BaseRuleEvaluator{
-		ruleEvaluators: make(map[string]RuleEvaluator),
+	return RuleEvaluator{
+		ruleEvaluators: make(map[string]RuleEvaluatorInternal),
 	}.init()
 }
 
-func (re BaseRuleEvaluator) init() RuleEvaluator {
+func (re RuleEvaluator) init() RuleEvaluator {
 	re.ruleEvaluators[model.RULE_GROUP] = RuleGroupEvaluator{re}.init()
 
 	re.ruleEvaluators[typeString] = StringRuleEvaluator{}.init()
@@ -69,29 +96,30 @@ func (re BaseRuleEvaluator) init() RuleEvaluator {
 	return re
 }
 
-func (re BaseRuleEvaluator) EvalRule(r model.Rule, store DataStore) (bool, error) {
+func (re RuleEvaluator) EvalRule(rule model.Rule, idStore DataStore, valueStore map[string]interface{}) (bool, error) {
 
 	handled, value := false, false
 	var err error
 	var evaluator string
-	if r.Type != model.RULE_GROUP {
-		err = re.validate(r, store)
+	if rule.Type != model.RULE_GROUP {
+		err = re.validate(rule)
 		if err != nil {
 			return false, err
 		}
 
-		handled, value, err = re.handleCommonOperators(r, store)
-		evaluator = string(*r.RuleLeaf.Datatype)
+		handled, value, err = re.handleCommonOperators(rule, valueStore)
+		evaluator = string(*rule.RuleLeaf.Datatype)
 	} else {
+		newID := getIDFromIDStore(rule, idStore)
+		rule.RuleLeaf.ID = &newID
 		evaluator = model.RULE_GROUP
 	}
 	if !handled {
-		// run through the specific rule evaluators
 		ruleEvaluator := re.ruleEvaluators[evaluator]
 		if ruleEvaluator == nil {
-			return false, fmt.Errorf("ruleEvaluator not found for type: %s", r.Type)
+			return false, fmt.Errorf("ruleEvaluator not found for type: %s", rule.Type)
 		}
-		return ruleEvaluator.EvalRule(r, store)
+		return ruleEvaluator.EvalRule(rule, valueStore)
 	}
 
 	return value, err
@@ -99,30 +127,22 @@ func (re BaseRuleEvaluator) EvalRule(r model.Rule, store DataStore) (bool, error
 
 // handleCommonOperators is a helper function to handle common operators like exists. The function returns
 // a bool indicating if the rule is handled, a bool indicating the value, if handled and an error if any.
-func (re BaseRuleEvaluator) handleCommonOperators(r model.Rule, store DataStore) (bool, bool, error) {
+func (re RuleEvaluator) handleCommonOperators(r model.Rule, store map[string]interface{}) (bool, bool, error) {
 	operator := string(*r.Operator)
 	//	switch on operator
 	switch operator {
 	case operatorExists:
-		return true, getValueFromStore(r, store) != nil, nil
+		_, ok := store[*r.RuleLeaf.ID]
+		return true, ok, nil
 	case operatorNotExists:
-		return true, getValueFromStore(r, store) == nil, nil
+		_, ok := store[*r.RuleLeaf.ID]
+		return true, !ok, nil
 	}
 
 	return false, false, nil
 }
 
-func getValueFromStore(r model.Rule, store DataStore) interface{} {
-	path := *r.RuleLeaf.ID
-	value, err := jmespath.Search(path, map[string]interface{}(store))
-	if err != nil {
-		logger.Error(loggerTag, "error searching for path: ", path, " in store: ", store, " error: ", err)
-		return nil
-	}
-	return value
-}
-
-func (re BaseRuleEvaluator) validate(r model.Rule, store DataStore) error {
+func (re RuleEvaluator) validate(r model.Rule) error {
 	id := r.ID
 	operator := r.Operator
 	valueFromRule := r.Value
@@ -139,55 +159,3 @@ func (re BaseRuleEvaluator) validate(r model.Rule, store DataStore) error {
 
 	return nil
 }
-
-//func (re BaseRuleEvaluator) handlePath(r model.Rule, store DataStore) (model.Rule, DataStore, error) {
-//
-//	var jsonPath, arrayIndex *string = nil, nil
-//	if r.RuleLeaf != nil {
-//		jsonPath = r.RuleLeaf.JsonPath
-//		arrayIndex = r.RuleLeaf.ArrayIndex
-//	}
-//	if jsonPath != nil {
-//		valueFromStore, ok := store[*r.RuleLeaf.ID]
-//		if !ok {
-//			return r, store, fmt.Errorf("value for id: %s not found in store", *r.ID)
-//		}
-//
-//		//// Define a map to store the parsed JSON jsonObject
-//		//var jsonObject map[string]interface{}
-//		//
-//		//// Unmarshal the JSON jsonObject into the map
-//		//err := json.Unmarshal([]byte(valueFromStore), &jsonObject)
-//		//if err != nil {
-//		//	return r, store, fmt.Errorf("error unmarshalling json_path for id: %s  %v", *r.ID, err)
-//		//}
-//
-//		//load json from valueFromStore
-//		valueAtPath, err := jmespath.Search(*jsonPath, valueFromStore)
-//		if err != nil {
-//			return r, store, fmt.Errorf("value for id: %s not found in store at path:%s ", *r.ID, *jsonPath)
-//		}
-//
-//		newId := *r.ID + *jsonPath
-//		r.ID = &newId
-//		if valueAtPath == nil {
-//			if string(*r.Datatype) == typeInteger || string(*r.Datatype) == typeFloat {
-//				valueAtPath = "0"
-//			} else if string(*r.Datatype) == typeBool {
-//				valueAtPath = "false"
-//			} else {
-//				valueAtPath = ""
-//			}
-//		}
-//		store[*r.ID] = valueAtPath.(string)
-//
-//		return r, store, nil
-//	}
-//
-//	//TODO handle array index
-//	if arrayIndex != nil {
-//		return r, store, nil
-//	}
-//
-//	return r, store, nil
-//}

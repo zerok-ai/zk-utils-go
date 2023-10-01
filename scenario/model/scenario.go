@@ -124,7 +124,6 @@ func (s Scenario) Less(other Scenario) bool {
 }
 
 type Workload struct {
-	Executor  string    `json:"executor"`
 	Service   string    `json:"service,omitempty"`
 	TraceRole TraceRole `json:"trace_role,omitempty"`
 	Protocol  Protocol  `json:"protocol,omitempty"`
@@ -132,7 +131,7 @@ type Workload struct {
 }
 
 func (wr Workload) Equals(other Workload) bool {
-	if wr.Executor != other.Executor || wr.Service != other.Service || wr.TraceRole != other.TraceRole || wr.Protocol != other.Protocol {
+	if wr.Service != other.Service || wr.TraceRole != other.TraceRole || wr.Protocol != other.Protocol {
 		return false
 	}
 
@@ -254,6 +253,7 @@ type RuleLeaf struct {
 	Input    *InputTypes    `json:"input,omitempty"`
 	Operator *OperatorTypes `json:"operator,omitempty"`
 	Value    *ValueTypes    `json:"value,omitempty"`
+	JsonPath *string        `json:"json_path,omitempty"`
 }
 
 func (r RuleLeaf) String() string {
@@ -318,6 +318,11 @@ func (r RuleLeaf) LessThan(other RuleLeaf) bool {
 			return true
 		}
 		return false
+	}
+
+	comparison = stringCompare(r.JsonPath, other.JsonPath)
+	if comparison != 0 {
+		return comparison < 0
 	}
 
 	fmt.Println("before returning false")

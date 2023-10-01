@@ -77,7 +77,7 @@ func TestRuleEvaluationFloat(t *testing.T) {
 func validate(t *testing.T, w model.Workload, dataStore evaluators.DataStore, expected bool) {
 	var result bool
 	ruleEvaluator := evaluators.NewRuleEvaluator()
-	result, err := ruleEvaluator.EvalRule(w.Rule, dataStore)
+	result, err := ruleEvaluator.EvalRule(w.Rule, nil, dataStore)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, result)
 }

@@ -6,27 +6,32 @@ import (
 )
 
 type BooleanEvaluator struct {
-	baseRuleEvaluator BaseRuleEvaluator
+	baseRuleEvaluator RuleEvaluator
 }
 
-func (re BooleanEvaluator) init() RuleEvaluator {
+func (re BooleanEvaluator) init() RuleEvaluatorInternal {
 	return re
 }
 
-func (re BooleanEvaluator) EvalRule(r model.Rule, store DataStore) (bool, error) {
+func (re BooleanEvaluator) EvalRule(rule model.Rule, valueStore map[string]interface{}) (bool, error) {
 
-	valueFromRule, err := getBooleanValue(string(*r.Value))
+	valueFromRule, err := getBooleanValue(string(*rule.Value))
 	if err != nil {
 		return false, err
 	}
 
-	valueFromStore, err1 := getBooleanValue(getValueFromStore(r, store))
+	// get the value from the value store
+	value, ok := GetValueFromStore(*rule.RuleLeaf.ID, valueStore)
+	if !ok {
+		return false, fmt.Errorf("value for id: %s not found in valueStore", *rule.RuleLeaf.ID)
+	}
+	valueFromStore, err1 := getBooleanValue(value)
 	if err1 != nil {
 		return false, err1
 	}
 
 	//	switch on operator
-	operator := string(*r.Operator)
+	operator := string(*rule.Operator)
 	switch operator {
 
 	case operatorEqual:
@@ -40,25 +45,11 @@ func (re BooleanEvaluator) EvalRule(r model.Rule, store DataStore) (bool, error)
 }
 
 func getBooleanValue(value interface{}) (bool, error) {
-	// convert strValue to bool
-	if value == nil {
-		return false, fmt.Errorf("nil-value: invalid boolean value: %s", value)
-	}
-
-	if boolValue, ok := value.(bool); ok {
-		return boolValue, nil
-	}
-
-	strValue, ok := value.(string)
-	if !ok {
-		return false, fmt.Errorf("typecast-string: invalid boolean value: %s", value)
-	}
-
+	strValue := fmt.Sprintf("%v", value)
 	if strValue == "true" {
 		return true, nil
 	} else if strValue == "false" {
 		return false, nil
-	} else {
-		return false, fmt.Errorf("invalid boolean value: %s", strValue)
 	}
+	return false, fmt.Errorf("invalid boolean value: %s", strValue)
 }

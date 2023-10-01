@@ -10,27 +10,21 @@ import (
 type StringRuleEvaluator struct {
 }
 
-func (re StringRuleEvaluator) init() RuleEvaluator {
+func (re StringRuleEvaluator) init() RuleEvaluatorInternal {
 	return re
 }
 
-func (re StringRuleEvaluator) EvalRule(r model.Rule, store DataStore) (bool, error) {
+func (re StringRuleEvaluator) EvalRule(rule model.Rule, valueStore map[string]interface{}) (bool, error) {
 
 	// get the values assuming that the rule object is valid
-	operator := string(*r.RuleLeaf.Operator)
-	valueFromRule := string(*r.RuleLeaf.Value)
+	operator := string(*rule.Operator)
+	valueFromRule := string(*rule.Value)
 
-	var valueFromStore string
-	ok := true
-	valTemp := getValueFromStore(r, store)
-	if valTemp != nil {
-		valueFromStore, ok = valTemp.(string)
+	valueFromStoreI, ok := valueStore[*rule.RuleLeaf.ID]
+	if !ok {
+		return false, fmt.Errorf("value for id: %s not found in valueStore", *rule.RuleLeaf.ID)
 	}
-
-	// if the value is not found in the store, or can't be converted to string, return false
-	if valTemp == nil || !ok {
-		return false, fmt.Errorf("value for id: %s not found in store", *r.RuleLeaf.ID)
-	}
+	valueFromStore := fmt.Sprintf("%v", valueFromStoreI)
 
 	//	switch on operator
 	switch operator {
