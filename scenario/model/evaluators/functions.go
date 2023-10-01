@@ -10,13 +10,13 @@ import (
 )
 
 type Function struct {
-	name string
-	args []string
+	Name string
+	Args []string
 }
 
 func GetPathAndFunctions(input string) (path string, functions []Function) {
 
-	// Define regular expressions for path, function name, and function parameters
+	// Define regular expressions for path, function Name, and function parameters
 	pathRegex := regexp.MustCompile(`^([^#]*)`)
 
 	// Extract path
@@ -39,9 +39,9 @@ func GetPathAndFunctions(input string) (path string, functions []Function) {
 	// Iterate over the matches and print the extracted function calls
 	functions = make([]Function, 0)
 	for _, match := range matches {
-		// get the name
+		// get the Name
 		name := match[1]
-		fmt.Print("\n---fn name:" + name)
+		fmt.Print("\n---fn Name:" + name)
 
 		// get the params and trim spaces from each substring
 		params := strings.Split(match[2], ",")
@@ -54,7 +54,7 @@ func GetPathAndFunctions(input string) (path string, functions []Function) {
 				fmt.Print("\t" + temp)
 			}
 		}
-		fmt.Printf("\tnumber of args: %d", len(args))
+		fmt.Printf("\tnumber of Args: %d", len(args))
 
 		// append the function to the list
 		functions = append(functions, Function{name, args})
@@ -87,9 +87,9 @@ func GetValueFromStore(path string, store map[string]interface{}) (interface{}, 
 			return valueAtObject, false
 		}
 
-		if fn.name == "jsonExtract" {
+		if fn.Name == "jsonExtract" {
 			valueAtObject, ok = jsonExtract(fn, valueAtObject)
-		} else if fn.name == "toUpperCase" || fn.name == "toLowerCase" {
+		} else if fn.Name == "toUpperCase" || fn.Name == "toLowerCase" {
 			valueAtObject, ok = stringFunction(fn, valueAtObject)
 		}
 		if !ok {
@@ -104,9 +104,9 @@ func stringFunction(fn Function, valueAtObject interface{}) (value string, ok bo
 	var stringVal string
 	stringVal, ok = valueAtObject.(string)
 	if ok {
-		if fn.name == "toUpperCase" {
+		if fn.Name == "toUpperCase" {
 			return strings.ToUpper(stringVal), true
-		} else if fn.name == "toLowerCase" {
+		} else if fn.Name == "toLowerCase" {
 			return strings.ToLower(stringVal), true
 		}
 	}
@@ -132,7 +132,7 @@ func jsonExtract(fn Function, valueAtObject interface{}) (value string, ok bool)
 	} else {
 		jsonObject = valueAtObject
 	}
-	path := fn.args[0]
+	path := fn.Args[0]
 	valueAtObject, err = jmespath.Search(path, jsonObject)
 
 	if err != nil {
