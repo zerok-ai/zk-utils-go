@@ -1,8 +1,12 @@
 package evaluators
 
 import (
+	"context"
 	"fmt"
+	"github.com/zerok-ai/zk-utils-go/ds"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
+	zkRedis "github.com/zerok-ai/zk-utils-go/storage/redis"
+	"github.com/zerok-ai/zk-utils-go/storage/redis/config"
 )
 
 const (
@@ -57,38 +61,31 @@ type LeafRuleEvaluator interface {
 
 type GroupRuleEvaluator interface {
 	init() GroupRuleEvaluator
-	evalRule(rule model.Rule, idStore DataStore, valueStore map[string]interface{}) (bool, error)
+	evalRule(rule model.Rule, attributeVersion string, valueStore map[string]interface{}) (bool, error)
 }
 
 type RuleEvaluator struct {
 	dataSource         DataStore
+	attributeNameStore *zkRedis.LocalCacheHSetStore
 	leafRuleEvaluators map[string]LeafRuleEvaluator
 	groupRuleEvaluator GroupRuleEvaluator
 }
 
-func getIDFromIDStore(rule model.Rule, idStore DataStore) string {
-
-	// get the id
-	id := *rule.RuleLeaf.ID
-
-	// get the actual id from the idStore. If not found, use the id as is
-	value, ok := idStore[id]
-	if !ok {
-		value = id
-	}
-
-	jsonPath := rule.RuleLeaf.JsonPath
-	if jsonPath != nil {
-		value = value + *jsonPath
-	}
-
-	return value
-}
-
-func NewRuleEvaluator() RuleEvaluator {
+func NewRuleEvaluator(redisConfig config.RedisConfig, ctx context.Context) RuleEvaluator {
 	return RuleEvaluator{
 		leafRuleEvaluators: make(map[string]LeafRuleEvaluator),
+		attributeNameStore: getAttributeNameStore(redisConfig, ctx),
 	}.init()
+}
+
+func getAttributeNameStore(redisConfig config.RedisConfig, ctx context.Context) *zkRedis.LocalCacheHSetStore {
+
+	dbName := "attrNames"
+	cache := ds.GetCacheWithExpiry[map[string]string](ds.NoExpiry)
+	redisClient := config.GetRedisConnection(dbName, redisConfig)
+
+	localCache := zkRedis.GetLocalCacheHSetStore(redisClient, cache, nil, ctx)
+	return localCache
 }
 
 func (re RuleEvaluator) init() RuleEvaluator {
@@ -102,24 +99,24 @@ func (re RuleEvaluator) init() RuleEvaluator {
 	return re
 }
 
-func (re RuleEvaluator) EvalRule(rule model.Rule, idStore DataStore, valueStore map[string]interface{}) (bool, error) {
-	return re.evalRule(rule, idStore, valueStore)
+func (re RuleEvaluator) EvalRule(rule model.Rule, attributeVersion string, valueStore map[string]interface{}) (bool, error) {
+	return re.evalRule(rule, attributeVersion, valueStore)
 }
 
-func (re RuleEvaluator) evalRule(rule model.Rule, idStore DataStore, valueStore map[string]interface{}) (bool, error) {
+func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, valueStore map[string]interface{}) (bool, error) {
 
 	handled, value := false, false
 	var err error
 	if rule.Type == model.RULE_GROUP {
-		return re.groupRuleEvaluator.evalRule(rule, idStore, valueStore)
+		return re.groupRuleEvaluator.evalRule(rule, attributeVersion, valueStore)
 	} else {
 		err = re.validate(rule)
 		if err != nil {
 			return false, err
 		}
 
-		newID := getIDFromIDStore(rule, idStore)
-		rule.RuleLeaf.ID = &newID
+		// replace id with actual attribute name
+		rule.RuleLeaf.ID = re.getAttributeName(rule, attributeVersion)
 
 		handled, value, err = re.handleCommonOperators(rule, valueStore)
 		evaluator := string(*rule.RuleLeaf.Datatype)
@@ -134,6 +131,29 @@ func (re RuleEvaluator) evalRule(rule model.Rule, idStore DataStore, valueStore 
 	}
 
 	return value, err
+}
+
+func (re RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion string) *string {
+
+	// get the id
+	id := *rule.RuleLeaf.ID
+	attributeName := id
+
+	// get the actual id from the idStore. If not found, use the id as is
+	idStore, _ := re.attributeNameStore.Get(attributeVersion)
+	if idStore != nil {
+		attrName, ok := (*idStore)[id]
+		if ok {
+			attributeName = attrName
+		}
+	}
+
+	jsonPath := rule.RuleLeaf.JsonPath
+	if jsonPath != nil {
+		attributeName = attributeName + "#jsonExtract(" + *jsonPath + ")"
+	}
+
+	return &attributeName
 }
 
 // handleCommonOperators is a helper function to handle common operators like exists. The function returns

@@ -1,7 +1,11 @@
 redis:
-  host: localhost
+  host: 127.0.0.1
   port: 6379
-  readTimeout: 20
   dbs:
-    scenario: 6
-    traces: 0
+    traces: 1
+    scenarios: 2
+    otel: 3
+    ip: 7
+    attrNames: 7
+    exceptions: 8
+  readTimeout: 20
