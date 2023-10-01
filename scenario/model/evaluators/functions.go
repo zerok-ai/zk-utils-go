@@ -87,10 +87,10 @@ func GetValueFromStore(path string, store map[string]interface{}) (interface{}, 
 			return valueAtObject, false
 		}
 
-		if fn.Name == "jsonExtract" {
-			valueAtObject, ok = jsonExtract(fn, valueAtObject)
-		} else if fn.Name == "toUpperCase" || fn.Name == "toLowerCase" {
-			valueAtObject, ok = stringFunction(fn, valueAtObject)
+		if fn.Name == "ExtractJSON" {
+			valueAtObject, ok = ExtractJSON(fn, valueAtObject)
+		} else {
+			valueAtObject, ok = EvalStringFunction(fn, valueAtObject)
 		}
 		if !ok {
 			return valueAtObject, false
@@ -100,7 +100,7 @@ func GetValueFromStore(path string, store map[string]interface{}) (interface{}, 
 	return valueAtObject, true
 }
 
-func stringFunction(fn Function, valueAtObject interface{}) (value string, ok bool) {
+func EvalStringFunction(fn Function, valueAtObject interface{}) (value string, ok bool) {
 	var stringVal string
 	stringVal, ok = valueAtObject.(string)
 	if ok {
@@ -113,7 +113,7 @@ func stringFunction(fn Function, valueAtObject interface{}) (value string, ok bo
 	return "", false
 }
 
-func jsonExtract(fn Function, valueAtObject interface{}) (value string, ok bool) {
+func ExtractJSON(fn Function, valueAtObject interface{}) (value string, ok bool) {
 
 	// check if valueAtObject is a string
 	var err error
