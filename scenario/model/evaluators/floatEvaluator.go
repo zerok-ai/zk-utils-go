@@ -11,11 +11,11 @@ import (
 type FloatRuleEvaluator struct {
 }
 
-func (re FloatRuleEvaluator) init() RuleEvaluatorInternal {
+func (re FloatRuleEvaluator) init() LeafRuleEvaluator {
 	return re
 }
 
-func (re FloatRuleEvaluator) EvalRule(rule model.Rule, valueStore map[string]interface{}) (bool, error) {
+func (re FloatRuleEvaluator) evalLeafRule(rule model.Rule, valueStore map[string]interface{}) (bool, error) {
 
 	// get the values assuming that the rule object is valid
 	operator := string(*rule.Operator)

@@ -3,25 +3,25 @@ package evaluators
 import "github.com/zerok-ai/zk-utils-go/scenario/model"
 
 type RuleGroupEvaluator struct {
-	baseRuleEvaluator RuleEvaluator
+	ruleEvaluator RuleEvaluator
 }
 
-func (re RuleGroupEvaluator) init() RuleEvaluatorInternal {
+func (re RuleGroupEvaluator) init() GroupRuleEvaluator {
 	return re
 }
 
-func (re RuleGroupEvaluator) EvalRule(rule model.Rule, valueStore map[string]interface{}) (bool, error) {
+func (re RuleGroupEvaluator) evalGroupRule(r model.Rule, idStore DataStore, valueStore map[string]interface{}) (bool, error) {
 
 	// evaluate all the rules
-	condition := *rule.Condition
+	condition := *r.Condition
 	result := true // default is true for both `AND` and `OR` to work
 	if condition == model.AND {
 		result = true
 	} else {
 		result = false
 	}
-	for _, rule := range rule.Rules {
-		ok, err := re.baseRuleEvaluator.EvalRule(rule, nil, valueStore)
+	for _, rule := range r.Rules {
+		ok, err := re.ruleEvaluator.EvalRule(rule, idStore, valueStore)
 		if err != nil {
 			return false, err
 		}

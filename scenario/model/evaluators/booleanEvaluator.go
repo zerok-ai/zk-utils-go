@@ -9,11 +9,11 @@ type BooleanEvaluator struct {
 	baseRuleEvaluator RuleEvaluator
 }
 
-func (re BooleanEvaluator) init() RuleEvaluatorInternal {
+func (re BooleanEvaluator) init() LeafRuleEvaluator {
 	return re
 }
 
-func (re BooleanEvaluator) EvalRule(rule model.Rule, valueStore map[string]interface{}) (bool, error) {
+func (re BooleanEvaluator) evalLeafRule(rule model.Rule, valueStore map[string]interface{}) (bool, error) {
 
 	valueFromRule, err := getBooleanValue(string(*rule.Value))
 	if err != nil {

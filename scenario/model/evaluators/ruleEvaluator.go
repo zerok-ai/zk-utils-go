@@ -50,14 +50,20 @@ func (ds DataStore) String() string {
 	return str
 }
 
-type RuleEvaluatorInternal interface {
-	init() RuleEvaluatorInternal
-	EvalRule(rule model.Rule, valueStore map[string]interface{}) (bool, error)
+type LeafRuleEvaluator interface {
+	init() LeafRuleEvaluator
+	evalLeafRule(rule model.Rule, valueStore map[string]interface{}) (bool, error)
+}
+
+type GroupRuleEvaluator interface {
+	init() GroupRuleEvaluator
+	evalGroupRule(rule model.Rule, idStore DataStore, valueStore map[string]interface{}) (bool, error)
 }
 
 type RuleEvaluator struct {
-	dataSource     DataStore
-	ruleEvaluators map[string]RuleEvaluatorInternal
+	dataSource         DataStore
+	leafRuleEvaluators map[string]LeafRuleEvaluator
+	groupRuleEvaluator GroupRuleEvaluator
 }
 
 func getIDFromIDStore(rule model.Rule, idStore DataStore) string {
@@ -81,17 +87,17 @@ func getIDFromIDStore(rule model.Rule, idStore DataStore) string {
 
 func NewRuleEvaluator() RuleEvaluator {
 	return RuleEvaluator{
-		ruleEvaluators: make(map[string]RuleEvaluatorInternal),
+		leafRuleEvaluators: make(map[string]LeafRuleEvaluator),
 	}.init()
 }
 
 func (re RuleEvaluator) init() RuleEvaluator {
-	re.ruleEvaluators[model.RULE_GROUP] = RuleGroupEvaluator{re}.init()
+	re.groupRuleEvaluator = RuleGroupEvaluator{re}.init()
 
-	re.ruleEvaluators[typeString] = StringRuleEvaluator{}.init()
-	re.ruleEvaluators[typeInteger] = IntegerRuleEvaluator{}.init()
-	re.ruleEvaluators[typeFloat] = FloatRuleEvaluator{}.init()
-	re.ruleEvaluators[typeBool] = BooleanEvaluator{}.init()
+	re.leafRuleEvaluators[typeString] = StringRuleEvaluator{}.init()
+	re.leafRuleEvaluators[typeInteger] = IntegerRuleEvaluator{}.init()
+	re.leafRuleEvaluators[typeFloat] = FloatRuleEvaluator{}.init()
+	re.leafRuleEvaluators[typeBool] = BooleanEvaluator{}.init()
 
 	return re
 }
@@ -100,26 +106,27 @@ func (re RuleEvaluator) EvalRule(rule model.Rule, idStore DataStore, valueStore 
 
 	handled, value := false, false
 	var err error
-	var evaluator string
-	if rule.Type != model.RULE_GROUP {
+	if rule.Type == model.RULE_GROUP {
+		return re.groupRuleEvaluator.evalGroupRule(rule, idStore, valueStore)
+	} else {
 		err = re.validate(rule)
 		if err != nil {
 			return false, err
 		}
 
-		handled, value, err = re.handleCommonOperators(rule, valueStore)
-		evaluator = string(*rule.RuleLeaf.Datatype)
-	} else {
 		newID := getIDFromIDStore(rule, idStore)
 		rule.RuleLeaf.ID = &newID
-		evaluator = model.RULE_GROUP
-	}
-	if !handled {
-		ruleEvaluator := re.ruleEvaluators[evaluator]
-		if ruleEvaluator == nil {
-			return false, fmt.Errorf("ruleEvaluator not found for type: %s", rule.Type)
+
+		handled, value, err = re.handleCommonOperators(rule, valueStore)
+		evaluator := string(*rule.RuleLeaf.Datatype)
+
+		if !handled {
+			ruleEvaluator := re.leafRuleEvaluators[evaluator]
+			if ruleEvaluator == nil {
+				return false, fmt.Errorf("ruleEvaluator not found for type: %s", rule.Type)
+			}
+			return ruleEvaluator.evalLeafRule(rule, valueStore)
 		}
-		return ruleEvaluator.EvalRule(rule, valueStore)
 	}
 
 	return value, err

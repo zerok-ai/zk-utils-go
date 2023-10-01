@@ -11,11 +11,11 @@ import (
 type IntegerRuleEvaluator struct {
 }
 
-func (re IntegerRuleEvaluator) init() RuleEvaluatorInternal {
+func (re IntegerRuleEvaluator) init() LeafRuleEvaluator {
 	return re
 }
 
-func (re IntegerRuleEvaluator) EvalRule(rule model.Rule, valueStore map[string]interface{}) (bool, error) {
+func (re IntegerRuleEvaluator) evalLeafRule(rule model.Rule, valueStore map[string]interface{}) (bool, error) {
 
 	// get the values assuming that the rule object is valid
 	operator := string(*rule.Operator)
