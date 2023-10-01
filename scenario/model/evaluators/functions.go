@@ -87,7 +87,7 @@ func GetValueFromStore(path string, store map[string]interface{}) (interface{}, 
 			return valueAtObject, false
 		}
 
-		if fn.Name == "ExtractJSON" {
+		if fn.Name == "jsonExtract" {
 			valueAtObject, ok = ExtractJSON(fn, valueAtObject)
 		} else {
 			valueAtObject, ok = EvalStringFunction(fn, valueAtObject)
