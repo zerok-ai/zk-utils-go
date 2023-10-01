@@ -112,10 +112,15 @@ func (versionStore *VersionedStore[T]) setToLocalCache(key string, value *T, ver
 }
 
 func (versionStore *VersionedStore[T]) GetAllValues() map[string]*T {
+	versionStore.mutex.Lock()
+	defer versionStore.mutex.Unlock()
 	return versionStore.localKeyValueCache
 }
 
 func (versionStore *VersionedStore[T]) GetValue(key string) (*T, error) {
+
+	versionStore.mutex.Lock()
+	defer versionStore.mutex.Unlock()
 
 	// get the value from local store
 	localVal := versionStore.localKeyValueCache[key]
