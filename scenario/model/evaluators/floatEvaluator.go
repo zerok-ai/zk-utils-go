@@ -15,7 +15,7 @@ func (re FloatRuleEvaluator) init() LeafRuleEvaluator {
 	return re
 }
 
-func (re FloatRuleEvaluator) evalLeafRule(rule model.Rule, valueStore map[string]interface{}) (bool, error) {
+func (re FloatRuleEvaluator) evalRule(rule model.Rule, valueStore map[string]interface{}) (bool, error) {
 
 	// get the values assuming that the rule object is valid
 	operator := string(*rule.Operator)

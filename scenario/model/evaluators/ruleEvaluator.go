@@ -52,12 +52,12 @@ func (ds DataStore) String() string {
 
 type LeafRuleEvaluator interface {
 	init() LeafRuleEvaluator
-	evalLeafRule(rule model.Rule, valueStore map[string]interface{}) (bool, error)
+	evalRule(rule model.Rule, valueStore map[string]interface{}) (bool, error)
 }
 
 type GroupRuleEvaluator interface {
 	init() GroupRuleEvaluator
-	evalGroupRule(rule model.Rule, idStore DataStore, valueStore map[string]interface{}) (bool, error)
+	evalRule(rule model.Rule, idStore DataStore, valueStore map[string]interface{}) (bool, error)
 }
 
 type RuleEvaluator struct {
@@ -103,11 +103,15 @@ func (re RuleEvaluator) init() RuleEvaluator {
 }
 
 func (re RuleEvaluator) EvalRule(rule model.Rule, idStore DataStore, valueStore map[string]interface{}) (bool, error) {
+	return re.evalRule(rule, idStore, valueStore)
+}
+
+func (re RuleEvaluator) evalRule(rule model.Rule, idStore DataStore, valueStore map[string]interface{}) (bool, error) {
 
 	handled, value := false, false
 	var err error
 	if rule.Type == model.RULE_GROUP {
-		return re.groupRuleEvaluator.evalGroupRule(rule, idStore, valueStore)
+		return re.groupRuleEvaluator.evalRule(rule, idStore, valueStore)
 	} else {
 		err = re.validate(rule)
 		if err != nil {
@@ -123,9 +127,9 @@ func (re RuleEvaluator) EvalRule(rule model.Rule, idStore DataStore, valueStore 
 		if !handled {
 			ruleEvaluator := re.leafRuleEvaluators[evaluator]
 			if ruleEvaluator == nil {
-				return false, fmt.Errorf("ruleEvaluator not found for type: %s", rule.Type)
+				return false, fmt.Errorf("LeafRuleEvaluator not found for type: %s", rule.Type)
 			}
-			return ruleEvaluator.evalLeafRule(rule, valueStore)
+			return ruleEvaluator.evalRule(rule, valueStore)
 		}
 	}
 

@@ -15,7 +15,7 @@ func (re IntegerRuleEvaluator) init() LeafRuleEvaluator {
 	return re
 }
 
-func (re IntegerRuleEvaluator) evalLeafRule(rule model.Rule, valueStore map[string]interface{}) (bool, error) {
+func (re IntegerRuleEvaluator) evalRule(rule model.Rule, valueStore map[string]interface{}) (bool, error) {
 
 	// get the values assuming that the rule object is valid
 	operator := string(*rule.Operator)

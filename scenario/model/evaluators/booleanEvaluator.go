@@ -13,7 +13,7 @@ func (re BooleanEvaluator) init() LeafRuleEvaluator {
 	return re
 }
 
-func (re BooleanEvaluator) evalLeafRule(rule model.Rule, valueStore map[string]interface{}) (bool, error) {
+func (re BooleanEvaluator) evalRule(rule model.Rule, valueStore map[string]interface{}) (bool, error) {
 
 	valueFromRule, err := getBooleanValue(string(*rule.Value))
 	if err != nil {
