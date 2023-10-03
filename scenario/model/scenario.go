@@ -123,11 +123,19 @@ func (s Scenario) Less(other Scenario) bool {
 	return false
 }
 
+type Executor string
+
+const (
+	ExecutorEbpf Executor = "EBPF"
+	ExecutorOTel Executor = "OTEL"
+)
+
 type Workload struct {
 	Service   string    `json:"service,omitempty"`
 	TraceRole TraceRole `json:"trace_role,omitempty"`
 	Protocol  Protocol  `json:"protocol,omitempty"`
 	Rule      Rule      `json:"rule,omitempty"`
+	Executor  Executor  `json:"executor,omitempty"`
 }
 
 func (wr Workload) Equals(other Workload) bool {
