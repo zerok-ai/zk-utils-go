@@ -131,15 +131,15 @@ const (
 )
 
 type Workload struct {
+	Executor  string    `json:"executor"`
 	Service   string    `json:"service,omitempty"`
 	TraceRole TraceRole `json:"trace_role,omitempty"`
 	Protocol  Protocol  `json:"protocol,omitempty"`
 	Rule      Rule      `json:"rule,omitempty"`
-	Executor  Executor  `json:"executor,omitempty"`
 }
 
 func (wr Workload) Equals(other Workload) bool {
-	if wr.Service != other.Service || wr.TraceRole != other.TraceRole || wr.Protocol != other.Protocol {
+	if wr.Executor != other.Executor || wr.Service != other.Service || wr.TraceRole != other.TraceRole || wr.Protocol != other.Protocol {
 		return false
 	}
 
@@ -261,11 +261,11 @@ type RuleLeaf struct {
 	Input    *InputTypes    `json:"input,omitempty"`
 	Operator *OperatorTypes `json:"operator,omitempty"`
 	Value    *ValueTypes    `json:"value,omitempty"`
-	JsonPath *string        `json:"json_path,omitempty"`
+	JsonPath *[]string      `json:"json_path,omitempty"`
 }
 
 func (r RuleLeaf) String() string {
-	return fmt.Sprintf("RuleLeaf{ID: %v, Field: %v, Datatype: %v, Input: %v, Operator: %v, Value: %v}", *r.ID, *r.Field, *r.Datatype, *r.Input, *r.Operator, *r.Value)
+	return fmt.Sprintf("RuleLeaf{ID: %v, Field: %v, Datatype: %v, Input: %v, Operator: %v, Value: %v, Value: %v}", *r.ID, *r.Field, *r.Datatype, *r.Input, *r.Operator, *r.Value, *r.JsonPath)
 }
 
 func (r RuleLeaf) Equals(other RuleLeaf) bool {
@@ -328,11 +328,28 @@ func (r RuleLeaf) LessThan(other RuleLeaf) bool {
 		return false
 	}
 
-	comparison = stringCompare(r.JsonPath, other.JsonPath)
-	if comparison != 0 {
-		return comparison < 0
-	}
+	if r.JsonPath == nil && other.JsonPath != nil {
+		return true
+	} else if r.JsonPath != nil && other.JsonPath == nil {
+		return false
+	} else if r.JsonPath != nil && other.JsonPath != nil && !reflect.DeepEqual(*r.JsonPath, *other.JsonPath) {
+		rLength := len(*r.JsonPath)
+		otherLength := len(*other.JsonPath)
+		if rLength < otherLength {
+			return true
+		} else if rLength > otherLength {
+			return false
+		}
 
+		for i := 0; i < rLength; i++ {
+			if (*r.JsonPath)[i] < (*other.JsonPath)[i] {
+				return true
+			} else if (*r.JsonPath)[i] > (*other.JsonPath)[i] {
+				return false
+			}
+		}
+		return false
+	}
 	fmt.Println("before returning false")
 	return false
 }
