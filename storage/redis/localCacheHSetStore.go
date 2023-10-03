@@ -5,10 +5,21 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/zerok-ai/zk-utils-go/ds"
 	zkErrors "github.com/zerok-ai/zk-utils-go/zkerrors"
+	"log"
 )
 
-// LocalCacheHSetStore is a cache store that uses LRU cache for local caching
-type LocalCacheHSetStore struct {
+type LocalCacheHSetStore interface {
+	Close()
+	SetCache(cache ds.Cache[map[string]string])
+	PutInLocalCache(key string, value *map[string]string)
+	Get(key string) (*map[string]string, bool)
+	GetFromLocalCache(key string) (*map[string]string, bool)
+	GetFromRedis(key string) (*map[string]string, error)
+	GetAllKeysFromRedis(pattern string) (*[]string, error)
+}
+
+// LocalCacheHSetStoreInternal is a cache store that uses LRU cache for local caching
+type LocalCacheHSetStoreInternal struct {
 	redisClient    *redis.Client
 	localCache     ds.Cache[map[string]string]
 	cacheStoreHook CacheStoreHook[map[string]string]
@@ -16,41 +27,42 @@ type LocalCacheHSetStore struct {
 }
 
 func GetLocalCacheHSetStore(rc *redis.Client, localCache ds.Cache[map[string]string], csh CacheStoreHook[map[string]string], ctx context.Context) *LocalCacheHSetStore {
-	localCacheHSetStore := (&LocalCacheHSetStore{
+	internal := (&LocalCacheHSetStoreInternal{
 		redisClient:    rc,
 		localCache:     localCache,
 		cacheStoreHook: csh,
 		context:        ctx,
 	}).initialize()
 
-	return localCacheHSetStore
+	var localCacheHSetStore LocalCacheHSetStore = &internal
+	return &localCacheHSetStore
 
 }
 
-func (localCacheHSetStore *LocalCacheHSetStore) SetCache(cache ds.Cache[map[string]string]) {
+func (localCacheHSetStore *LocalCacheHSetStoreInternal) SetCache(cache ds.Cache[map[string]string]) {
 	localCacheHSetStore.localCache = cache
 }
 
-func (localCacheHSetStore *LocalCacheHSetStore) initialize() *LocalCacheHSetStore {
-	return localCacheHSetStore
+func (localCacheHSetStore *LocalCacheHSetStoreInternal) initialize() LocalCacheHSetStoreInternal {
+	return *localCacheHSetStore
 }
 
-func (localCacheHSetStore *LocalCacheHSetStore) Close() {
+func (localCacheHSetStore *LocalCacheHSetStoreInternal) Close() {
 	err := localCacheHSetStore.redisClient.Close()
 	if err != nil {
 		return
 	}
 }
 
-func (localCacheHSetStore *LocalCacheHSetStore) PutInLocalCache(key string, value *map[string]string) {
+func (localCacheHSetStore *LocalCacheHSetStoreInternal) PutInLocalCache(key string, value *map[string]string) {
 	localCacheHSetStore.localCache.Put(key, value)
 }
 
-func (localCacheHSetStore *LocalCacheHSetStore) GetFromLocalCache(key string) (*map[string]string, bool) {
+func (localCacheHSetStore *LocalCacheHSetStoreInternal) GetFromLocalCache(key string) (*map[string]string, bool) {
 	return localCacheHSetStore.localCache.Get(key)
 }
 
-func (localCacheHSetStore *LocalCacheHSetStore) GetFromRedis(key string) (*map[string]string, error) {
+func (localCacheHSetStore *LocalCacheHSetStoreInternal) GetFromRedis(key string) (*map[string]string, error) {
 	value, err := localCacheHSetStore.redisClient.HGetAll(localCacheHSetStore.context, key).Result()
 	if err != nil {
 		return nil, err
@@ -59,9 +71,19 @@ func (localCacheHSetStore *LocalCacheHSetStore) GetFromRedis(key string) (*map[s
 	return &value, nil
 }
 
+func (localCacheHSetStore *LocalCacheHSetStoreInternal) GetAllKeysFromRedis(pattern string) (*[]string, error) {
+	// Use the client to retrieve all keys using the KEYS command (not recommended for large databases)
+	keys, err := localCacheHSetStore.redisClient.Keys(localCacheHSetStore.context, pattern).Result()
+	if err != nil {
+		log.Fatalf("Error getting keys: %v", err)
+	}
+
+	return &keys, nil
+}
+
 // Get returns the value for the given key. If the value is not present in the cache, it is fetched from the DB and stored in the cache
 // The function returns the value and a boolean indicating if the value was fetched from the cache
-func (localCacheHSetStore *LocalCacheHSetStore) Get(key string) (*map[string]string, bool) {
+func (localCacheHSetStore *LocalCacheHSetStoreInternal) Get(key string) (*map[string]string, bool) {
 	value, fromCache := localCacheHSetStore.GetFromLocalCache(key)
 	if value == nil {
 		fromCache = false
@@ -76,7 +98,7 @@ func (localCacheHSetStore *LocalCacheHSetStore) Get(key string) (*map[string]str
 }
 
 // Put puts the given key-value pair in the cache and DB
-func (localCacheHSetStore *LocalCacheHSetStore) saveLocally(key string, value *map[string]string) {
+func (localCacheHSetStore *LocalCacheHSetStoreInternal) saveLocally(key string, value *map[string]string) {
 	var err *zkErrors.ZkError = nil
 	if localCacheHSetStore.cacheStoreHook != nil {
 		err = localCacheHSetStore.cacheStoreHook.PreCacheSaveHookAsync(key, value)
