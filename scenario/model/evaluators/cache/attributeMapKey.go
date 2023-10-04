@@ -52,6 +52,30 @@ func (key Key) IsLessThan(other Key) bool {
 	return key.Suffix < other.Suffix
 }
 
+func (key Key) IsGreaterThan(other Key) bool {
+	if key.Executor != other.Executor {
+		return key.Executor > other.Executor
+	}
+
+	if key.Protocol != other.Protocol {
+		return key.Protocol > other.Protocol
+	}
+
+	if key.Major != other.Major {
+		return key.Major > other.Major
+	}
+
+	if key.Minor != other.Minor {
+		return key.Minor > other.Minor
+	}
+
+	if key.Patch != other.Patch {
+		return key.Patch > other.Patch
+	}
+
+	return key.Suffix > other.Suffix
+}
+
 // ParseKey parses a key into its components.
 func ParseKey(key string) (Key, error) {
 	parts := strings.Split(key, "_")

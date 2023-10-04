@@ -116,7 +116,7 @@ func (attributeCache *AttributeCache) getClosestKey(executor string, attributeVe
 	// find the closest key smaller than the input key
 	index := 0
 	for index = 0; index < len(keys); index++ {
-		if !keys[index].IsLessThan(inputKey) {
+		if keys[index].IsGreaterThan(inputKey) {
 			break
 		}
 	}
