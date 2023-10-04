@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/redis/go-redis/v9"
 	"github.com/zerok-ai/zk-utils-go/ds"
-	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators"
+	"github.com/zerok-ai/zk-utils-go/scenario/model"
 	zkRedis "github.com/zerok-ai/zk-utils-go/storage/redis"
 	"sort"
 )
@@ -75,7 +75,7 @@ func (attributeCache *AttributeCache) GetFromRedis(key string) (*map[string]stri
 */
 func (attributeCache *AttributeCache) Get(executor, attributeVersion, protocol, attributeName string) *string {
 
-	protocols := []string{protocol, string(evaluators.ProtocolGeneral)}
+	protocols := []string{protocol, string(model.ProtocolGeneral)}
 	for _, proto := range protocols {
 
 		// 1. get the closest key

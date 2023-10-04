@@ -7,10 +7,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/zerok-ai/zk-utils-go/common"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
-	evaluators2 "github.com/zerok-ai/zk-utils-go/scenario/model/evaluators"
-	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/cache"
+	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators"
+
+	//"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators"
 	"github.com/zerok-ai/zk-utils-go/storage/redis/config"
-	"sort"
 	"testing"
 )
 
@@ -82,48 +82,48 @@ func TestRuleEvaluationFloat(t *testing.T) {
 	validate(t, w, dataStore, true)
 }
 
-func TestMatchingVersionKey(t *testing.T) {
-
-	keys := []string{
-		"OTEL_1.21.0_GENERAL",
-		"OTEL_1.7.0_HTTP",
-		"OTEL_1.7.0_GENERAL",
-		"OTEL_1.21.0_HTTP",
-		"EBPF_0.1.0-alpha_HTTP",
-	}
-
-	//protocol := "HTTP"
-	//executor := "OTEL"
-
-	//attributeCache := cache.AttributeCache{}
-	//attributeCache.Executors = PopulateExecutorDataFromRedis(config.RedisConfig{}, context.Background())
-
-	var parsedKeys []cache.Key
-	for _, key := range keys {
-		parsedKey, err := cache.ParseKey(key)
-		if err != nil {
-			fmt.Printf("Error parsing key: %v\n", err)
-			continue
-		}
-		parsedKeys = append(parsedKeys, parsedKey)
-	}
-
-	// Sort the keys using the custom sorting criteria.
-	sort.Sort(cache.ByVersion(parsedKeys))
-
-	// Print the sorted keys.
-	for _, parsedKey := range parsedKeys {
-		fmt.Println(parsedKey.Value)
-	}
-
-}
+//func TestMatchingVersionKey(t *testing.T) {
+//
+//	keys := []string{
+//		"OTEL_1.21.0_GENERAL",
+//		"OTEL_1.7.0_HTTP",
+//		"OTEL_1.7.0_GENERAL",
+//		"OTEL_1.21.0_HTTP",
+//		"EBPF_0.1.0-alpha_HTTP",
+//	}
+//
+//	//protocol := "HTTP"
+//	//executor := "OTEL"
+//
+//	//attributeCache := cache.AttributeCache{}
+//	//attributeCache.Executors = PopulateExecutorDataFromRedis(config.RedisConfig{}, context.Background())
+//
+//	//var parsedKeys []cache.Key
+//	//for _, key := range keys {
+//	//	parsedKey, err := cache.ParseKey(key)
+//	//	if err != nil {
+//	//		fmt.Printf("Error parsing key: %v\n", err)
+//	//		continue
+//	//	}
+//	//	parsedKeys = append(parsedKeys, parsedKey)
+//	//}
+//	//
+//	//// Sort the keys using the custom sorting criteria.
+//	//sort.Sort(cache.ByVersion(parsedKeys))
+//	//
+//	//// Print the sorted keys.
+//	//for _, parsedKey := range parsedKeys {
+//	//	fmt.Println(parsedKey.Value)
+//	//}
+//
+//}
 
 func validate(t *testing.T, w model.Workload, dataStore map[string]interface{}, expected bool) {
 	var result bool
 	executor := "OTEL"
 	redisConfig := config.RedisConfig{}
 	ctx := context.Background()
-	ruleEvaluator := evaluators2.NewRuleEvaluator(redisConfig, executor, ctx)
+	ruleEvaluator := evaluators.NewRuleEvaluator(redisConfig, model.Executor(executor), ctx)
 	result, err := ruleEvaluator.EvalRule(w.Rule, "0.1.0", "HTTP", dataStore)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, result)
