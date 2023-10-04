@@ -105,7 +105,6 @@ func (re RuleEvaluator) init() RuleEvaluator {
 func (re RuleEvaluator) EvalRule(rule model.Rule, attributeVersion string, protocol model.Protocol, valueStore map[string]interface{}) (bool, error) {
 
 	result, err := re.evalRule(rule, attributeVersion, protocol, valueStore)
-	zkLogger.DebugF(LoggerTag, "EvalRule: rule=%v, attributeVersion=%s, protocol=%s, valueStore=%v, result=%v, err=%v", rule, attributeVersion, protocol, valueStore, result, err)
 	return result, err
 }
 
