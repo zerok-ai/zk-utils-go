@@ -7,6 +7,7 @@ import (
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/cache"
+	"github.com/zerok-ai/zk-utils-go/storage/redis/clientDBNames"
 	"github.com/zerok-ai/zk-utils-go/storage/redis/config"
 )
 
@@ -83,7 +84,7 @@ func NewRuleEvaluator(redisConfig config.RedisConfig, executorName model.Executo
 
 func getAttributeNamesStore(redisConfig config.RedisConfig, ctx context.Context) *cache.AttributeCache {
 
-	dbName := "attrNames"
+	dbName := clientDBNames.ExecutorAttrDBName
 	noExpiryCache := ds.GetCacheWithExpiry[map[string]string](ds.NoExpiry)
 	redisClient := config.GetRedisConnection(dbName, redisConfig)
 
