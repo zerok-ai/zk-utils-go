@@ -3,8 +3,11 @@ package config
 import (
 	"fmt"
 	"github.com/redis/go-redis/v9"
+	zklogger "github.com/zerok-ai/zk-utils-go/logs"
 	"time"
 )
+
+const LoggerTag = "redis_config"
 
 type RedisConfig struct {
 	Host        string         `yaml:"host" env:"ZK_REDIS_HOST" env-description:"Redis HOST"`
@@ -22,8 +25,8 @@ func GetRedisConnection(dbName string, redisConfig RedisConfig) *redis.Client {
 	readTimeout := time.Duration(redisConfig.ReadTimeout) * time.Second
 	//password := os.Getenv("ZK_REDIS_PASSWORD")
 	//host := os.Getenv("ZK_REDIS_HOST")
-	fmt.Print("config.ZK_REDIS_PASSWORD=" + redisConfig.Password)
-	fmt.Print("config.ZK_REDIS_HOST=" + redisConfig.Host)
+	zklogger.DebugF(LoggerTag, "config.ZK_REDIS_HOST=%s", redisConfig.Host)
+	zklogger.DebugF(LoggerTag, "config.ZK_REDIS_PASSWORD=%s", redisConfig.Password)
 	return redis.NewClient(&redis.Options{
 		Addr:        fmt.Sprint(redisConfig.Host, ":", redisConfig.Port),
 		Password:    redisConfig.Password,
