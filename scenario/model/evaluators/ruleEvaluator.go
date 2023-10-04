@@ -43,17 +43,6 @@ const (
 	operatorNotBetween       = "not_between"
 )
 
-type Executor string
-type Protocol string
-
-const (
-	ExecutorEbpf Executor = "EBPF"
-	ExecutorOTel Executor = "OTEL"
-
-	ProtocolHTTP    Protocol = "HTTP"
-	ProtocolGeneral Protocol = "GENERAL"
-)
-
 type DataStore map[string]string
 
 func (ds DataStore) String() string {
@@ -76,14 +65,14 @@ type GroupRuleEvaluator interface {
 }
 
 type RuleEvaluator struct {
-	executor           Executor
+	executor           model.Executor
 	dataSource         DataStore
 	attributeNameStore *cache.AttributeCache
 	leafRuleEvaluators map[string]LeafRuleEvaluator
 	groupRuleEvaluator GroupRuleEvaluator
 }
 
-func NewRuleEvaluator(redisConfig config.RedisConfig, executorName Executor, ctx context.Context) RuleEvaluator {
+func NewRuleEvaluator(redisConfig config.RedisConfig, executorName model.Executor, ctx context.Context) RuleEvaluator {
 	return RuleEvaluator{
 		executor:           executorName,
 		leafRuleEvaluators: make(map[string]LeafRuleEvaluator),
@@ -160,7 +149,8 @@ func (re RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion, prot
 
 	jsonPath := rule.RuleLeaf.JsonPath
 	if jsonPath != nil {
-		attributeName = attributeName + "#jsonExtract(" + *jsonPath + ")"
+		//TODO - add jsonPath to the attribute name
+		//attributeName = attributeName + "#jsonExtract(" + *jsonPath + ")"
 	}
 
 	return &attributeName
