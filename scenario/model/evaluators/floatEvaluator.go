@@ -157,12 +157,8 @@ func (re FloatRuleEvaluator) valueFromStore(r model.Rule, valueStore map[string]
 	if !ok {
 		return 0, fmt.Errorf("value not found for id %s", *r.RuleLeaf.ID)
 	}
-	valueInterfaceString, ok := valueInterface.(string)
-	if !ok {
-		return 0, fmt.Errorf("error converting value %v to string for id %v", valueInterface, *r.RuleLeaf.ID)
-	}
 
-	valueFromStore, err1 := strconv.ParseFloat(valueInterfaceString, 64)
+	valueFromStore, err1 := strconv.ParseFloat(fmt.Sprintf("%v", valueInterface), 64)
 	if err1 != nil {
 		return 0, fmt.Errorf("error converting valueStore value %s to float: %v", string(*r.Value), err1)
 	}

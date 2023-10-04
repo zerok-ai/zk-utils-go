@@ -154,12 +154,8 @@ func (re IntegerRuleEvaluator) valueFromStore(r model.Rule, valueStore map[strin
 	if !ok {
 		return 0, fmt.Errorf("value not found for id %s", *r.RuleLeaf.ID)
 	}
-	valueInterfaceString, ok := valueInterface.(string)
-	if !ok {
-		return 0, fmt.Errorf("error converting value %v to string for id %v", valueInterface, *r.RuleLeaf.ID)
-	}
 
-	valueFromStore, err1 := strconv.Atoi(valueInterfaceString)
+	valueFromStore, err1 := strconv.Atoi(fmt.Sprintf("%v", valueInterface))
 	if err1 != nil {
 		return 0, fmt.Errorf("error converting valueStore value %s to integer: %v", string(*r.Value), err1)
 	}
