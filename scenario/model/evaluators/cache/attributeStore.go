@@ -143,7 +143,7 @@ func (attributeCache *AttributeCache) populateExecutorDataFromRedis() *ExecutorP
 
 func PopulateExecutorData(strKeys *[]string) *ExecutorProtocol {
 
-	if strKeys != nil {
+	if strKeys == nil {
 		executorData := make(ExecutorProtocol)
 		return &executorData
 	}
