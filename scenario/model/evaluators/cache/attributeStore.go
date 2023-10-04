@@ -168,10 +168,10 @@ func PopulateExecutorData(strKeys *[]string) *ExecutorProtocol {
 		keys, ok := protocolKeys[parsedKey.Protocol]
 		if !ok {
 			keys = make([]Key, 0)
-			protocolKeys[parsedKey.Protocol] = keys
 		}
 
 		keys = append(keys, parsedKey)
+		protocolKeys[parsedKey.Protocol] = keys
 	}
 
 	// sort the version list
