@@ -265,7 +265,7 @@ type RuleLeaf struct {
 }
 
 func (r RuleLeaf) String() string {
-	return fmt.Sprintf("RuleLeaf{ID: %v, Field: %v, Datatype: %v, Input: %v, Operator: %v, Value: %v, Value: %v}", *r.ID, *r.Field, *r.Datatype, *r.Input, *r.Operator, *r.Value, *r.JsonPath)
+	return fmt.Sprintf("RuleLeaf{ID: %v, Field: %v, Datatype: %v, Input: %v, Operator: %v, Value: %v, JsonPath: %v}", *r.ID, *r.Field, *r.Datatype, *r.Input, *r.Operator, *r.Value, *r.JsonPath)
 }
 
 func (r RuleLeaf) Equals(other RuleLeaf) bool {
