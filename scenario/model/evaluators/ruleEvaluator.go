@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/zerok-ai/zk-utils-go/ds"
+	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/cache"
 	"github.com/zerok-ai/zk-utils-go/storage/redis/config"
@@ -102,7 +103,10 @@ func (re RuleEvaluator) init() RuleEvaluator {
 }
 
 func (re RuleEvaluator) EvalRule(rule model.Rule, attributeVersion string, protocol model.Protocol, valueStore map[string]interface{}) (bool, error) {
-	return re.evalRule(rule, attributeVersion, protocol, valueStore)
+
+	result, err := re.evalRule(rule, attributeVersion, protocol, valueStore)
+	zkLogger.DebugF(LoggerTag, "EvalRule: rule=%v, attributeVersion=%s, protocol=%s, valueStore=%v, result=%v, err=%v", rule, attributeVersion, protocol, valueStore, result, err)
+	return result, err
 }
 
 func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, protocol model.Protocol, valueStore map[string]interface{}) (bool, error) {
@@ -110,15 +114,20 @@ func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, proto
 	handled, value := false, false
 	var err error
 	if rule.Type == model.RULE_GROUP {
-		return re.groupRuleEvaluator.evalRule(rule, attributeVersion, protocol, valueStore)
+		value, err = re.groupRuleEvaluator.evalRule(rule, attributeVersion, protocol, valueStore)
+		zkLogger.DebugF(LoggerTag, "Evaluated value for group =%v, for condition=%s", value, rule.RuleGroup.Condition)
 	} else {
 		err = re.validate(rule)
 		if err != nil {
 			return false, err
 		}
 
+		oldRuleId := *rule.RuleLeaf.ID
+
 		// replace id with actual attribute executor
 		rule.RuleLeaf.ID = re.getAttributeName(rule, attributeVersion, protocol)
+
+		zkLogger.DebugF(LoggerTag, "RuleId: ruleID=%v, attributeName=%s", oldRuleId, rule.RuleLeaf.ID)
 
 		handled, value, err = re.handleCommonOperators(rule, valueStore)
 		evaluator := string(*rule.RuleLeaf.Datatype)
@@ -128,10 +137,10 @@ func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, proto
 			if ruleEvaluator == nil {
 				return false, fmt.Errorf("LeafRuleEvaluator not found for type: %s", rule.Type)
 			}
-			return ruleEvaluator.evalRule(rule, valueStore)
+			value, err = ruleEvaluator.evalRule(rule, valueStore)
 		}
+		zkLogger.DebugF(LoggerTag, "Evaluated value=%v, for id=%s", value, rule.RuleLeaf.ID)
 	}
-
 	return value, err
 }
 
