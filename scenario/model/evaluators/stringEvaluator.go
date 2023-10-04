@@ -20,9 +20,9 @@ func (re StringRuleEvaluator) evalRule(rule model.Rule, valueStore map[string]in
 	operator := string(*rule.Operator)
 	valueFromRule := string(*rule.Value)
 
-	valueFromStoreI, ok := valueStore[*rule.RuleLeaf.ID]
+	valueFromStoreI, ok := valueStore[*rule.RuleLeaf.AttributeNameOfID]
 	if !ok {
-		return false, fmt.Errorf("value for id: %s not found in valueStore", *rule.RuleLeaf.ID)
+		return false, fmt.Errorf("value for attributeName: %s not found in valueStore", *rule.RuleLeaf.AttributeNameOfID)
 	}
 	valueFromStore := fmt.Sprintf("%v", valueFromStoreI)
 

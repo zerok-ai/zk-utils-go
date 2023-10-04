@@ -21,9 +21,9 @@ func (re BooleanEvaluator) evalRule(rule model.Rule, valueStore map[string]inter
 	}
 
 	// get the value from the value store
-	value, ok := GetValueFromStore(*rule.RuleLeaf.ID, valueStore)
+	value, ok := GetValueFromStore(*rule.RuleLeaf.AttributeNameOfID, valueStore)
 	if !ok {
-		return false, fmt.Errorf("value for id: %s not found in valueStore", *rule.RuleLeaf.ID)
+		return false, fmt.Errorf("value for attributeName: %s not found in valueStore", *rule.RuleLeaf.AttributeNameOfID)
 	}
 	valueFromStore, err1 := getBooleanValue(value)
 	if err1 != nil {

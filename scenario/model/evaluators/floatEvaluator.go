@@ -19,9 +19,9 @@ func (re FloatRuleEvaluator) evalRule(rule model.Rule, valueStore map[string]int
 
 	// get the values assuming that the rule object is valid
 	operator := string(*rule.Operator)
-	_, ok := valueStore[*rule.RuleLeaf.ID]
+	_, ok := valueStore[*rule.RuleLeaf.AttributeNameOfID]
 	if !ok {
-		return false, fmt.Errorf("value for id: %s not found in valueStore", *rule.RuleLeaf.ID)
+		return false, fmt.Errorf("value for attributeName: %s not found in valueStore", *rule.RuleLeaf.AttributeNameOfID)
 	}
 
 	//	switch on operator

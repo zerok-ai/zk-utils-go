@@ -122,12 +122,12 @@ func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, proto
 			return false, err
 		}
 
-		oldRuleId := *rule.RuleLeaf.ID
-
 		// replace id with actual attribute executor
-		rule.RuleLeaf.ID = re.getAttributeName(rule, attributeVersion, protocol)
+		if rule.RuleLeaf.AttributeNameOfID == nil {
+			rule.RuleLeaf.AttributeNameOfID = re.getAttributeName(rule, attributeVersion, protocol)
+		}
 
-		zkLogger.DebugF(LoggerTag, "RuleId: ruleID=%v, attributeName=%s", oldRuleId, rule.RuleLeaf.ID)
+		zkLogger.DebugF(LoggerTag, "RuleId: ruleID=%v, attributeName=%s", rule.RuleLeaf.ID, rule.RuleLeaf.AttributeNameOfID)
 
 		handled, value, err = re.handleCommonOperators(rule, valueStore)
 		evaluator := string(*rule.RuleLeaf.Datatype)
@@ -139,7 +139,7 @@ func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, proto
 			}
 			value, err = ruleEvaluator.evalRule(rule, valueStore)
 		}
-		zkLogger.DebugF(LoggerTag, "Evaluated value=%v, for id=%s", value, rule.RuleLeaf.ID)
+		zkLogger.DebugF(LoggerTag, "Evaluated value=%v, for attributeName=%s", value, rule.RuleLeaf.AttributeNameOfID)
 	}
 	return value, err
 }

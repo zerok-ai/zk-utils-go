@@ -248,13 +248,14 @@ func (r RuleGroup) LessThan(other RuleGroup) bool {
 }
 
 type RuleLeaf struct {
-	ID       *string        `json:"id,omitempty"`
-	Field    *string        `json:"field,omitempty"`
-	Datatype *DataType      `json:"datatype,omitempty"`
-	Input    *InputTypes    `json:"input,omitempty"`
-	Operator *OperatorTypes `json:"operator,omitempty"`
-	Value    *ValueTypes    `json:"value,omitempty"`
-	JsonPath *[]string      `json:"json_path,omitempty"`
+	ID                *string        `json:"id,omitempty"`
+	Field             *string        `json:"field,omitempty"`
+	Datatype          *DataType      `json:"datatype,omitempty"`
+	Input             *InputTypes    `json:"input,omitempty"`
+	Operator          *OperatorTypes `json:"operator,omitempty"`
+	Value             *ValueTypes    `json:"value,omitempty"`
+	JsonPath          *[]string      `json:"json_path,omitempty"`
+	AttributeNameOfID *string
 }
 
 func (r RuleLeaf) String() string {
