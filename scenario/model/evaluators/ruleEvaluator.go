@@ -3,6 +3,7 @@ package evaluators
 import (
 	"context"
 	"fmt"
+	"github.com/jmespath/go-jmespath"
 	"github.com/zerok-ai/zk-utils-go/ds"
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
@@ -139,7 +140,7 @@ func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, proto
 			}
 			value, err = ruleEvaluator.evalRule(rule, valueStore)
 		}
-		zkLogger.DebugF(LoggerTag, "Evaluated value=%v, for attributeName=%s", value, rule.RuleLeaf.AttributeNameOfID)
+		zkLogger.DebugF(LoggerTag, "Evaluated value=%v, for attributeName=%v", value, rule.RuleLeaf.AttributeNameOfID)
 	}
 	return value, err
 }
@@ -181,11 +182,15 @@ func (re RuleEvaluator) handleCommonOperators(r model.Rule, store map[string]int
 	//	switch on operator
 	switch operator {
 	case operatorExists:
-		_, ok := store[*r.RuleLeaf.AttributeNameOfID]
-		return true, ok, nil
+		value, err := jmespath.Search(*r.RuleLeaf.AttributeNameOfID, store)
+		if err == nil && value != nil {
+			return true, true, nil
+		}
 	case operatorNotExists:
-		_, ok := store[*r.RuleLeaf.AttributeNameOfID]
-		return true, !ok, nil
+		value, err := jmespath.Search(*r.RuleLeaf.AttributeNameOfID, store)
+		if !(err == nil && value != nil) {
+			return true, true, nil
+		}
 	}
 
 	return false, false, nil

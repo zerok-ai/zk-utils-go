@@ -2,6 +2,7 @@ package evaluators
 
 import (
 	"fmt"
+	"github.com/jmespath/go-jmespath"
 	logger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
 	"strconv"
@@ -153,8 +154,8 @@ func (re FloatRuleEvaluator) valueFromRuleAndStore(r model.Rule, valueStore map[
 
 func (re FloatRuleEvaluator) valueFromStore(r model.Rule, valueStore map[string]interface{}) (float64, error) {
 
-	valueInterface, ok := valueStore[*r.RuleLeaf.AttributeNameOfID]
-	if !ok {
+	valueInterface, err := jmespath.Search(*r.RuleLeaf.AttributeNameOfID, valueStore)
+	if err != nil || valueInterface == nil {
 		return 0, fmt.Errorf("value not found for id %s", *r.RuleLeaf.AttributeNameOfID)
 	}
 
