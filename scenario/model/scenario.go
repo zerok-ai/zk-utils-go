@@ -123,15 +123,8 @@ func (s Scenario) Less(other Scenario) bool {
 	return false
 }
 
-type Executor string
-
-const (
-	ExecutorEbpf Executor = "EBPF"
-	ExecutorOTel Executor = "OTEL"
-)
-
 type Workload struct {
-	Executor  string    `json:"executor"`
+	Executor  Executor  `json:"executor"`
 	Service   string    `json:"service,omitempty"`
 	TraceRole TraceRole `json:"trace_role,omitempty"`
 	Protocol  Protocol  `json:"protocol,omitempty"`
@@ -350,6 +343,7 @@ func (r RuleLeaf) LessThan(other RuleLeaf) bool {
 		}
 		return false
 	}
+
 	fmt.Println("before returning false")
 	return false
 }
@@ -374,6 +368,15 @@ type InputTypes string
 type OperatorTypes string
 type ValueTypes string
 type Protocol string
+type Executor string
+
+const (
+	ExecutorEbpf Executor = "EBPF"
+	ExecutorOTel Executor = "OTEL"
+
+	ProtocolHTTP    Protocol = "HTTP"
+	ProtocolGeneral Protocol = "GENERAL"
+)
 
 type Rules []Rule
 

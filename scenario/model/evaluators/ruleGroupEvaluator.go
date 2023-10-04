@@ -10,7 +10,7 @@ func (re RuleGroupEvaluator) init() GroupRuleEvaluator {
 	return re
 }
 
-func (re RuleGroupEvaluator) evalRule(rule model.Rule, attributeVersion string, valueStore map[string]interface{}) (bool, error) {
+func (re RuleGroupEvaluator) evalRule(rule model.Rule, attributeVersion, protocol string, valueStore map[string]interface{}) (bool, error) {
 
 	// evaluate all the rules
 	condition := *rule.Condition
@@ -21,7 +21,7 @@ func (re RuleGroupEvaluator) evalRule(rule model.Rule, attributeVersion string, 
 		result = false
 	}
 	for _, childRule := range rule.Rules {
-		ok, err := re.baseRuleEvaluator.evalRule(childRule, attributeVersion, valueStore)
+		ok, err := re.baseRuleEvaluator.evalRule(childRule, attributeVersion, protocol, valueStore)
 		if err != nil {
 			return false, err
 		}
