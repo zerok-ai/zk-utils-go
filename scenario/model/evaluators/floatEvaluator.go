@@ -153,9 +153,9 @@ func (re FloatRuleEvaluator) valueFromRuleAndStore(r model.Rule, valueStore map[
 
 func (re FloatRuleEvaluator) valueFromStore(r model.Rule, valueStore map[string]interface{}) (float64, error) {
 
-	valueInterface, ok := valueStore[*r.RuleLeaf.ID]
+	valueInterface, ok := valueStore[*r.RuleLeaf.AttributeNameOfID]
 	if !ok {
-		return 0, fmt.Errorf("value not found for id %s", *r.RuleLeaf.ID)
+		return 0, fmt.Errorf("value not found for id %s", *r.RuleLeaf.AttributeNameOfID)
 	}
 
 	valueFromStore, err1 := strconv.ParseFloat(fmt.Sprintf("%v", valueInterface), 64)

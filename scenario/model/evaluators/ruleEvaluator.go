@@ -181,10 +181,10 @@ func (re RuleEvaluator) handleCommonOperators(r model.Rule, store map[string]int
 	//	switch on operator
 	switch operator {
 	case operatorExists:
-		_, ok := store[*r.RuleLeaf.ID]
+		_, ok := store[*r.RuleLeaf.AttributeNameOfID]
 		return true, ok, nil
 	case operatorNotExists:
-		_, ok := store[*r.RuleLeaf.ID]
+		_, ok := store[*r.RuleLeaf.AttributeNameOfID]
 		return true, !ok, nil
 	}
 

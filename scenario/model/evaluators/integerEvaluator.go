@@ -150,9 +150,9 @@ func (re IntegerRuleEvaluator) valueFromRuleAndStore(r model.Rule, valueStore ma
 
 func (re IntegerRuleEvaluator) valueFromStore(r model.Rule, valueStore map[string]interface{}) (int, error) {
 
-	valueInterface, ok := valueStore[*r.RuleLeaf.ID]
+	valueInterface, ok := valueStore[*r.RuleLeaf.AttributeNameOfID]
 	if !ok {
-		return 0, fmt.Errorf("value not found for id %s", *r.RuleLeaf.ID)
+		return 0, fmt.Errorf("value not found for AttributeNameOfID %s", *r.RuleLeaf.AttributeNameOfID)
 	}
 
 	valueFromStore, err1 := strconv.Atoi(fmt.Sprintf("%v", valueInterface))
