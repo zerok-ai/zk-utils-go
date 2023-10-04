@@ -149,8 +149,17 @@ func (re RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion, prot
 
 	jsonPath := rule.RuleLeaf.JsonPath
 	if jsonPath != nil {
-		//TODO - add jsonPath to the attribute name
-		//attributeName = attributeName + "#jsonExtract(" + *jsonPath + ")"
+		//add jsonPath to the attribute name using jsonExtract function
+		jsonPathString := "#jsonExtract("
+		for index, path := range *jsonPath {
+			if index > 0 {
+				jsonPathString += "."
+			}
+			jsonPathString += "\"" + path + "\""
+		}
+		jsonPathString += ")"
+
+		attributeName += jsonPathString
 	}
 
 	return &attributeName
