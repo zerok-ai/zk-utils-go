@@ -43,6 +43,17 @@ const (
 	operatorNotBetween       = "not_between"
 )
 
+type Executor string
+type Protocol string
+
+const (
+	ExecutorEbpf Executor = "EBPF"
+	ExecutorOTel Executor = "OTEL"
+
+	ProtocolHTTP    Protocol = "HTTP"
+	ProtocolGeneral Protocol = "GENERAL"
+)
+
 type DataStore map[string]string
 
 func (ds DataStore) String() string {
@@ -65,14 +76,14 @@ type GroupRuleEvaluator interface {
 }
 
 type RuleEvaluator struct {
-	executor           string
+	executor           Executor
 	dataSource         DataStore
 	attributeNameStore *cache.AttributeCache
 	leafRuleEvaluators map[string]LeafRuleEvaluator
 	groupRuleEvaluator GroupRuleEvaluator
 }
 
-func NewRuleEvaluator(redisConfig config.RedisConfig, executorName string, ctx context.Context) RuleEvaluator {
+func NewRuleEvaluator(redisConfig config.RedisConfig, executorName Executor, ctx context.Context) RuleEvaluator {
 	return RuleEvaluator{
 		executor:           executorName,
 		leafRuleEvaluators: make(map[string]LeafRuleEvaluator),
@@ -142,7 +153,7 @@ func (re RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion, prot
 	attributeName := id
 
 	// get the actual id from the idStore. If not found, use the id as is
-	attributeNameFromStore := re.attributeNameStore.Get(re.executor, attributeVersion, protocol, attributeName)
+	attributeNameFromStore := re.attributeNameStore.Get(string(re.executor), attributeVersion, protocol, attributeName)
 	if attributeNameFromStore != nil {
 		attributeName = *attributeNameFromStore
 	}
