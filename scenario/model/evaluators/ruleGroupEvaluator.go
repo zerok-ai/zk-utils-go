@@ -10,7 +10,7 @@ func (re RuleGroupEvaluator) init() GroupRuleEvaluator {
 	return re
 }
 
-func (re RuleGroupEvaluator) evalRule(rule model.Rule, attributeVersion, protocol string, valueStore map[string]interface{}) (bool, error) {
+func (re RuleGroupEvaluator) evalRule(rule model.Rule, attributeVersion string, protocol model.Protocol, valueStore map[string]interface{}) (bool, error) {
 
 	// evaluate all the rules
 	condition := *rule.Condition

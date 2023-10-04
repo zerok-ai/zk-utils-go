@@ -61,7 +61,7 @@ type LeafRuleEvaluator interface {
 
 type GroupRuleEvaluator interface {
 	init() GroupRuleEvaluator
-	evalRule(rule model.Rule, attributeVersion, protocol string, valueStore map[string]interface{}) (bool, error)
+	evalRule(rule model.Rule, attributeVersion string, protocol model.Protocol, valueStore map[string]interface{}) (bool, error)
 }
 
 type RuleEvaluator struct {
@@ -101,11 +101,11 @@ func (re RuleEvaluator) init() RuleEvaluator {
 	return re
 }
 
-func (re RuleEvaluator) EvalRule(rule model.Rule, attributeVersion string, protocol string, valueStore map[string]interface{}) (bool, error) {
+func (re RuleEvaluator) EvalRule(rule model.Rule, attributeVersion string, protocol model.Protocol, valueStore map[string]interface{}) (bool, error) {
 	return re.evalRule(rule, attributeVersion, protocol, valueStore)
 }
 
-func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, protocol string, valueStore map[string]interface{}) (bool, error) {
+func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, protocol model.Protocol, valueStore map[string]interface{}) (bool, error) {
 
 	handled, value := false, false
 	var err error
@@ -135,7 +135,7 @@ func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, proto
 	return value, err
 }
 
-func (re RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion, protocol string) *string {
+func (re RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion string, protocol model.Protocol) *string {
 
 	// get the id
 	id := *rule.RuleLeaf.ID

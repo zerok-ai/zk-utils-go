@@ -73,9 +73,9 @@ func (attributeCache *AttributeCache) GetFromRedis(key string) (*map[string]stri
 	and then in `OTEL_1.17.0_GENERAL`
 
 */
-func (attributeCache *AttributeCache) Get(executor, attributeVersion, protocol, attributeName string) *string {
+func (attributeCache *AttributeCache) Get(executor, attributeVersion string, protocol model.Protocol, attributeName string) *string {
 
-	protocols := []string{protocol, string(model.ProtocolGeneral)}
+	protocols := []model.Protocol{protocol, model.ProtocolGeneral}
 	for _, proto := range protocols {
 
 		// 1. get the closest key
@@ -96,7 +96,7 @@ func (attributeCache *AttributeCache) Get(executor, attributeVersion, protocol, 
 
 var BlankKey = &Key{Value: ""}
 
-func (attributeCache *AttributeCache) getClosestKey(executor, attributeVersion, protocol string) *Key {
+func (attributeCache *AttributeCache) getClosestKey(executor string, attributeVersion string, protocol model.Protocol) *Key {
 
 	inputKey, err := ParseKey(fmt.Sprintf("%s_%s_%s", executor, attributeVersion, protocol))
 	if err != nil {
@@ -108,7 +108,7 @@ func (attributeCache *AttributeCache) getClosestKey(executor, attributeVersion, 
 		return BlankKey
 	}
 
-	keys, ok := protocolData[protocol]
+	keys, ok := protocolData[string(protocol)]
 	if !ok || len(keys) == 0 {
 		return BlankKey
 	}
