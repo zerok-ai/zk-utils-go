@@ -13,7 +13,7 @@ func (re BooleanEvaluator) init() LeafRuleEvaluator {
 	return re
 }
 
-func (re BooleanEvaluator) evalRule(rule model.Rule, valueStore map[string]interface{}) (bool, error) {
+func (re BooleanEvaluator) evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
 
 	valueFromRule, err := getBooleanValue(string(*rule.Value))
 	if err != nil {
@@ -21,9 +21,9 @@ func (re BooleanEvaluator) evalRule(rule model.Rule, valueStore map[string]inter
 	}
 
 	// get the value from the value store
-	value, ok := GetValueFromStore(*rule.RuleLeaf.AttributeNameOfID, valueStore)
+	value, ok := GetValueFromStore(attributeNameOfID, valueStore)
 	if !ok {
-		return false, fmt.Errorf("value for attributeName: %s not found in valueStore", *rule.RuleLeaf.AttributeNameOfID)
+		return false, fmt.Errorf("value for attributeName: %s not found in valueStore", attributeNameOfID)
 	}
 	valueFromStore, err1 := getBooleanValue(value)
 	if err1 != nil {

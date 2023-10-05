@@ -59,7 +59,7 @@ func (ds DataStore) String() string {
 
 type LeafRuleEvaluator interface {
 	init() LeafRuleEvaluator
-	evalRule(rule model.Rule, valueStore map[string]interface{}) (bool, error)
+	evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error)
 }
 
 type GroupRuleEvaluator interface {
@@ -124,13 +124,11 @@ func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, proto
 		}
 
 		// replace id with actual attribute executor
-		if rule.RuleLeaf.AttributeNameOfID == nil {
-			rule.RuleLeaf.AttributeNameOfID = re.getAttributeName(rule, attributeVersion, protocol)
-		}
+		attributeNameOfID := re.getAttributeName(rule, attributeVersion, protocol)
 
-		zkLogger.DebugF(LoggerTag, "RuleId: ruleID=%v, attributeName=%s", rule.RuleLeaf.ID, rule.RuleLeaf.AttributeNameOfID)
+		zkLogger.DebugF(LoggerTag, "RuleId: ruleID=%v, attributeName=%v", rule.RuleLeaf.ID, *attributeNameOfID)
 
-		handled, value, err = re.handleCommonOperators(rule, valueStore)
+		handled, value, err = re.handleCommonOperators(rule, *attributeNameOfID, valueStore)
 		evaluator := string(*rule.RuleLeaf.Datatype)
 
 		if !handled {
@@ -138,9 +136,9 @@ func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, proto
 			if ruleEvaluator == nil {
 				return false, fmt.Errorf("LeafRuleEvaluator not found for type: %s", rule.Type)
 			}
-			value, err = ruleEvaluator.evalRule(rule, valueStore)
+			value, err = ruleEvaluator.evalRule(rule, *attributeNameOfID, valueStore)
 		}
-		zkLogger.DebugF(LoggerTag, "Evaluated value=%v, for attributeName=%v", value, rule.RuleLeaf.AttributeNameOfID)
+		zkLogger.DebugF(LoggerTag, "Evaluated value=%v, for attributeName=%v", value, *attributeNameOfID)
 	}
 	return value, err
 }
@@ -177,17 +175,17 @@ func (re RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion strin
 
 // handleCommonOperators is a helper function to handle common operators like exists. The function returns
 // a bool indicating if the rule is handled, a bool indicating the value, if handled and an error if any.
-func (re RuleEvaluator) handleCommonOperators(r model.Rule, store map[string]interface{}) (bool, bool, error) {
+func (re RuleEvaluator) handleCommonOperators(r model.Rule, attributeNameOfID string, store map[string]interface{}) (bool, bool, error) {
 	operator := string(*r.Operator)
 	//	switch on operator
 	switch operator {
 	case operatorExists:
-		value, err := jmespath.Search(*r.RuleLeaf.AttributeNameOfID, store)
+		value, err := jmespath.Search(attributeNameOfID, store)
 		if err == nil && value != nil {
 			return true, true, nil
 		}
 	case operatorNotExists:
-		value, err := jmespath.Search(*r.RuleLeaf.AttributeNameOfID, store)
+		value, err := jmespath.Search(attributeNameOfID, store)
 		if !(err == nil && value != nil) {
 			return true, true, nil
 		}

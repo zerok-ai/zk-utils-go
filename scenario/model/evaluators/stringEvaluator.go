@@ -14,15 +14,15 @@ func (re StringRuleEvaluator) init() LeafRuleEvaluator {
 	return re
 }
 
-func (re StringRuleEvaluator) evalRule(rule model.Rule, valueStore map[string]interface{}) (bool, error) {
+func (re StringRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
 
 	// get the values assuming that the rule object is valid
 	operator := string(*rule.Operator)
 	valueFromRule := string(*rule.Value)
 
-	valueFromStoreI, ok := valueStore[*rule.RuleLeaf.AttributeNameOfID]
+	valueFromStoreI, ok := valueStore[attributeNameOfID]
 	if !ok {
-		return false, fmt.Errorf("value for attributeName: %s not found in valueStore", *rule.RuleLeaf.AttributeNameOfID)
+		return false, fmt.Errorf("value for attributeName: %s not found in valueStore", attributeNameOfID)
 	}
 	valueFromStore := fmt.Sprintf("%v", valueFromStoreI)
 
