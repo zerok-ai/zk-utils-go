@@ -123,7 +123,7 @@ func validate(t *testing.T, w model.Workload, dataStore map[string]interface{}, 
 	executor := "OTEL"
 	redisConfig := config.RedisConfig{}
 	ctx := context.Background()
-	ruleEvaluator := evaluators.NewRuleEvaluator(redisConfig, model.Executor(executor), ctx)
+	ruleEvaluator := evaluators.NewRuleEvaluator(redisConfig, model.ExecutorName(executor), ctx)
 	result, err := ruleEvaluator.EvalRule(w.Rule, "0.1.0", "HTTP", dataStore)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, result)

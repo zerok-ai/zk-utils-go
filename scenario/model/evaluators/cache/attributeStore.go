@@ -10,13 +10,12 @@ import (
 	"sort"
 )
 
-type Protocol map[string][]Key
-type ExecutorProtocol map[string]Protocol
-type ExecutorDataPopulator func()
+type ProtocolKeyMap map[string][]Key
+type NameMapExecutorProtocol map[string]ProtocolKeyMap
 
 type AttributeCache struct {
-	localCacheHSetStore zkRedis.LocalCacheHSetStore
-	executors           *ExecutorProtocol
+	localCacheHSetStore     zkRedis.LocalCacheHSetStore
+	nameMapExecutorProtocol *NameMapExecutorProtocol
 }
 
 func GetAttributeCache(rc *redis.Client, localCache ds.Cache[map[string]string], csh zkRedis.CacheStoreHook[map[string]string], ctx context.Context) *AttributeCache {
@@ -32,7 +31,7 @@ func (attributeCache *AttributeCache) SetCache(cache ds.Cache[map[string]string]
 }
 
 func (attributeCache *AttributeCache) initialize() *AttributeCache {
-	attributeCache.executors = attributeCache.populateExecutorDataFromRedis()
+	attributeCache.nameMapExecutorProtocol = attributeCache.populateAttributeDatasetsFromRedis()
 	return attributeCache
 }
 
@@ -73,9 +72,9 @@ func (attributeCache *AttributeCache) GetFromRedis(key string) (*map[string]stri
 	and then in `OTEL_1.17.0_GENERAL`
 
 */
-func (attributeCache *AttributeCache) Get(executor, attributeVersion string, protocol model.Protocol, attributeName string) *string {
+func (attributeCache *AttributeCache) Get(executor, attributeVersion string, protocol model.ProtocolName, attributeName string) *string {
 
-	protocols := []model.Protocol{protocol, model.ProtocolGeneral}
+	protocols := []model.ProtocolName{protocol, model.ProtocolGeneral}
 	for _, proto := range protocols {
 
 		// 1. get the closest key
@@ -96,14 +95,14 @@ func (attributeCache *AttributeCache) Get(executor, attributeVersion string, pro
 
 var BlankKey = &Key{Value: ""}
 
-func (attributeCache *AttributeCache) getClosestKey(executor string, attributeVersion string, protocol model.Protocol) *Key {
+func (attributeCache *AttributeCache) getClosestKey(executor string, attributeVersion string, protocol model.ProtocolName) *Key {
 
 	inputKey, err := ParseKey(fmt.Sprintf("%s_%s_%s", executor, attributeVersion, protocol))
 	if err != nil {
 		return BlankKey
 	}
 
-	protocolData, ok := (*attributeCache.executors)[executor]
+	protocolData, ok := (*attributeCache.nameMapExecutorProtocol)[executor]
 	if !ok {
 		return BlankKey
 	}
@@ -126,31 +125,31 @@ func (attributeCache *AttributeCache) getClosestKey(executor string, attributeVe
 	return &keys[index-1]
 }
 
-func (attributeCache *AttributeCache) populateExecutorDataFromRedis() *ExecutorProtocol {
+func (attributeCache *AttributeCache) populateAttributeDatasetsFromRedis() *NameMapExecutorProtocol {
 
 	//1. fetch data for the `protocol` and `GENERAL` protocol
 	strKeys, err := attributeCache.localCacheHSetStore.GetAllKeysFromRedis("*")
 	if err != nil {
-		executorData := make(ExecutorProtocol)
+		executorData := make(NameMapExecutorProtocol)
 		return &executorData
 	}
 
-	//2. load data into `ExecutorProtocol` object
+	//2. load data into `NameMapExecutorProtocol` object
 	executorData := PopulateExecutorData(strKeys)
 
 	return executorData
 }
 
-func PopulateExecutorData(strKeys *[]string) *ExecutorProtocol {
+func PopulateExecutorData(strKeys *[]string) *NameMapExecutorProtocol {
 
 	if strKeys == nil {
-		executorData := make(ExecutorProtocol)
+		executorData := make(NameMapExecutorProtocol)
 		return &executorData
 	}
 
-	executorData := make(ExecutorProtocol)
+	nameMapExecutorProtocol := make(NameMapExecutorProtocol)
 
-	//2. load data into `ExecutorProtocol` object
+	//2. load data into `NameMapExecutorProtocol` object
 	for _, key := range *strKeys {
 		parsedKey, err1 := ParseKey(key)
 		if err1 != nil {
@@ -158,10 +157,10 @@ func PopulateExecutorData(strKeys *[]string) *ExecutorProtocol {
 		}
 
 		// get the protocol
-		protocolKeys, ok := executorData[parsedKey.Executor]
+		protocolKeys, ok := nameMapExecutorProtocol[parsedKey.Executor]
 		if !ok {
-			protocolKeys = make(Protocol)
-			executorData[parsedKey.Executor] = protocolKeys
+			protocolKeys = make(ProtocolKeyMap)
+			nameMapExecutorProtocol[parsedKey.Executor] = protocolKeys
 		}
 
 		// get the keys
@@ -175,10 +174,10 @@ func PopulateExecutorData(strKeys *[]string) *ExecutorProtocol {
 	}
 
 	// sort the version list
-	for _, protocol := range executorData {
+	for _, protocol := range nameMapExecutorProtocol {
 		for _, keys := range protocol {
 			sort.Sort(ByVersion(keys))
 		}
 	}
-	return &executorData
+	return &nameMapExecutorProtocol
 }

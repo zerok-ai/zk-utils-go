@@ -124,11 +124,11 @@ func (s Scenario) Less(other Scenario) bool {
 }
 
 type Workload struct {
-	Executor  Executor  `json:"executor"`
-	Service   string    `json:"service,omitempty"`
-	TraceRole TraceRole `json:"trace_role,omitempty"`
-	Protocol  Protocol  `json:"protocol,omitempty"`
-	Rule      Rule      `json:"rule,omitempty"`
+	Executor  ExecutorName `json:"executor"`
+	Service   string       `json:"service,omitempty"`
+	TraceRole TraceRole    `json:"trace_role,omitempty"`
+	Protocol  ProtocolName `json:"protocol,omitempty"`
+	Rule      Rule         `json:"rule,omitempty"`
 }
 
 func (wr Workload) Equals(other Workload) bool {
@@ -367,15 +367,15 @@ type DataType string
 type InputTypes string
 type OperatorTypes string
 type ValueTypes string
-type Protocol string
-type Executor string
+type ProtocolName string
+type ExecutorName string
 
 const (
-	ExecutorEbpf Executor = "EBPF"
-	ExecutorOTel Executor = "OTEL"
+	ExecutorEbpf ExecutorName = "EBPF"
+	ExecutorOTel ExecutorName = "OTEL"
 
-	ProtocolHTTP    Protocol = "HTTP"
-	ProtocolGeneral Protocol = "GENERAL"
+	ProtocolHTTP    ProtocolName = "HTTP"
+	ProtocolGeneral ProtocolName = "GENERAL"
 )
 
 type Rules []Rule
@@ -444,10 +444,10 @@ func (r Rules) Equals(other Rules) bool {
 }
 
 const (
-	MYSQL      Protocol = "MYSQL"
-	HTTP       Protocol = "HTTP"
-	RULE       string   = "rule"
-	RULE_GROUP string   = "rule_group"
+	MYSQL      ProtocolName = "MYSQL"
+	HTTP       ProtocolName = "HTTP"
+	RULE       string       = "rule"
+	RULE_GROUP string       = "rule_group"
 )
 
 const (

@@ -64,20 +64,20 @@ type LeafRuleEvaluator interface {
 
 type GroupRuleEvaluator interface {
 	init() GroupRuleEvaluator
-	evalRule(rule model.Rule, attributeVersion string, protocol model.Protocol, valueStore map[string]interface{}) (bool, error)
+	evalRule(rule model.Rule, attributeVersion string, protocol model.ProtocolName, valueStore map[string]interface{}) (bool, error)
 }
 
 type RuleEvaluator struct {
-	executor           model.Executor
+	executorName       model.ExecutorName
 	dataSource         DataStore
 	attributeNameStore *cache.AttributeCache
 	leafRuleEvaluators map[string]LeafRuleEvaluator
 	groupRuleEvaluator GroupRuleEvaluator
 }
 
-func NewRuleEvaluator(redisConfig config.RedisConfig, executorName model.Executor, ctx context.Context) RuleEvaluator {
+func NewRuleEvaluator(redisConfig config.RedisConfig, executorName model.ExecutorName, ctx context.Context) RuleEvaluator {
 	return RuleEvaluator{
-		executor:           executorName,
+		executorName:       executorName,
 		leafRuleEvaluators: make(map[string]LeafRuleEvaluator),
 		attributeNameStore: getAttributeNamesStore(redisConfig, ctx),
 	}.init()
@@ -104,13 +104,13 @@ func (re RuleEvaluator) init() RuleEvaluator {
 	return re
 }
 
-func (re RuleEvaluator) EvalRule(rule model.Rule, attributeVersion string, protocol model.Protocol, valueStore map[string]interface{}) (bool, error) {
+func (re RuleEvaluator) EvalRule(rule model.Rule, attributeVersion string, protocol model.ProtocolName, valueStore map[string]interface{}) (bool, error) {
 
 	result, err := re.evalRule(rule, attributeVersion, protocol, valueStore)
 	return result, err
 }
 
-func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, protocol model.Protocol, valueStore map[string]interface{}) (bool, error) {
+func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, protocol model.ProtocolName, valueStore map[string]interface{}) (bool, error) {
 
 	handled, value := false, false
 	var err error
@@ -123,7 +123,7 @@ func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, proto
 			return false, err
 		}
 
-		// replace id with actual attribute executor
+		// replace id with actual attribute executorName
 		attributeNameOfID := re.getAttributeName(rule, attributeVersion, protocol)
 
 		zkLogger.DebugF(LoggerTag, "RuleId: ruleID=%v, attributeName=%v", rule.RuleLeaf.ID, *attributeNameOfID)
@@ -143,14 +143,14 @@ func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, proto
 	return value, err
 }
 
-func (re RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion string, protocol model.Protocol) *string {
+func (re RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion string, protocol model.ProtocolName) *string {
 
 	// get the id
 	id := *rule.RuleLeaf.ID
 	attributeName := id
 
 	// get the actual id from the idStore. If not found, use the id as is
-	attributeNameFromStore := re.attributeNameStore.Get(string(re.executor), attributeVersion, protocol, attributeName)
+	attributeNameFromStore := re.attributeNameStore.Get(string(re.executorName), attributeVersion, protocol, attributeName)
 	if attributeNameFromStore != nil {
 		attributeName = *attributeNameFromStore
 	}
