@@ -126,7 +126,7 @@ func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, proto
 		// replace id with actual attribute executorName
 		attributeNameOfID := re.getAttributeName(rule, attributeVersion, protocol)
 
-		zkLogger.DebugF(LoggerTag, "RuleId: ruleID=%v, attributeName=%v", rule.RuleLeaf.ID, *attributeNameOfID)
+		zkLogger.DebugF(LoggerTag, "RuleId:- ruleID=%v, attributeName=%v", rule.RuleLeaf.ID, *attributeNameOfID)
 
 		handled, value, err = re.handleCommonOperators(rule, *attributeNameOfID, valueStore)
 		evaluator := string(*rule.RuleLeaf.Datatype)
@@ -145,12 +145,10 @@ func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, proto
 
 func (re RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion string, protocol model.ProtocolName) *string {
 
-	// get the id
-	id := *rule.RuleLeaf.ID
-	attributeName := id
+	attributeName := *rule.RuleLeaf.ID
 
 	// get the actual id from the idStore. If not found, use the id as is
-	attributeNameFromStore := re.attributeNameStore.Get(string(re.executorName), attributeVersion, protocol, attributeName)
+	attributeNameFromStore := re.attributeNameStore.Get(string(re.executorName), attributeVersion, protocol, *rule.RuleLeaf.ID)
 	if attributeNameFromStore != nil {
 		attributeName = *attributeNameFromStore
 	}

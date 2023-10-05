@@ -22,7 +22,7 @@ func (re IntegerRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID strin
 	operator := string(*rule.Operator)
 	_, ok := valueStore[attributeNameOfID]
 	if !ok {
-		return false, fmt.Errorf("value for attributeName: %s not found in valueStore", attributeNameOfID)
+		return false, fmt.Errorf("value for attributeName-: %s not found in valueStore", attributeNameOfID)
 	}
 
 	//	switch on operator

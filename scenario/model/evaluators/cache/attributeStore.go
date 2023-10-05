@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"github.com/redis/go-redis/v9"
 	"github.com/zerok-ai/zk-utils-go/ds"
+	zklogger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
 	zkRedis "github.com/zerok-ai/zk-utils-go/storage/redis"
 	"sort"
 )
+
+const LoggerTag = "attribute-cache"
 
 type ProtocolKeyMap map[string][]Key
 type NameMapExecutorProtocol map[string]ProtocolKeyMap
@@ -82,6 +85,7 @@ func (attributeCache *AttributeCache) Get(executor, attributeVersion string, pro
 
 		// 2. get data for closest key from local cache
 		dataFromLocalCache, _ := attributeCache.localCacheHSetStore.Get(closestProtocolKey.Value)
+		zklogger.Debug(LoggerTag, "closestProtocolKey: %v", closestProtocolKey)
 		if dataFromLocalCache != nil {
 			returnVal := (*dataFromLocalCache)[attributeName]
 			if returnVal != "" {
