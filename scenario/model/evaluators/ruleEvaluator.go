@@ -116,7 +116,7 @@ func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, proto
 	var err error
 	if rule.Type == model.RULE_GROUP {
 		value, err = re.groupRuleEvaluator.evalRule(rule, attributeVersion, protocol, valueStore)
-		zkLogger.DebugF(LoggerTag, "Evaluated value for group =%v, for condition=%s", value, rule.RuleGroup.Condition)
+		zkLogger.DebugF(LoggerTag, "Evaluated value for group =%v, for condition=%s", value, *rule.RuleGroup.Condition)
 	} else {
 		err = re.validate(rule)
 		if err != nil {
@@ -126,7 +126,7 @@ func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, proto
 		// replace id with actual attribute executorName
 		attributeNameOfID := re.getAttributeName(rule, attributeVersion, protocol)
 
-		zkLogger.DebugF(LoggerTag, "RuleId:- ruleID=%v, attributeName=%v", rule.RuleLeaf.ID, *attributeNameOfID)
+		zkLogger.DebugF(LoggerTag, "RuleId:- ruleID=%s, attributeName=%s", *rule.RuleLeaf.ID, *attributeNameOfID)
 
 		handled, value, err = re.handleCommonOperators(rule, *attributeNameOfID, valueStore)
 		evaluator := string(*rule.RuleLeaf.Datatype)
