@@ -129,12 +129,12 @@ func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, proto
 		zkLogger.DebugF(LoggerTag, "RuleId:- ruleID=%s, attributeName=%s", *rule.RuleLeaf.ID, *attributeNameOfID)
 
 		handled, value, err = re.handleCommonOperators(rule, *attributeNameOfID, valueStore)
-		evaluator := string(*rule.RuleLeaf.Datatype)
+		leafEvaluatorType := string(*rule.RuleLeaf.Datatype)
 
 		if !handled {
-			ruleEvaluator := re.leafRuleEvaluators[evaluator]
+			ruleEvaluator := re.leafRuleEvaluators[leafEvaluatorType]
 			if ruleEvaluator == nil {
-				return false, fmt.Errorf("LeafRuleEvaluator not found for type: %s", rule.Type)
+				return false, fmt.Errorf("LeafRuleEvaluator not found for type: %s", leafEvaluatorType)
 			}
 			value, err = ruleEvaluator.evalRule(rule, *attributeNameOfID, valueStore)
 		}
