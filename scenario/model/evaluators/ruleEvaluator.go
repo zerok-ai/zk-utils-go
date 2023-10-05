@@ -173,10 +173,10 @@ func (re RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion strin
 
 // handleCommonOperators is a helper function to handle common operators like exists. The function returns
 // a bool indicating if the rule is handled, a bool indicating the value, if handled and an error if any.
-func (re RuleEvaluator) handleCommonOperators(r model.Rule, attributeNameOfID string, store map[string]interface{}) (bool, bool, error) {
+func (re RuleEvaluator) handleCommonOperators(r model.Rule, attributeNameOfID string, store map[string]interface{}) (handled bool, returnValue bool, err error) {
 	operator := string(*r.Operator)
-	handled := false
-	returnValue := false
+	handled = false
+	returnValue = false
 
 	//	switch on operator
 	switch operator {
@@ -190,7 +190,7 @@ func (re RuleEvaluator) handleCommonOperators(r model.Rule, attributeNameOfID st
 		returnValue = err != nil || value == nil
 	}
 
-	return returnValue, handled, nil
+	return handled, returnValue, nil
 }
 
 func (re RuleEvaluator) validate(r model.Rule) error {
