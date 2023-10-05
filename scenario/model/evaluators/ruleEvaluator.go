@@ -175,21 +175,22 @@ func (re RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion strin
 // a bool indicating if the rule is handled, a bool indicating the value, if handled and an error if any.
 func (re RuleEvaluator) handleCommonOperators(r model.Rule, attributeNameOfID string, store map[string]interface{}) (bool, bool, error) {
 	operator := string(*r.Operator)
+	handled := false
+	returnValue := false
+
 	//	switch on operator
 	switch operator {
 	case operatorExists:
+		handled = true
 		value, err := jmespath.Search(attributeNameOfID, store)
-		if err == nil && value != nil {
-			return true, true, nil
-		}
+		returnValue = err == nil && value != nil
 	case operatorNotExists:
+		handled = true
 		value, err := jmespath.Search(attributeNameOfID, store)
-		if !(err == nil && value != nil) {
-			return true, true, nil
-		}
+		returnValue = err != nil || value == nil
 	}
 
-	return false, false, nil
+	return returnValue, handled, nil
 }
 
 func (re RuleEvaluator) validate(r model.Rule) error {
