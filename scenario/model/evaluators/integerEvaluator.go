@@ -2,7 +2,6 @@ package evaluators
 
 import (
 	"fmt"
-	"github.com/jmespath/go-jmespath"
 	logger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
 	"strconv"
@@ -20,10 +19,6 @@ func (re IntegerRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID strin
 
 	// get the values assuming that the rule object is valid
 	operator := string(*rule.Operator)
-	_, ok := valueStore[attributeNameOfID]
-	if !ok {
-		return false, fmt.Errorf("value for attributeName-: %s not found in valueStore", attributeNameOfID)
-	}
 
 	//	switch on operator
 	switch operator {
@@ -142,6 +137,7 @@ func (re IntegerRuleEvaluator) valueFromRuleAndStore(r model.Rule, attributeName
 	if err != nil {
 		return 0, 0, fmt.Errorf("error converting rule value %s to integer: %v", string(*r.Value), err)
 	}
+
 	valueFromStore, err := re.valueFromStore(r, attributeNameOfID, valueStore)
 	if err != nil {
 		return 0, 0, err
@@ -151,8 +147,8 @@ func (re IntegerRuleEvaluator) valueFromRuleAndStore(r model.Rule, attributeName
 
 func (re IntegerRuleEvaluator) valueFromStore(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (int, error) {
 
-	valueInterface, err := jmespath.Search(attributeNameOfID, valueStore)
-	if err != nil || valueInterface == nil {
+	valueInterface, ok := GetValueFromStore(attributeNameOfID, valueStore)
+	if !ok || valueInterface == nil {
 		return 0, fmt.Errorf("value not found for id %s", attributeNameOfID)
 	}
 

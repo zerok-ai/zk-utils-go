@@ -85,7 +85,7 @@ func (attributeCache *AttributeCache) Get(executor, attributeVersion string, pro
 
 		// 2. get data for closest key from local cache
 		dataFromLocalCache, _ := attributeCache.localCacheHSetStore.Get(closestProtocolKey.Value)
-		zklogger.Debug(LoggerTag, "closestProtocolKey: %v", closestProtocolKey)
+		zklogger.DebugF(LoggerTag, "closestProtocolKey: %v", closestProtocolKey)
 		if dataFromLocalCache != nil {
 			returnVal := (*dataFromLocalCache)[attributeName]
 			if returnVal != "" {

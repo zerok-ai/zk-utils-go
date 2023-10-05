@@ -20,7 +20,7 @@ func (re StringRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID string
 	operator := string(*rule.Operator)
 	valueFromRule := string(*rule.Value)
 
-	valueFromStoreI, ok := valueStore[attributeNameOfID]
+	valueFromStoreI, ok := GetValueFromStore(attributeNameOfID, valueStore)
 	if !ok {
 		return false, fmt.Errorf("value for attributeName: %s not found in valueStore", attributeNameOfID)
 	}
