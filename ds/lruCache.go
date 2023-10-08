@@ -27,6 +27,7 @@ func GetLRUCache[T any](cacheSize int) *LRUCache[T] {
 	lruStore := &LRUCache[T]{
 		localKeyValueCache: make(map[string]*list.Element),
 		capacity:           cacheSize,
+		recencyList:        list.New(),
 	}
 
 	return lruStore
