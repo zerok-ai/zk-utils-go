@@ -50,8 +50,8 @@ func ToJsonString(iInstance interface{}) *string {
 	if iInstance == nil {
 		return nil
 	}
-	bytes, error := json.Marshal(iInstance)
-	if error != nil {
+	bytes, err := json.Marshal(iInstance)
+	if err != nil {
 		return nil
 	} else {
 		iString := string(bytes)
@@ -247,4 +247,22 @@ func GetStmtRawQuery(tx *sql.Tx, stmt string) (*sql.Stmt, error) {
 		return nil, err
 	}
 	return preparedStmt, nil
+}
+
+func DeepCopy[T any](input *T) (*T, error) {
+
+	byteArray, err := json.Marshal(input)
+	if err != nil {
+		zkLogger.Error(LogTag, "Error in Deep copy[1]:", err)
+		return nil, err
+	}
+
+	var newObject T
+	err = json.Unmarshal(byteArray, &newObject)
+	if err != nil {
+		zkLogger.Error(LogTag, "Error in Deep copy[2]:", err)
+		return nil, err
+	}
+
+	return &newObject, nil
 }
