@@ -54,7 +54,7 @@ func GetPathAndFunctions(input string) (path string, functions []Function) {
 				fmt.Print("\t" + temp)
 			}
 		}
-		fmt.Printf("\tnumber of Args: %d", len(args))
+		fmt.Printf("\tnumber of Args: %d\n", len(args))
 
 		// append the function to the list
 		functions = append(functions, Function{name, args})

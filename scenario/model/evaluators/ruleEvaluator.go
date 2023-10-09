@@ -1,15 +1,11 @@
 package evaluators
 
 import (
-	"context"
 	"fmt"
 	"github.com/jmespath/go-jmespath"
-	"github.com/zerok-ai/zk-utils-go/ds"
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/cache"
-	"github.com/zerok-ai/zk-utils-go/storage/redis/clientDBNames"
-	"github.com/zerok-ai/zk-utils-go/storage/redis/config"
 )
 
 const (
@@ -75,22 +71,12 @@ type RuleEvaluator struct {
 	groupRuleEvaluator GroupRuleEvaluator
 }
 
-func NewRuleEvaluator(redisConfig config.RedisConfig, executorName model.ExecutorName, ctx context.Context) RuleEvaluator {
+func NewRuleEvaluator(executorName model.ExecutorName, attributeNameStore *cache.AttributeCache) RuleEvaluator {
 	return RuleEvaluator{
 		executorName:       executorName,
+		attributeNameStore: attributeNameStore,
 		leafRuleEvaluators: make(map[string]LeafRuleEvaluator),
-		attributeNameStore: getAttributeNamesStore(redisConfig, ctx),
 	}.init()
-}
-
-func getAttributeNamesStore(redisConfig config.RedisConfig, ctx context.Context) *cache.AttributeCache {
-
-	dbName := clientDBNames.ExecutorAttrDBName
-	noExpiryCache := ds.GetCacheWithExpiry[map[string]string](ds.NoExpiry)
-	redisClient := config.GetRedisConnection(dbName, redisConfig)
-
-	localCache := cache.GetAttributeCache(redisClient, noExpiryCache, nil, ctx)
-	return localCache
 }
 
 func (re RuleEvaluator) init() RuleEvaluator {
