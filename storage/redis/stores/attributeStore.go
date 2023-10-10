@@ -76,13 +76,13 @@ func (attributeCache *ExecutorAttrStore) GetFromRedis(key string) (*map[string]s
 	and then in `OTEL_1.17.0_GENERAL`
 
 */
-func (attributeCache *ExecutorAttrStore) Get(executor, attributeVersion string, protocol model.ProtocolName, attributeName string) *string {
+func (attributeCache *ExecutorAttrStore) Get(executor model.ExecutorName, attributeVersion string, protocol model.ProtocolName, attributeName string) *string {
 
 	protocols := []model.ProtocolName{protocol, model.ProtocolGeneral}
 	for _, proto := range protocols {
 
 		// 1. get the closest key
-		closestProtocolKey := attributeCache.getClosestKey(executor, attributeVersion, proto)
+		closestProtocolKey := attributeCache.getClosestKey(string(executor), attributeVersion, proto)
 
 		// 2. get data for closest key from local cache
 		dataFromLocalCache, _ := attributeCache.localCacheHSetStore.Get(closestProtocolKey.Value)
