@@ -18,10 +18,11 @@ var storeFactory *StoreFactory
 
 func GetStoreFactory(redisConfig config.RedisConfig, ctx context.Context) *StoreFactory {
 	if storeFactory == nil {
+		var mapOfStores = make(map[string]interface{})
 		storeFactory = &StoreFactory{
 			redisConfig: redisConfig,
 			ctx:         ctx,
-			mapOfStores: make(map[string]interface{}),
+			mapOfStores: mapOfStores,
 		}
 	}
 	return storeFactory
