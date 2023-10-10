@@ -1,4 +1,4 @@
-package cache
+package stores
 
 import (
 	"context"
@@ -7,50 +7,51 @@ import (
 	"github.com/zerok-ai/zk-utils-go/ds"
 	zklogger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
+	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/cache"
 	zkRedis "github.com/zerok-ai/zk-utils-go/storage/redis"
 	"sort"
 )
 
 const LoggerTag = "attribute-cache"
 
-type ProtocolKeyMap map[string][]Key
+type ProtocolKeyMap map[string][]cache.Key
 type NameMapExecutorProtocol map[string]ProtocolKeyMap
 
-type AttributeCache struct {
-	localCacheHSetStore     zkRedis.LocalCacheHSetStore
+type ExecutorAttrStore struct {
+	localCacheHSetStore     LocalCacheHSetStore
 	nameMapExecutorProtocol *NameMapExecutorProtocol
 }
 
-func GetAttributeCache(rc *redis.Client, localCache ds.Cache[map[string]string], csh zkRedis.CacheStoreHook[map[string]string], ctx context.Context) *AttributeCache {
-	attributeCache := (&AttributeCache{
-		localCacheHSetStore: *zkRedis.GetLocalCacheHSetStore(rc, localCache, csh, ctx),
+func GetExecutorAttrStore(rc *redis.Client, localCache ds.Cache[map[string]string], csh zkRedis.CacheStoreHook[map[string]string], ctx context.Context) *ExecutorAttrStore {
+	attributeCache := (&ExecutorAttrStore{
+		localCacheHSetStore: *GetLocalCacheHSetStore(rc, localCache, csh, ctx),
 	}).initialize()
 
 	return attributeCache
 }
 
-func (attributeCache *AttributeCache) SetCache(cache ds.Cache[map[string]string]) {
+func (attributeCache *ExecutorAttrStore) SetCache(cache ds.Cache[map[string]string]) {
 	attributeCache.localCacheHSetStore.SetCache(cache)
 }
 
-func (attributeCache *AttributeCache) initialize() *AttributeCache {
+func (attributeCache *ExecutorAttrStore) initialize() *ExecutorAttrStore {
 	attributeCache.nameMapExecutorProtocol = attributeCache.populateAttributeDatasetsFromRedis()
 	return attributeCache
 }
 
-func (attributeCache *AttributeCache) Close() {
+func (attributeCache *ExecutorAttrStore) Close() {
 	attributeCache.localCacheHSetStore.Close()
 }
 
-func (attributeCache *AttributeCache) PutInLocalCache(key string, value *map[string]string) {
+func (attributeCache *ExecutorAttrStore) PutInLocalCache(key string, value *map[string]string) {
 	attributeCache.localCacheHSetStore.PutInLocalCache(key, value)
 }
 
-func (attributeCache *AttributeCache) GetFromLocalCache(key string) (*map[string]string, bool) {
+func (attributeCache *ExecutorAttrStore) GetFromLocalCache(key string) (*map[string]string, bool) {
 	return attributeCache.localCacheHSetStore.Get(key)
 }
 
-func (attributeCache *AttributeCache) GetFromRedis(key string) (*map[string]string, error) {
+func (attributeCache *ExecutorAttrStore) GetFromRedis(key string) (*map[string]string, error) {
 	value, err := attributeCache.localCacheHSetStore.GetFromRedis(key)
 	if err != nil {
 		return nil, err
@@ -75,7 +76,7 @@ func (attributeCache *AttributeCache) GetFromRedis(key string) (*map[string]stri
 	and then in `OTEL_1.17.0_GENERAL`
 
 */
-func (attributeCache *AttributeCache) Get(executor, attributeVersion string, protocol model.ProtocolName, attributeName string) *string {
+func (attributeCache *ExecutorAttrStore) Get(executor, attributeVersion string, protocol model.ProtocolName, attributeName string) *string {
 
 	protocols := []model.ProtocolName{protocol, model.ProtocolGeneral}
 	for _, proto := range protocols {
@@ -97,11 +98,11 @@ func (attributeCache *AttributeCache) Get(executor, attributeVersion string, pro
 	return nil
 }
 
-var BlankKey = &Key{Value: ""}
+var BlankKey = &cache.Key{Value: ""}
 
-func (attributeCache *AttributeCache) getClosestKey(executor string, attributeVersion string, protocol model.ProtocolName) *Key {
+func (attributeCache *ExecutorAttrStore) getClosestKey(executor string, attributeVersion string, protocol model.ProtocolName) *cache.Key {
 
-	inputKey, err := ParseKey(fmt.Sprintf("%s_%s_%s", executor, attributeVersion, protocol))
+	inputKey, err := cache.ParseKey(fmt.Sprintf("%s_%s_%s", executor, attributeVersion, protocol))
 	if err != nil {
 		return BlankKey
 	}
@@ -129,7 +130,7 @@ func (attributeCache *AttributeCache) getClosestKey(executor string, attributeVe
 	return &keys[index-1]
 }
 
-func (attributeCache *AttributeCache) populateAttributeDatasetsFromRedis() *NameMapExecutorProtocol {
+func (attributeCache *ExecutorAttrStore) populateAttributeDatasetsFromRedis() *NameMapExecutorProtocol {
 
 	//1. fetch data for the `protocol` and `GENERAL` protocol
 	strKeys, err := attributeCache.localCacheHSetStore.GetAllKeysFromRedis("*")
@@ -155,7 +156,7 @@ func PopulateExecutorData(strKeys *[]string) *NameMapExecutorProtocol {
 
 	//2. load data into `NameMapExecutorProtocol` object
 	for _, key := range *strKeys {
-		parsedKey, err1 := ParseKey(key)
+		parsedKey, err1 := cache.ParseKey(key)
 		if err1 != nil {
 			continue
 		}
@@ -170,7 +171,7 @@ func PopulateExecutorData(strKeys *[]string) *NameMapExecutorProtocol {
 		// get the keys
 		keys, ok := protocolKeys[parsedKey.Protocol]
 		if !ok {
-			keys = make([]Key, 0)
+			keys = make([]cache.Key, 0)
 		}
 
 		keys = append(keys, parsedKey)
@@ -180,7 +181,7 @@ func PopulateExecutorData(strKeys *[]string) *NameMapExecutorProtocol {
 	// sort the version list
 	for _, protocol := range nameMapExecutorProtocol {
 		for _, keys := range protocol {
-			sort.Sort(ByVersion(keys))
+			sort.Sort(cache.ByVersion(keys))
 		}
 	}
 	return &nameMapExecutorProtocol

@@ -2,7 +2,7 @@ package functions
 
 import (
 	"fmt"
-	zkRedis "github.com/zerok-ai/zk-utils-go/storage/redis"
+	"github.com/zerok-ai/zk-utils-go/storage/redis/stores"
 	"regexp"
 	"strings"
 )
@@ -19,10 +19,10 @@ func (fn BlankFunction) Execute(valueAtObject interface{}) (value interface{}, o
 }
 
 type FunctionFactory struct {
-	serviceIPStore *zkRedis.LocalCacheHSetStore
+	serviceIPStore stores.LocalCacheHSetStore
 }
 
-func NewFunctionFactory(serviceIPStore *zkRedis.LocalCacheHSetStore) *FunctionFactory {
+func NewFunctionFactory(serviceIPStore stores.LocalCacheHSetStore) *FunctionFactory {
 	return &FunctionFactory{serviceIPStore}
 }
 

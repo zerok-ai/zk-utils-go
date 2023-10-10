@@ -1,9 +1,10 @@
-package redis
+package stores
 
 import (
 	"context"
 	"github.com/redis/go-redis/v9"
 	"github.com/zerok-ai/zk-utils-go/ds"
+	zkredis "github.com/zerok-ai/zk-utils-go/storage/redis"
 	zkErrors "github.com/zerok-ai/zk-utils-go/zkerrors"
 	"log"
 )
@@ -22,11 +23,11 @@ type LocalCacheHSetStore interface {
 type LocalCacheHSetStoreInternal struct {
 	redisClient    *redis.Client
 	localCache     ds.Cache[map[string]string]
-	cacheStoreHook CacheStoreHook[map[string]string]
+	cacheStoreHook zkredis.CacheStoreHook[map[string]string]
 	context        context.Context
 }
 
-func GetLocalCacheHSetStore(rc *redis.Client, localCache ds.Cache[map[string]string], csh CacheStoreHook[map[string]string], ctx context.Context) *LocalCacheHSetStore {
+func GetLocalCacheHSetStore(rc *redis.Client, localCache ds.Cache[map[string]string], csh zkredis.CacheStoreHook[map[string]string], ctx context.Context) *LocalCacheHSetStore {
 	internal := (&LocalCacheHSetStoreInternal{
 		redisClient:    rc,
 		localCache:     localCache,

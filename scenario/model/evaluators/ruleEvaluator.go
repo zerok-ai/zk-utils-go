@@ -5,9 +5,8 @@ import (
 	"github.com/jmespath/go-jmespath"
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
-	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/cache"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/functions"
-	zkRedis "github.com/zerok-ai/zk-utils-go/storage/redis"
+	"github.com/zerok-ai/zk-utils-go/storage/redis/stores"
 )
 
 const (
@@ -66,23 +65,20 @@ type GroupRuleEvaluator interface {
 }
 
 type RuleEvaluator struct {
-	executorName       model.ExecutorName
-	attributeNameStore *cache.AttributeCache
-	podDetailsStore    *zkRedis.LocalCacheHSetStore
-	functionFactory    *functions.FunctionFactory
+	executorName      model.ExecutorName
+	executorAttrStore stores.ExecutorAttrStore
+	podDetailsStore   stores.LocalCacheHSetStore
+	functionFactory   *functions.FunctionFactory
 
 	leafRuleEvaluators map[string]LeafRuleEvaluator
 	groupRuleEvaluator GroupRuleEvaluator
 }
 
-func NewRuleEvaluator(executorName model.ExecutorName, storeFactory *zkRedis.StoreFactory) RuleEvaluator {
-
-	attributeNameStore := storeFactory.GetExecutorAttrStore()
-	podDetailsStore := storeFactory.GetPodDetailsStore()
+func NewRuleEvaluator(executorName model.ExecutorName, executorAttrStore stores.ExecutorAttrStore, podDetailsStore stores.LocalCacheHSetStore) RuleEvaluator {
 	return RuleEvaluator{
-		executorName:       executorName,
-		attributeNameStore: attributeNameStore,
-		podDetailsStore:    podDetailsStore,
+		executorName:      executorName,
+		executorAttrStore: executorAttrStore,
+		podDetailsStore:   podDetailsStore,
 	}.init()
 }
 
@@ -143,7 +139,7 @@ func (re RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion strin
 	attributeName := *rule.RuleLeaf.ID
 
 	// get the actual id from the idStore. If not found, use the id as is
-	attributeNameFromStore := re.attributeNameStore.Get(string(re.executorName), attributeVersion, protocol, *rule.RuleLeaf.ID)
+	attributeNameFromStore := re.executorAttrStore.Get(string(re.executorName), attributeVersion, protocol, *rule.RuleLeaf.ID)
 	if attributeNameFromStore != nil {
 		attributeName = *attributeNameFromStore
 	}
