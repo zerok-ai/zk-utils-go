@@ -1,7 +1,6 @@
 package evaluators
 
 import (
-	"context"
 	"fmt"
 	"github.com/jmespath/go-jmespath"
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
@@ -9,7 +8,6 @@ import (
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/cache"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/functions"
 	zkRedis "github.com/zerok-ai/zk-utils-go/storage/redis"
-	"github.com/zerok-ai/zk-utils-go/storage/redis/config"
 )
 
 const (
@@ -70,27 +68,27 @@ type GroupRuleEvaluator interface {
 type RuleEvaluator struct {
 	executorName       model.ExecutorName
 	attributeNameStore *cache.AttributeCache
-	serviceIPStore     *zkRedis.LocalCacheHSetStore
+	podDetailsStore    *zkRedis.LocalCacheHSetStore
 	functionFactory    *functions.FunctionFactory
 
 	leafRuleEvaluators map[string]LeafRuleEvaluator
 	groupRuleEvaluator GroupRuleEvaluator
 }
 
-func NewRuleEvaluator(redisConfig config.RedisConfig, executorName model.ExecutorName, ctx context.Context) RuleEvaluator {
+func NewRuleEvaluator(executorName model.ExecutorName, storeFactory *zkRedis.StoreFactory) RuleEvaluator {
 
-	attributeNameStore := GetAttributeNamesStore(redisConfig, ctx)
-	serviceIPStore := GetExpiryBasedCacheStore(redisConfig, ctx)
+	attributeNameStore := storeFactory.GetExecutorAttrStore()
+	podDetailsStore := storeFactory.GetPodDetailsStore()
 	return RuleEvaluator{
 		executorName:       executorName,
 		attributeNameStore: attributeNameStore,
-		serviceIPStore:     serviceIPStore,
+		podDetailsStore:    podDetailsStore,
 	}.init()
 }
 
 func (re RuleEvaluator) init() RuleEvaluator {
 	re.groupRuleEvaluator = RuleGroupEvaluator{re}.init()
-	re.functionFactory = functions.NewFunctionFactory(re.serviceIPStore)
+	re.functionFactory = functions.NewFunctionFactory(re.podDetailsStore)
 
 	re.leafRuleEvaluators = make(map[string]LeafRuleEvaluator)
 	re.leafRuleEvaluators[typeString] = NewStringRuleEvaluator(re.functionFactory)

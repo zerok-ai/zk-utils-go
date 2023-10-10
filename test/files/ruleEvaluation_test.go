@@ -8,6 +8,7 @@ import (
 	"github.com/zerok-ai/zk-utils-go/common"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators"
+	"github.com/zerok-ai/zk-utils-go/storage/redis"
 	//"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators"
 	"github.com/zerok-ai/zk-utils-go/storage/redis/config"
 	"testing"
@@ -122,8 +123,12 @@ func validate(t *testing.T, w model.Workload, dataStore map[string]interface{}, 
 	executor := "OTEL"
 	redisConfig := config.RedisConfig{}
 	ctx := context.Background()
-	attrNS := evaluators.GetAttributeNamesStore(redisConfig, ctx)
-	ruleEvaluator := evaluators.NewRuleEvaluator(model.ExecutorName(executor), attrNS)
+	sf := redis.GetStoreFactory(redisConfig, ctx)
+	executorAttrDB := sf.GetExecutorAttrStore(redisConfig, ctx)
+	podDetailsStore := sf.GetPodDetailsStore(redisConfig, ctx)
+
+	ruleEvaluator := evaluators.NewRuleEvaluator(model.ExecutorName(executor), executorAttrDB, podDetailsStore)
+
 	result, err := ruleEvaluator.EvalRule(w.Rule, "0.1.1", "HTTP", dataStore)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, result)

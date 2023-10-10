@@ -1,10 +1,14 @@
-package functions
+package podDetails
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/jmespath/go-jmespath"
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
+	zkRedis "github.com/zerok-ai/zk-utils-go/storage/redis"
 )
+
+const LoggerTag = "ip"
 
 type Set map[string]bool
 
@@ -76,14 +80,6 @@ type PodStatus struct {
 }
 type ProgrammingLanguage string
 
-//type ContainerRuntime struct {
-//	PodUID        string           `json:"uid"`
-//	ContainerName string           `json:"cont"`
-//	Image         string           `json:"image"`
-//	ImageID       string           `json:"imageId"`
-//	Process       []ProcessDetails `json:"process"`
-//}
-
 type ContainerRuntime struct {
 	Image    string            `json:"image"`
 	ImageID  string            `json:"imageId"`
@@ -138,7 +134,30 @@ type RuntimeSyncRequest struct {
 	RuntimeDetails []ContainerRuntime `json:"details"`
 }
 
-func LoadIPDetailsIntoHashmap(ip string, input *map[string]string) *PodDetails {
+var serviceNamePaths = []string{"Metadata.ServiceName"}
+
+func GetServiceNameFromPodDetails(ip string, podDetailsStore *zkRedis.LocalCacheHSetStore) string {
+	workloadDetailsPtr, _ := (*podDetailsStore).Get(ip)
+	podDetails := loadIPDetailsIntoHashmap(ip, workloadDetailsPtr)
+
+	var serviceName string
+	for _, serviceNamePath := range serviceNamePaths {
+		valAtPath, err := jmespath.Search(serviceNamePath, podDetails)
+		if err == nil || valAtPath != nil {
+			serviceName = valAtPath.(string)
+			break
+		}
+	}
+	return serviceName
+}
+
+const (
+	status   = "status"
+	metadata = "metadata"
+	spec     = "spec"
+)
+
+func loadIPDetailsIntoHashmap(ip string, input *map[string]string) *PodDetails {
 	podDetails := PodDetails{}
 	if input == nil || len(*input) == 0 {
 		zkLogger.ErrorF(LoggerTag, "Error getting service for ip = %s \n", ip)
@@ -147,7 +166,7 @@ func LoadIPDetailsIntoHashmap(ip string, input *map[string]string) *PodDetails {
 
 	//load status
 	var podStatus PodStatus
-	stringValue, ok := (*input)["status"]
+	stringValue, ok := (*input)[status]
 	if ok {
 		err := json.Unmarshal([]byte(stringValue), &podStatus)
 		if err != nil {
@@ -157,18 +176,17 @@ func LoadIPDetailsIntoHashmap(ip string, input *map[string]string) *PodDetails {
 
 	//load metadata
 	var podMetadata PodMetadata
-	stringValue, ok = (*input)["metadata"]
+	stringValue, ok = (*input)[metadata]
 	if ok {
 		err := json.Unmarshal([]byte(stringValue), &podMetadata)
 		if err != nil {
 			zkLogger.ErrorF(LoggerTag, "Error marshalling metadata for ip = %s\n", ip)
 		}
-		podDetails.Status = podStatus
 	}
 
 	//load spec
 	var podSpec PodSpec
-	stringValue, ok = (*input)["spec"]
+	stringValue, ok = (*input)[spec]
 	if ok {
 		err := json.Unmarshal([]byte(stringValue), &podSpec)
 		if err != nil {
@@ -176,9 +194,9 @@ func LoadIPDetailsIntoHashmap(ip string, input *map[string]string) *PodDetails {
 		}
 	}
 
+	podDetails.Spec = podSpec
 	podDetails.Status = podStatus
 	podDetails.Metadata = podMetadata
-	podDetails.Spec = podSpec
 
 	return &podDetails
 }

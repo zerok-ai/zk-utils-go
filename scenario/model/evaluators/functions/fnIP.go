@@ -2,6 +2,7 @@ package functions
 
 import (
 	"github.com/jmespath/go-jmespath"
+	"github.com/zerok-ai/zk-utils-go/podDetails"
 	zkRedis "github.com/zerok-ai/zk-utils-go/storage/redis"
 )
 
@@ -10,14 +11,14 @@ const (
 )
 
 type ExtractWorkLoadFromIP struct {
-	Name           string
-	Args           []string
-	serviceIPStore *zkRedis.LocalCacheHSetStore
+	Name            string
+	Args            []string
+	podDetailsStore *zkRedis.LocalCacheHSetStore
 }
 
 func (fn ExtractWorkLoadFromIP) Execute(valueAtObject interface{}) (interface{}, bool) {
 
-	if len(fn.Args) < 1 || fn.serviceIPStore == nil {
+	if len(fn.Args) < 1 || fn.podDetailsStore == nil {
 		return "", false
 	}
 
@@ -29,13 +30,6 @@ func (fn ExtractWorkLoadFromIP) Execute(valueAtObject interface{}) (interface{},
 	}
 
 	// get the workload for the ip
-	workloadDetailsPtr, _ := (*fn.serviceIPStore).Get(ip.(string))
-	//workloadDetailsPtr, _ := scenarioManager.serviceIPStore.Get("10.60.1.53")
-	podDetails := LoadIPDetailsIntoHashmap(ip.(string), workloadDetailsPtr)
-
-	serviceName, err := jmespath.Search("Metadata.ServiceName", podDetails)
-	if err != nil || serviceName == nil {
-		return ip.(string), false
-	}
-	return serviceName.(string), false
+	serviceName := podDetails.GetServiceNameFromPodDetails(ip.(string), fn.podDetailsStore)
+	return serviceName, true
 }
