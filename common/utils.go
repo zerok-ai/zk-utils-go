@@ -67,8 +67,8 @@ func FromJsonString(iString string, iType reflect.Type) interface{} {
 	iTypeInterface := reflect.New(iType).Interface()
 	iReader := strings.NewReader(iString)
 	decoder := json.NewDecoder(iReader)
-	error := decoder.Decode(iTypeInterface)
-	if error != nil {
+	err := decoder.Decode(iTypeInterface)
+	if err != nil {
 		//TODO:Refactor
 	}
 	return iTypeInterface

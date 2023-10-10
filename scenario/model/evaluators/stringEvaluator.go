@@ -3,15 +3,21 @@ package evaluators
 import (
 	"fmt"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
+	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/functions"
 	"regexp"
 	"strings"
 )
 
 type StringRuleEvaluator struct {
+	functionFactory *functions.FunctionFactory
 }
 
 func (re StringRuleEvaluator) init() LeafRuleEvaluator {
 	return re
+}
+
+func NewStringRuleEvaluator(functionFactory *functions.FunctionFactory) LeafRuleEvaluator {
+	return StringRuleEvaluator{functionFactory: functionFactory}.init()
 }
 
 func (re StringRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
@@ -20,7 +26,7 @@ func (re StringRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID string
 	operator := string(*rule.Operator)
 	valueFromRule := string(*rule.Value)
 
-	valueFromStoreI, ok := GetValueFromStore(attributeNameOfID, valueStore)
+	valueFromStoreI, ok := GetValueFromStore(attributeNameOfID, valueStore, re.functionFactory)
 	if !ok {
 		return false, fmt.Errorf("value for attributeName: %s not found in valueStore", attributeNameOfID)
 	}

@@ -1,11 +1,15 @@
 package evaluators
 
 import (
+	"context"
 	"fmt"
 	"github.com/jmespath/go-jmespath"
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/cache"
+	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/functions"
+	zkRedis "github.com/zerok-ai/zk-utils-go/storage/redis"
+	"github.com/zerok-ai/zk-utils-go/storage/redis/config"
 )
 
 const (
@@ -65,27 +69,34 @@ type GroupRuleEvaluator interface {
 
 type RuleEvaluator struct {
 	executorName       model.ExecutorName
-	dataSource         DataStore
 	attributeNameStore *cache.AttributeCache
+	serviceIPStore     *zkRedis.LocalCacheHSetStore
+	functionFactory    *functions.FunctionFactory
+
 	leafRuleEvaluators map[string]LeafRuleEvaluator
 	groupRuleEvaluator GroupRuleEvaluator
 }
 
-func NewRuleEvaluator(executorName model.ExecutorName, attributeNameStore *cache.AttributeCache) RuleEvaluator {
+func NewRuleEvaluator(redisConfig config.RedisConfig, executorName model.ExecutorName, ctx context.Context) RuleEvaluator {
+
+	attributeNameStore := GetAttributeNamesStore(redisConfig, ctx)
+	serviceIPStore := GetExpiryBasedCacheStore(redisConfig, ctx)
 	return RuleEvaluator{
 		executorName:       executorName,
 		attributeNameStore: attributeNameStore,
-		leafRuleEvaluators: make(map[string]LeafRuleEvaluator),
+		serviceIPStore:     serviceIPStore,
 	}.init()
 }
 
 func (re RuleEvaluator) init() RuleEvaluator {
 	re.groupRuleEvaluator = RuleGroupEvaluator{re}.init()
+	re.functionFactory = functions.NewFunctionFactory(re.serviceIPStore)
 
-	re.leafRuleEvaluators[typeString] = StringRuleEvaluator{}.init()
-	re.leafRuleEvaluators[typeInteger] = IntegerRuleEvaluator{}.init()
-	re.leafRuleEvaluators[typeFloat] = FloatRuleEvaluator{}.init()
-	re.leafRuleEvaluators[typeBool] = BooleanEvaluator{}.init()
+	re.leafRuleEvaluators = make(map[string]LeafRuleEvaluator)
+	re.leafRuleEvaluators[typeString] = NewStringRuleEvaluator(re.functionFactory)
+	re.leafRuleEvaluators[typeInteger] = NewIntegerRuleEvaluator(re.functionFactory)
+	re.leafRuleEvaluators[typeFloat] = NewFloatRuleEvaluator(re.functionFactory)
+	re.leafRuleEvaluators[typeBool] = NewBooleanEvaluator(re.functionFactory)
 
 	return re
 }
@@ -142,7 +153,7 @@ func (re RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion strin
 	jsonPath := rule.RuleLeaf.JsonPath
 	if jsonPath != nil {
 		//add jsonPath to the attribute name using jsonExtract function
-		jsonPathString := "#jsonExtract("
+		jsonPathString := "#" + functions.JsonExtract + "("
 		for index, path := range *jsonPath {
 			if index > 0 {
 				jsonPathString += "."
@@ -195,4 +206,36 @@ func (re RuleEvaluator) validate(r model.Rule) error {
 	}
 
 	return nil
+}
+
+func GetValueFromStore(inputPath string, store map[string]interface{}, ff *functions.FunctionFactory) (interface{}, bool) {
+
+	var err error
+	var ok bool
+	var valueAtObject interface{}
+
+	valueAtObject = store
+	path, functionArr := ff.GetPathAndFunctions(inputPath)
+
+	// handle path
+	if len(path) > 0 {
+		valueAtObject, err = jmespath.Search(path, valueAtObject)
+		if err != nil {
+			zkLogger.ErrorF(LoggerTag, "Error evaluating jmespath at path:%s for store %v\n%v", path, store, err)
+			return valueAtObject, false
+		}
+	}
+
+	// handle functionArr
+	for _, fn := range functionArr {
+		if valueAtObject == nil {
+			return valueAtObject, false
+		}
+		valueAtObject, ok = fn.Execute(valueAtObject)
+		if !ok {
+			return valueAtObject, false
+		}
+	}
+
+	return valueAtObject, true
 }

@@ -4,15 +4,21 @@ import (
 	"fmt"
 	logger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
+	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/functions"
 	"strconv"
 	"strings"
 )
 
 type FloatRuleEvaluator struct {
+	functionFactory *functions.FunctionFactory
 }
 
 func (re FloatRuleEvaluator) init() LeafRuleEvaluator {
 	return re
+}
+
+func NewFloatRuleEvaluator(functionFactory *functions.FunctionFactory) LeafRuleEvaluator {
+	return FloatRuleEvaluator{functionFactory: functionFactory}.init()
 }
 
 func (re FloatRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
@@ -153,7 +159,7 @@ func (re FloatRuleEvaluator) valueFromRuleAndStore(r model.Rule, attributeNameOf
 
 func (re FloatRuleEvaluator) valueFromStore(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (float64, error) {
 
-	valueInterface, ok := GetValueFromStore(attributeNameOfID, valueStore)
+	valueInterface, ok := GetValueFromStore(attributeNameOfID, valueStore, re.functionFactory)
 	if !ok || valueInterface == nil {
 		return 0, fmt.Errorf("value not found for id %s", attributeNameOfID)
 	}

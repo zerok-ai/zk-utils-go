@@ -3,25 +3,29 @@ package evaluators
 import (
 	"fmt"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
+	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/functions"
 )
 
 type BooleanEvaluator struct {
-	baseRuleEvaluator RuleEvaluator
+	functionFactory *functions.FunctionFactory
 }
 
 func (re BooleanEvaluator) init() LeafRuleEvaluator {
 	return re
 }
 
-func (re BooleanEvaluator) evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
+func NewBooleanEvaluator(functionFactory *functions.FunctionFactory) LeafRuleEvaluator {
+	return BooleanEvaluator{functionFactory: functionFactory}.init()
+}
 
+func (re BooleanEvaluator) evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
 	valueFromRule, err := getBooleanValue(string(*rule.Value))
 	if err != nil {
 		return false, err
 	}
 
 	// get the value from the value store
-	value, ok := GetValueFromStore(attributeNameOfID, valueStore)
+	value, ok := GetValueFromStore(attributeNameOfID, valueStore, re.functionFactory)
 	if !ok {
 		return false, fmt.Errorf("value for attributeName: %s not found in valueStore", attributeNameOfID)
 	}

@@ -4,15 +4,21 @@ import (
 	"fmt"
 	logger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
+	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/functions"
 	"strconv"
 	"strings"
 )
 
 type IntegerRuleEvaluator struct {
+	functionFactory *functions.FunctionFactory
 }
 
 func (re IntegerRuleEvaluator) init() LeafRuleEvaluator {
 	return re
+}
+
+func NewIntegerRuleEvaluator(factory *functions.FunctionFactory) LeafRuleEvaluator {
+	return IntegerRuleEvaluator{}.init()
 }
 
 func (re IntegerRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
@@ -147,7 +153,7 @@ func (re IntegerRuleEvaluator) valueFromRuleAndStore(r model.Rule, attributeName
 
 func (re IntegerRuleEvaluator) valueFromStore(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (int, error) {
 
-	valueInterface, ok := GetValueFromStore(attributeNameOfID, valueStore)
+	valueInterface, ok := GetValueFromStore(attributeNameOfID, valueStore, re.functionFactory)
 	if !ok || valueInterface == nil {
 		return 0, fmt.Errorf("value not found for id %s", attributeNameOfID)
 	}
