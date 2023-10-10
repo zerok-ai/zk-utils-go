@@ -42,6 +42,9 @@ func (sf *StoreFactory) GetExecutorAttrStore() *ExecutorAttrStore {
 
 	// save and return
 	executorAttrStore := GetExecutorAttrStore(redisClient, noExpiryCache, nil, sf.ctx)
+	if sf.mapOfStores == nil {
+		sf.mapOfStores = make(map[string]interface{})
+	}
 	sf.mapOfStores[clientDBNames.ExecutorAttrDBName] = executorAttrStore
 
 	return executorAttrStore
@@ -62,6 +65,9 @@ func (sf *StoreFactory) GetPodDetailsStore() *LocalCacheHSetStore {
 
 	//save and return
 	localCache := GetLocalCacheHSetStore(redisClient, expiryCache, nil, sf.ctx)
+	if sf.mapOfStores == nil {
+		sf.mapOfStores = make(map[string]interface{})
+	}
 	sf.mapOfStores[clientDBNames.PodDetailsDBName] = localCache
 
 	return localCache
