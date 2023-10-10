@@ -139,7 +139,7 @@ func (re RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion strin
 	attributeName := *rule.RuleLeaf.ID
 
 	// get the actual id from the idStore. If not found, use the id as is
-	attributeNameFromStore := re.executorAttrStore.Get(string(re.executorName), attributeVersion, protocol, *rule.RuleLeaf.ID)
+	attributeNameFromStore := re.executorAttrStore.Get(re.executorName, attributeVersion, protocol, *rule.RuleLeaf.ID)
 	if attributeNameFromStore != nil {
 		attributeName = *attributeNameFromStore
 	}
