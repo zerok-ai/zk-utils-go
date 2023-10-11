@@ -92,12 +92,13 @@ func (re *IntegerRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID stri
 	return false, fmt.Errorf("integer: invalid operator: %s", operator)
 }
 
-func (re *IntegerRuleEvaluator) getValuesFromCSString(csv string) []int {
-	retArr := make([]int, 0)
+func (re *IntegerRuleEvaluator) getValuesFromCSString(csv string) []int64 {
+	retArr := make([]int64, 0)
 	stringSet := strings.Split(csv, ",")
 
 	for _, part := range stringSet {
-		number, err := strconv.Atoi(part)
+		number, err := strconv.ParseInt(fmt.Sprintf("%v", part), 10, 64)
+
 		if err != nil {
 			logger.Error(LoggerTag, "error converting %s to integer: %v", stringSet[0], err)
 			continue
@@ -134,7 +135,7 @@ func (re *IntegerRuleEvaluator) isValuePresentInCSV(r model.Rule, attributeNameO
 	stringSet := strings.Split(csv, ",")
 
 	for _, part := range stringSet {
-		number, err := strconv.Atoi(part)
+		number, err := strconv.ParseInt(fmt.Sprintf("%v", part), 10, 64)
 		if err != nil {
 			logger.Error(LoggerTag, "error converting %s to integer: %v", stringSet[0], err)
 			continue
@@ -146,8 +147,9 @@ func (re *IntegerRuleEvaluator) isValuePresentInCSV(r model.Rule, attributeNameO
 	return false
 }
 
-func (re *IntegerRuleEvaluator) valueFromRuleAndStore(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (int, int, error) {
-	valueFromRule, err := strconv.Atoi(string(*r.Value))
+func (re *IntegerRuleEvaluator) valueFromRuleAndStore(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (int64, int64, error) {
+	valueFromRule, err := strconv.ParseInt(fmt.Sprintf("%v", string(*r.Value)), 10, 64)
+
 	if err != nil {
 		return 0, 0, fmt.Errorf("error converting rule value %s to integer: %v", string(*r.Value), err)
 	}
@@ -159,7 +161,7 @@ func (re *IntegerRuleEvaluator) valueFromRuleAndStore(r model.Rule, attributeNam
 	return valueFromRule, valueFromStore, nil
 }
 
-func (re *IntegerRuleEvaluator) valueFromStore(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (int, error) {
+func (re *IntegerRuleEvaluator) valueFromStore(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (int64, error) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -172,7 +174,7 @@ func (re *IntegerRuleEvaluator) valueFromStore(r model.Rule, attributeNameOfID s
 		return 0, fmt.Errorf("value not found for id %s", attributeNameOfID)
 	}
 
-	valueFromStore, err1 := strconv.Atoi(fmt.Sprintf("%v", valueInterface))
+	valueFromStore, err1 := strconv.ParseInt(fmt.Sprintf("%v", valueInterface), 10, 64)
 	if err1 != nil {
 		return 0, fmt.Errorf("error converting valueStore value %s to integer: %v", string(*r.Value), err1)
 	}
