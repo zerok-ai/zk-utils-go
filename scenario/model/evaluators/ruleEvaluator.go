@@ -219,6 +219,7 @@ func GetValueFromStore(inputPath string, store map[string]interface{}, ff *funct
 
 	defer func() {
 		if r := recover(); r != nil {
+			zkLogger.ErrorF(LoggerTag, "In GetValueFromStore: inputPath: %s \nstore:  %v \nattrStoreKey:%v", inputPath, store, attrStoreKey, r)
 			zkLogger.ErrorF(LoggerTag, "In GetValueFromStore: Recovered from panic: %v", r)
 		}
 	}()

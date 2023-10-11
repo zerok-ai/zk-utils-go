@@ -22,6 +22,12 @@ type ExtractJson struct {
 
 func (fn ExtractJson) Execute(valueAtObject interface{}) (value interface{}, ok bool) {
 
+	defer func() {
+		if r := recover(); r != nil {
+			zkLogger.ErrorF(LoggerTag, "In ExtractJson.Execute: Recovered from panic: %v", r)
+		}
+	}()
+
 	// check if valueAtObject is a string
 	var err error
 	var stringVal string

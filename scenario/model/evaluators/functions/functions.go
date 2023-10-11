@@ -2,6 +2,7 @@ package functions
 
 import (
 	"fmt"
+	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/cache"
 	"github.com/zerok-ai/zk-utils-go/storage/redis/stores"
 	"regexp"
@@ -57,6 +58,12 @@ func (ff FunctionFactory) GetFunction(name string, args []string, attrStoreKey *
 }
 
 func (ff FunctionFactory) GetPathAndFunctions(input string, attrStoreKey *cache.AttribStoreKey) []Function {
+
+	defer func() {
+		if r := recover(); r != nil {
+			zkLogger.ErrorF(LoggerTag, "In GetPathAndFunctions %s\n: Recovered from panic: %v", input, r)
+		}
+	}()
 
 	// Define regular expressions for path, function name, and function parameters
 	// Define the regular expression patternForInput.
