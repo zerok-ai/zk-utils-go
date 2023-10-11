@@ -138,7 +138,7 @@ var serviceNamePaths = []string{"Metadata.ServiceName"}
 
 func GetServiceNameFromPodDetailsStore(ip string, podDetailsStore *stores.LocalCacheHSetStore) string {
 	workloadDetailsPtr, _ := (*podDetailsStore).Get(ip)
-	podDetails := loadIPDetailsIntoHashmap(ip, workloadDetailsPtr)
+	podDetails := loadPodDetailsIntoHashmap(ip, workloadDetailsPtr)
 
 	var serviceName string
 	for _, serviceNamePath := range serviceNamePaths {
@@ -157,7 +157,7 @@ const (
 	spec     = "spec"
 )
 
-func loadIPDetailsIntoHashmap(ip string, input *map[string]string) *PodDetails {
+func loadPodDetailsIntoHashmap(ip string, input *map[string]string) *PodDetails {
 	podDetails := PodDetails{}
 	if input == nil || len(*input) == 0 {
 		zkLogger.ErrorF(LoggerTag, "Error getting service for ip = %s \n", ip)

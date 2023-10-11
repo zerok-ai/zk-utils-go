@@ -25,6 +25,12 @@ func NewIntegerRuleEvaluator(factory *functions.FunctionFactory) LeafRuleEvaluat
 
 func (re IntegerRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
 
+	defer func() {
+		if r := recover(); r != nil {
+			logger.ErrorF(LoggerTag, "In integer eval: Recovered from panic: %v", r)
+		}
+	}()
+
 	// get the values assuming that the rule object is valid
 	operator := string(*rule.Operator)
 
@@ -154,6 +160,12 @@ func (re IntegerRuleEvaluator) valueFromRuleAndStore(r model.Rule, attributeName
 }
 
 func (re IntegerRuleEvaluator) valueFromStore(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (int, error) {
+
+	defer func() {
+		if r := recover(); r != nil {
+			logger.ErrorF(LoggerTag, "In valueFromStore: Recovered from panic: %v", r)
+		}
+	}()
 
 	valueInterface, ok := GetValueFromStore(attributeNameOfID, valueStore, re.functionFactory, re.attrStoreKey)
 	if !ok || valueInterface == nil {

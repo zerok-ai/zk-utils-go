@@ -145,6 +145,12 @@ func (re *RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion stri
 
 	attributeName := *rule.RuleLeaf.ID
 
+	defer func() {
+		if r := recover(); r != nil {
+			zkLogger.ErrorF(LoggerTag, "In getAttributeName: AttrName:%s Recovered from panic: %v", attributeName, r)
+		}
+	}()
+
 	// get the actual id from the idStore. If not found, use the id as is
 	attributeNameFromStore := re.executorAttrStore.Get(re.executorName, attributeVersion, protocol, *rule.RuleLeaf.ID)
 	if attributeNameFromStore != nil {
@@ -210,6 +216,12 @@ func (re *RuleEvaluator) validate(r model.Rule) error {
 }
 
 func GetValueFromStore(inputPath string, store map[string]interface{}, ff *functions.FunctionFactory, attrStoreKey *cache.AttribStoreKey) (interface{}, bool) {
+
+	defer func() {
+		if r := recover(); r != nil {
+			zkLogger.ErrorF(LoggerTag, "In GetValueFromStore: Recovered from panic: %v", r)
+		}
+	}()
 
 	var ok bool
 	var valueAtObject interface{}

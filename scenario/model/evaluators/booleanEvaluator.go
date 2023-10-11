@@ -2,6 +2,7 @@ package evaluators
 
 import (
 	"fmt"
+	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/cache"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/functions"
@@ -21,6 +22,11 @@ func NewBooleanEvaluator(functionFactory *functions.FunctionFactory) LeafRuleEva
 }
 
 func (re BooleanEvaluator) evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			zkLogger.ErrorF(LoggerTag, "In bool eval: Recovered from panic: %v", r)
+		}
+	}()
 	valueFromRule, err := getBooleanValue(string(*rule.Value))
 	if err != nil {
 		return false, err

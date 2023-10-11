@@ -2,6 +2,7 @@ package functions
 
 import (
 	"github.com/jmespath/go-jmespath"
+	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/podDetails"
 	"github.com/zerok-ai/zk-utils-go/storage/redis/stores"
 )
@@ -17,6 +18,12 @@ type ExtractWorkLoadFromIP struct {
 }
 
 func (fn ExtractWorkLoadFromIP) Execute(valueAtObject interface{}) (interface{}, bool) {
+
+	defer func() {
+		if r := recover(); r != nil {
+			zkLogger.ErrorF(LoggerTag, "In Execute of ExtractWorkLoadFromIP: Recovered from panic: %v", r)
+		}
+	}()
 
 	if len(fn.Args) < 1 {
 		return "", false
