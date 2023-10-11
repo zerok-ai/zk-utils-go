@@ -68,15 +68,15 @@ type GroupRuleEvaluator interface {
 
 type RuleEvaluator struct {
 	executorName      model.ExecutorName
-	executorAttrStore stores.ExecutorAttrStore
-	podDetailsStore   stores.LocalCacheHSetStore
+	executorAttrStore *stores.ExecutorAttrStore
+	podDetailsStore   *stores.LocalCacheHSetStore
 	functionFactory   *functions.FunctionFactory
 
 	leafRuleEvaluators map[string]LeafRuleEvaluator
 	groupRuleEvaluator GroupRuleEvaluator
 }
 
-func NewRuleEvaluator(executorName model.ExecutorName, executorAttrStore stores.ExecutorAttrStore, podDetailsStore stores.LocalCacheHSetStore) *RuleEvaluator {
+func NewRuleEvaluator(executorName model.ExecutorName, executorAttrStore *stores.ExecutorAttrStore, podDetailsStore *stores.LocalCacheHSetStore) *RuleEvaluator {
 	return (&RuleEvaluator{
 		executorName:       executorName,
 		executorAttrStore:  executorAttrStore,
@@ -87,7 +87,7 @@ func NewRuleEvaluator(executorName model.ExecutorName, executorAttrStore stores.
 
 func (re *RuleEvaluator) init() *RuleEvaluator {
 	re.groupRuleEvaluator = (&RuleGroupEvaluator{re}).init()
-	re.functionFactory = functions.NewFunctionFactory(&re.podDetailsStore, &re.executorAttrStore)
+	re.functionFactory = functions.NewFunctionFactory(re.podDetailsStore, re.executorAttrStore)
 
 	re.leafRuleEvaluators[typeString] = NewStringRuleEvaluator(re.functionFactory)
 	re.leafRuleEvaluators[typeInteger] = NewIntegerRuleEvaluator(re.functionFactory)
