@@ -14,7 +14,7 @@ import (
 
 const LoggerTag = "attribute-cache"
 
-type ProtocolKeyMap map[string][]cache.Key
+type ProtocolKeyMap map[string][]cache.AttribStoreKey
 type NameMapExecutorProtocol map[string]ProtocolKeyMap
 
 type ExecutorAttrStore struct {
@@ -76,6 +76,11 @@ func (attributeCache *ExecutorAttrStore) GetFromRedis(key string) (*map[string]s
 	and then in `OTEL_1.17.0_GENERAL`
 
 */
+
+func (attributeCache *ExecutorAttrStore) GetAttributeFromStore(key *cache.AttribStoreKey, attributeName string) *string {
+	return attributeCache.Get(model.ExecutorName(key.Executor), key.Version, model.ProtocolName(key.Protocol), attributeName)
+}
+
 func (attributeCache *ExecutorAttrStore) Get(executor model.ExecutorName, attributeVersion string, protocol model.ProtocolName, attributeName string) *string {
 
 	protocols := []model.ProtocolName{protocol, model.ProtocolGeneral}
@@ -98,9 +103,9 @@ func (attributeCache *ExecutorAttrStore) Get(executor model.ExecutorName, attrib
 	return nil
 }
 
-var BlankKey = &cache.Key{Value: ""}
+var BlankKey = &cache.AttribStoreKey{Value: ""}
 
-func (attributeCache *ExecutorAttrStore) getClosestKey(executor string, attributeVersion string, protocol model.ProtocolName) *cache.Key {
+func (attributeCache *ExecutorAttrStore) getClosestKey(executor string, attributeVersion string, protocol model.ProtocolName) *cache.AttribStoreKey {
 
 	inputKey, err := cache.ParseKey(fmt.Sprintf("%s_%s_%s", executor, attributeVersion, protocol))
 	if err != nil {
@@ -171,7 +176,7 @@ func PopulateExecutorData(strKeys *[]string) *NameMapExecutorProtocol {
 		// get the keys
 		keys, ok := protocolKeys[parsedKey.Protocol]
 		if !ok {
-			keys = make([]cache.Key, 0)
+			keys = make([]cache.AttribStoreKey, 0)
 		}
 
 		keys = append(keys, parsedKey)

@@ -13,7 +13,7 @@ const (
 type ExtractWorkLoadFromIP struct {
 	Name            string
 	Args            []string
-	podDetailsStore stores.LocalCacheHSetStore
+	podDetailsStore *stores.LocalCacheHSetStore
 }
 
 func (fn ExtractWorkLoadFromIP) Execute(valueAtObject interface{}) (interface{}, bool) {

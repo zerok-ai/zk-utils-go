@@ -4,6 +4,7 @@ import (
 	"fmt"
 	logger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
+	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/cache"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/functions"
 	"strconv"
 	"strings"
@@ -11,6 +12,7 @@ import (
 
 type IntegerRuleEvaluator struct {
 	functionFactory *functions.FunctionFactory
+	attrStoreKey    *cache.AttribStoreKey
 }
 
 func (re IntegerRuleEvaluator) init() LeafRuleEvaluator {
@@ -153,7 +155,7 @@ func (re IntegerRuleEvaluator) valueFromRuleAndStore(r model.Rule, attributeName
 
 func (re IntegerRuleEvaluator) valueFromStore(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (int, error) {
 
-	valueInterface, ok := GetValueFromStore(attributeNameOfID, valueStore, re.functionFactory)
+	valueInterface, ok := GetValueFromStore(attributeNameOfID, valueStore, re.functionFactory, re.attrStoreKey)
 	if !ok || valueInterface == nil {
 		return 0, fmt.Errorf("value not found for id %s", attributeNameOfID)
 	}
@@ -163,4 +165,8 @@ func (re IntegerRuleEvaluator) valueFromStore(r model.Rule, attributeNameOfID st
 		return 0, fmt.Errorf("error converting valueStore value %s to integer: %v", string(*r.Value), err1)
 	}
 	return valueFromStore, nil
+}
+
+func (re IntegerRuleEvaluator) setAttrStoreKey(attrStoreKey *cache.AttribStoreKey) {
+	re.attrStoreKey = attrStoreKey
 }

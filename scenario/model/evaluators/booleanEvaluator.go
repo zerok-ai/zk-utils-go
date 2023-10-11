@@ -3,11 +3,13 @@ package evaluators
 import (
 	"fmt"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
+	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/cache"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/functions"
 )
 
 type BooleanEvaluator struct {
 	functionFactory *functions.FunctionFactory
+	attrStoreKey    *cache.AttribStoreKey
 }
 
 func (re BooleanEvaluator) init() LeafRuleEvaluator {
@@ -25,7 +27,7 @@ func (re BooleanEvaluator) evalRule(rule model.Rule, attributeNameOfID string, v
 	}
 
 	// get the value from the value store
-	value, ok := GetValueFromStore(attributeNameOfID, valueStore, re.functionFactory)
+	value, ok := GetValueFromStore(attributeNameOfID, valueStore, re.functionFactory, re.attrStoreKey)
 	if !ok {
 		return false, fmt.Errorf("value for attributeName: %s not found in valueStore", attributeNameOfID)
 	}
@@ -46,6 +48,10 @@ func (re BooleanEvaluator) evalRule(rule model.Rule, attributeNameOfID string, v
 	}
 
 	return false, fmt.Errorf("bool: invalid operator: %s", operator)
+}
+
+func (re BooleanEvaluator) setAttrStoreKey(attrStoreKey *cache.AttribStoreKey) {
+	re.attrStoreKey = attrStoreKey
 }
 
 func getBooleanValue(value interface{}) (bool, error) {

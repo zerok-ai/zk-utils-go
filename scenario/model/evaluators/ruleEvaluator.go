@@ -5,6 +5,7 @@ import (
 	"github.com/jmespath/go-jmespath"
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
+	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/cache"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/functions"
 	"github.com/zerok-ai/zk-utils-go/storage/redis/stores"
 )
@@ -56,6 +57,7 @@ func (ds DataStore) String() string {
 
 type LeafRuleEvaluator interface {
 	init() LeafRuleEvaluator
+	setAttrStoreKey(attrStoreKey *cache.AttribStoreKey)
 	evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error)
 }
 
@@ -85,7 +87,7 @@ func NewRuleEvaluator(executorName model.ExecutorName, executorAttrStore stores.
 
 func (re *RuleEvaluator) init() *RuleEvaluator {
 	re.groupRuleEvaluator = (&RuleGroupEvaluator{re}).init()
-	re.functionFactory = functions.NewFunctionFactory(re.podDetailsStore)
+	re.functionFactory = functions.NewFunctionFactory(&re.podDetailsStore, &re.executorAttrStore)
 
 	re.leafRuleEvaluators[typeString] = NewStringRuleEvaluator(re.functionFactory)
 	re.leafRuleEvaluators[typeInteger] = NewIntegerRuleEvaluator(re.functionFactory)
@@ -95,9 +97,14 @@ func (re *RuleEvaluator) init() *RuleEvaluator {
 	return re
 }
 
-func (re *RuleEvaluator) EvalRule(rule model.Rule, attributeVersion string, protocol model.ProtocolName, valueStore map[string]interface{}) (bool, error) {
+func (re *RuleEvaluator) EvalRule(rule model.Rule, attrStoreKey *cache.AttribStoreKey, protocol model.ProtocolName, valueStore map[string]interface{}) (bool, error) {
 
-	result, err := re.evalRule(rule, attributeVersion, protocol, valueStore)
+	// set the new attrStoreKey in all the leafRuleEvaluators
+	for _, leafEvaluator := range re.leafRuleEvaluators {
+		leafEvaluator.setAttrStoreKey(attrStoreKey)
+	}
+
+	result, err := re.evalRule(rule, attrStoreKey.Version, protocol, valueStore)
 	return result, err
 }
 
@@ -202,14 +209,14 @@ func (re *RuleEvaluator) validate(r model.Rule) error {
 	return nil
 }
 
-func GetValueFromStore(inputPath string, store map[string]interface{}, ff *functions.FunctionFactory) (interface{}, bool) {
+func GetValueFromStore(inputPath string, store map[string]interface{}, ff *functions.FunctionFactory, attrStoreKey *cache.AttribStoreKey) (interface{}, bool) {
 
 	var err error
 	var ok bool
 	var valueAtObject interface{}
 
 	valueAtObject = store
-	path, functionArr := ff.GetPathAndFunctions(inputPath)
+	path, functionArr := ff.GetPathAndFunctions(inputPath, attrStoreKey)
 
 	// handle path
 	if len(path) > 0 {

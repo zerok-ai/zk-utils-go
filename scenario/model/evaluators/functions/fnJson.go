@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"github.com/jmespath/go-jmespath"
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
+	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/cache"
+	"github.com/zerok-ai/zk-utils-go/storage/redis/stores"
 )
 
 const (
@@ -12,8 +14,10 @@ const (
 )
 
 type ExtractJson struct {
-	Name string
-	Args []string
+	name         string
+	args         []string
+	attrStore    *stores.ExecutorAttrStore
+	attrStoreKey *cache.AttribStoreKey
 }
 
 func (fn ExtractJson) Execute(valueAtObject interface{}) (value interface{}, ok bool) {
@@ -35,12 +39,19 @@ func (fn ExtractJson) Execute(valueAtObject interface{}) (value interface{}, ok 
 	} else {
 		jsonObject = valueAtObject
 	}
-	path := fn.Args[0]
+	path := fn.args[0]
+
+	// resolve the path from attribute store
+	resolvedVal := fn.attrStore.GetAttributeFromStore(fn.attrStoreKey, path)
+	if resolvedVal != nil {
+		path = *resolvedVal
+	}
+
 	valueAtObject, err = jmespath.Search(path, jsonObject)
 
 	if err != nil {
 		zkLogger.ErrorF(LoggerTag, "Error evaluating jmespath at path:%s for store %v", path, jsonObject)
 		return "", false
 	}
-	return valueAtObject.(string), true
+	return valueAtObject, true
 }

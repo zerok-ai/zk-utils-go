@@ -5,8 +5,8 @@ import (
 	"strings"
 )
 
-// Key represents a key in the format executor_version_protocol.
-type Key struct {
+// AttribStoreKey represents a key in the format executor_version_protocol.
+type AttribStoreKey struct {
 	Value string
 
 	Major  int
@@ -20,7 +20,7 @@ type Key struct {
 }
 
 // ByVersion is a custom type for sorting keys by version.
-type ByVersion []Key
+type ByVersion []AttribStoreKey
 
 func (a ByVersion) Len() int      { return len(a) }
 func (a ByVersion) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
@@ -28,7 +28,7 @@ func (a ByVersion) Less(i, j int) bool {
 	return a[i].IsLessThan(a[j])
 }
 
-func (key Key) IsLessThan(other Key) bool {
+func (key AttribStoreKey) IsLessThan(other AttribStoreKey) bool {
 	if key.Executor != other.Executor {
 		return key.Executor < other.Executor
 	}
@@ -52,7 +52,7 @@ func (key Key) IsLessThan(other Key) bool {
 	return key.Suffix < other.Suffix
 }
 
-func (key Key) IsGreaterThan(other Key) bool {
+func (key AttribStoreKey) IsGreaterThan(other AttribStoreKey) bool {
 	if key.Executor != other.Executor {
 		return key.Executor > other.Executor
 	}
@@ -76,33 +76,37 @@ func (key Key) IsGreaterThan(other Key) bool {
 	return key.Suffix > other.Suffix
 }
 
+func CreateKey(executor string, version string, protocol string) (AttribStoreKey, error) {
+	return ParseKey(fmt.Sprintf("%s_%s_%s", executor, version, protocol))
+}
+
 // ParseKey parses a key into its components.
-func ParseKey(key string) (Key, error) {
+func ParseKey(key string) (AttribStoreKey, error) {
 	parts := strings.Split(key, "_")
 	if len(parts) != 3 {
-		return Key{}, fmt.Errorf("invalid key format: %s", key)
+		return AttribStoreKey{}, fmt.Errorf("invalid key format: %s", key)
 	}
 
 	versionParts := strings.Split(parts[1], ".")
 	if len(versionParts) != 3 {
-		return Key{}, fmt.Errorf("invalid version format: %s", parts[1])
+		return AttribStoreKey{}, fmt.Errorf("invalid version format: %s", parts[1])
 	}
 
 	var major, minor, patch int
 	var suffix string
 	if _, err := fmt.Sscanf(versionParts[0], "%d", &major); err != nil {
-		return Key{}, err
+		return AttribStoreKey{}, err
 	}
 	if _, err := fmt.Sscanf(versionParts[1], "%d", &minor); err != nil {
-		return Key{}, err
+		return AttribStoreKey{}, err
 	}
 	if _, err := fmt.Sscanf(versionParts[2], "%d-%s", &patch, &suffix); err != nil {
 		if _, err := fmt.Sscanf(versionParts[2], "%d", &patch); err != nil {
-			return Key{}, err
+			return AttribStoreKey{}, err
 		}
 	}
 
-	return Key{
+	return AttribStoreKey{
 		Value: key,
 
 		Major:  major,

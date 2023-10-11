@@ -136,8 +136,8 @@ type RuntimeSyncRequest struct {
 
 var serviceNamePaths = []string{"Metadata.ServiceName"}
 
-func GetServiceNameFromPodDetailsStore(ip string, podDetailsStore stores.LocalCacheHSetStore) string {
-	workloadDetailsPtr, _ := podDetailsStore.Get(ip)
+func GetServiceNameFromPodDetailsStore(ip string, podDetailsStore *stores.LocalCacheHSetStore) string {
+	workloadDetailsPtr, _ := (*podDetailsStore).Get(ip)
 	podDetails := loadIPDetailsIntoHashmap(ip, workloadDetailsPtr)
 
 	var serviceName string

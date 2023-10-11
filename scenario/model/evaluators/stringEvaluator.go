@@ -3,6 +3,7 @@ package evaluators
 import (
 	"fmt"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
+	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/cache"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/functions"
 	"regexp"
 	"strings"
@@ -10,23 +11,24 @@ import (
 
 type StringRuleEvaluator struct {
 	functionFactory *functions.FunctionFactory
+	attrStoreKey    *cache.AttribStoreKey
 }
 
-func (re StringRuleEvaluator) init() LeafRuleEvaluator {
+func (re *StringRuleEvaluator) init() LeafRuleEvaluator {
 	return re
 }
 
 func NewStringRuleEvaluator(functionFactory *functions.FunctionFactory) LeafRuleEvaluator {
-	return StringRuleEvaluator{functionFactory: functionFactory}.init()
+	return (&StringRuleEvaluator{functionFactory: functionFactory}).init()
 }
 
-func (re StringRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
+func (re *StringRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
 
 	// get the values assuming that the rule object is valid
 	operator := string(*rule.Operator)
 	valueFromRule := string(*rule.Value)
 
-	valueFromStoreI, ok := GetValueFromStore(attributeNameOfID, valueStore, re.functionFactory)
+	valueFromStoreI, ok := GetValueFromStore(attributeNameOfID, valueStore, re.functionFactory, re.attrStoreKey)
 	if !ok {
 		return false, fmt.Errorf("value for attributeName: %s not found in valueStore", attributeNameOfID)
 	}
@@ -77,4 +79,8 @@ func (re StringRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID string
 	}
 
 	return false, fmt.Errorf("string: invalid operator: %s", operator)
+}
+
+func (re *StringRuleEvaluator) setAttrStoreKey(attrStoreKey *cache.AttribStoreKey) {
+	re.attrStoreKey = attrStoreKey
 }

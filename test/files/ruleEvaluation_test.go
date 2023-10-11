@@ -9,6 +9,7 @@ import (
 	"github.com/zerok-ai/zk-utils-go/common"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators"
+	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/cache"
 	"github.com/zerok-ai/zk-utils-go/storage/redis/stores"
 	"github.com/zerok-ai/zk-utils-go/test/files/config"
 	"testing"
@@ -145,7 +146,8 @@ func validate(t *testing.T, w model.Workload, dataStore map[string]interface{}, 
 
 	ruleEvaluator := evaluators.NewRuleEvaluator(model.ExecutorName(executor), *executorAttrDB, *podDetailsStore)
 
-	result, err := ruleEvaluator.EvalRule(w.Rule, "1.11.1", "HTTP", dataStore)
+	key, err := cache.ParseKey("OTEL_1.21.0_GENERAL")
+	result, err = ruleEvaluator.EvalRule(w.Rule, &key, "HTTP", dataStore)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, result)
 }
