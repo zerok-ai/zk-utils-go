@@ -31,6 +31,13 @@ func NewFunctionFactory(serviceIPStore *stores.LocalCacheHSetStore, attrStore *s
 
 func (ff FunctionFactory) GetFunction(name string, args []string, attrStoreKey *cache.AttribStoreKey) *Function {
 
+	defer func() {
+		if r := recover(); r != nil {
+			zkLogger.ErrorF(LoggerTag, "In GetFunction name:%s args:%v attrStoreKey:%v", name, args, attrStoreKey)
+			zkLogger.ErrorF(LoggerTag, "In GetFunction: Recovered from panic: %v", r)
+		}
+	}()
+
 	newArgs := make([]string, 0)
 	for _, arg := range args {
 		newArg := ff.attrStore.GetAttributeFromStore(*attrStoreKey, arg)

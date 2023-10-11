@@ -83,6 +83,12 @@ func (attributeCache *ExecutorAttrStore) GetAttributeFromStore(key cache.AttribS
 
 func (attributeCache *ExecutorAttrStore) Get(executor model.ExecutorName, attributeVersion string, protocol model.ProtocolName, attributeName string) *string {
 
+	defer func() {
+		if r := recover(); r != nil {
+			zklogger.ErrorF(LoggerTag, "In ExecutorAttrStore.Get %s\n: Recovered from panic: %v", executor)
+		}
+	}()
+
 	protocols := []model.ProtocolName{protocol, model.ProtocolGeneral}
 	for _, proto := range protocols {
 
