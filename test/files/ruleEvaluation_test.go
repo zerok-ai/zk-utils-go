@@ -4,14 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/stretchr/testify/assert"
 	"github.com/zerok-ai/zk-utils-go/common"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators"
 	"github.com/zerok-ai/zk-utils-go/storage/redis/stores"
-
-	//"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators"
-	"github.com/zerok-ai/zk-utils-go/storage/redis/config"
+	"github.com/zerok-ai/zk-utils-go/test/files/config"
 	"testing"
 )
 
@@ -68,7 +67,7 @@ func TestRuleEvaluationString(t *testing.T) {
 func TestRuleEvaluationInteger(t *testing.T) {
 	var dataStore map[string]interface{}
 	var w model.Workload
-	err := loadObjects("test/files/ruleEvaluation/integer/schema.json", &w, "test/files/ruleEvaluation/integer/data.json", &dataStore)
+	err := loadObjects("./ruleEvaluation/integer/schema.json", &w, "./ruleEvaluation/integer/data.json", &dataStore)
 	assert.NoError(t, err)
 
 	validate(t, w, dataStore, true)
@@ -77,7 +76,7 @@ func TestRuleEvaluationInteger(t *testing.T) {
 func TestRuleEvaluationFloat(t *testing.T) {
 	var dataStore map[string]interface{}
 	var w model.Workload
-	err := loadObjects("test/files/ruleEvaluation/float/schema.json", &w, "test/files/ruleEvaluation/float/data.json", &dataStore)
+	err := loadObjects("./ruleEvaluation/float/schema.json", &w, "./ruleEvaluation/float/data.json", &dataStore)
 	assert.NoError(t, err)
 
 	validate(t, w, dataStore, true)
@@ -119,18 +118,34 @@ func TestRuleEvaluationFloat(t *testing.T) {
 //
 //}
 
+func TestRuleEvaluationID(t *testing.T) {
+	var dataStore map[string]interface{}
+	var w model.Workload
+	err := loadObjects("./ruleEvaluation/id/schema.json", &w, "./ruleEvaluation/id/data.json", &dataStore)
+	assert.NoError(t, err)
+
+	validate(t, w, dataStore, true)
+}
+
 func validate(t *testing.T, w model.Workload, dataStore map[string]interface{}, expected bool) {
 	var result bool
 	executor := "OTEL"
-	redisConfig := config.RedisConfig{}
+
+	configPath := "./config/config.yaml"
+	var cfg config.AppConfigs
+	if err := cleanenv.ReadConfig(configPath, &cfg); err != nil {
+		panic(err)
+	}
+
+	redisConfig := cfg.Redis
 	ctx := context.Background()
 	sf := stores.GetStoreFactory(redisConfig, ctx)
 	executorAttrDB := sf.GetExecutorAttrStore()
 	podDetailsStore := sf.GetPodDetailsStore()
 
-	ruleEvaluator := evaluators.NewRuleEvaluator(model.ExecutorName(executor), executorAttrDB, podDetailsStore)
+	ruleEvaluator := evaluators.NewRuleEvaluator(model.ExecutorName(executor), *executorAttrDB, *podDetailsStore)
 
-	result, err := ruleEvaluator.EvalRule(w.Rule, "0.1.1", "HTTP", dataStore)
+	result, err := ruleEvaluator.EvalRule(w.Rule, "1.11.1", "HTTP", dataStore)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, result)
 }

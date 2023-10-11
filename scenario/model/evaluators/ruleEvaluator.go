@@ -74,19 +74,19 @@ type RuleEvaluator struct {
 	groupRuleEvaluator GroupRuleEvaluator
 }
 
-func NewRuleEvaluator(executorName model.ExecutorName, executorAttrStore stores.ExecutorAttrStore, podDetailsStore stores.LocalCacheHSetStore) RuleEvaluator {
-	return RuleEvaluator{
-		executorName:      executorName,
-		executorAttrStore: executorAttrStore,
-		podDetailsStore:   podDetailsStore,
-	}.init()
+func NewRuleEvaluator(executorName model.ExecutorName, executorAttrStore stores.ExecutorAttrStore, podDetailsStore stores.LocalCacheHSetStore) *RuleEvaluator {
+	return (&RuleEvaluator{
+		executorName:       executorName,
+		executorAttrStore:  executorAttrStore,
+		podDetailsStore:    podDetailsStore,
+		leafRuleEvaluators: make(map[string]LeafRuleEvaluator),
+	}).init()
 }
 
-func (re RuleEvaluator) init() RuleEvaluator {
-	re.groupRuleEvaluator = RuleGroupEvaluator{re}.init()
+func (re *RuleEvaluator) init() *RuleEvaluator {
+	re.groupRuleEvaluator = (&RuleGroupEvaluator{re}).init()
 	re.functionFactory = functions.NewFunctionFactory(re.podDetailsStore)
 
-	re.leafRuleEvaluators = make(map[string]LeafRuleEvaluator)
 	re.leafRuleEvaluators[typeString] = NewStringRuleEvaluator(re.functionFactory)
 	re.leafRuleEvaluators[typeInteger] = NewIntegerRuleEvaluator(re.functionFactory)
 	re.leafRuleEvaluators[typeFloat] = NewFloatRuleEvaluator(re.functionFactory)
@@ -95,13 +95,13 @@ func (re RuleEvaluator) init() RuleEvaluator {
 	return re
 }
 
-func (re RuleEvaluator) EvalRule(rule model.Rule, attributeVersion string, protocol model.ProtocolName, valueStore map[string]interface{}) (bool, error) {
+func (re *RuleEvaluator) EvalRule(rule model.Rule, attributeVersion string, protocol model.ProtocolName, valueStore map[string]interface{}) (bool, error) {
 
 	result, err := re.evalRule(rule, attributeVersion, protocol, valueStore)
 	return result, err
 }
 
-func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, protocol model.ProtocolName, valueStore map[string]interface{}) (bool, error) {
+func (re *RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, protocol model.ProtocolName, valueStore map[string]interface{}) (bool, error) {
 
 	handled, value := false, false
 	var err error
@@ -134,7 +134,7 @@ func (re RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, proto
 	return value, err
 }
 
-func (re RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion string, protocol model.ProtocolName) *string {
+func (re *RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion string, protocol model.ProtocolName) *string {
 
 	attributeName := *rule.RuleLeaf.ID
 
@@ -164,7 +164,7 @@ func (re RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion strin
 
 // handleCommonOperators is a helper function to handle common operators like exists. The function returns
 // a bool indicating if the rule is handled, a bool indicating the value, if handled and an error if any.
-func (re RuleEvaluator) handleCommonOperators(r model.Rule, attributeNameOfID string, store map[string]interface{}) (handled bool, returnValue bool, err error) {
+func (re *RuleEvaluator) handleCommonOperators(r model.Rule, attributeNameOfID string, store map[string]interface{}) (handled bool, returnValue bool, err error) {
 	operator := string(*r.Operator)
 	handled = false
 	returnValue = false
@@ -184,7 +184,7 @@ func (re RuleEvaluator) handleCommonOperators(r model.Rule, attributeNameOfID st
 	return handled, returnValue, nil
 }
 
-func (re RuleEvaluator) validate(r model.Rule) error {
+func (re *RuleEvaluator) validate(r model.Rule) error {
 	id := r.ID
 	operator := r.Operator
 	valueFromRule := r.Value

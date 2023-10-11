@@ -11,7 +11,7 @@ import (
 type StoreFactory struct {
 	redisConfig config.RedisConfig
 	ctx         context.Context
-	mapOfStores map[string]interface{}
+	mapOfStores *map[string]interface{}
 }
 
 var storeFactory *StoreFactory
@@ -22,7 +22,7 @@ func GetStoreFactory(redisConfig config.RedisConfig, ctx context.Context) *Store
 		storeFactory = &StoreFactory{
 			redisConfig: redisConfig,
 			ctx:         ctx,
-			mapOfStores: mapOfStores,
+			mapOfStores: &mapOfStores,
 		}
 	}
 	return storeFactory
@@ -31,7 +31,7 @@ func GetStoreFactory(redisConfig config.RedisConfig, ctx context.Context) *Store
 // GetExecutorAttrStore returns the store. If the store has already been created, it returns the same store.
 func (sf *StoreFactory) GetExecutorAttrStore() *ExecutorAttrStore {
 
-	if localCache, ok := sf.mapOfStores[clientDBNames.ExecutorAttrDBName]; ok {
+	if localCache, ok := (*sf.mapOfStores)[clientDBNames.ExecutorAttrDBName]; ok {
 		return localCache.(*ExecutorAttrStore)
 	}
 
@@ -42,10 +42,7 @@ func (sf *StoreFactory) GetExecutorAttrStore() *ExecutorAttrStore {
 
 	// save and return
 	executorAttrStore := GetExecutorAttrStore(redisClient, noExpiryCache, nil, sf.ctx)
-	if sf.mapOfStores == nil {
-		sf.mapOfStores = make(map[string]interface{})
-	}
-	sf.mapOfStores[clientDBNames.ExecutorAttrDBName] = executorAttrStore
+	(*sf.mapOfStores)[clientDBNames.ExecutorAttrDBName] = executorAttrStore
 
 	return executorAttrStore
 }
@@ -53,7 +50,7 @@ func (sf *StoreFactory) GetExecutorAttrStore() *ExecutorAttrStore {
 // GetPodDetailsStore returns the store. If the store has already been created, it returns the same store.
 func (sf *StoreFactory) GetPodDetailsStore() *LocalCacheHSetStore {
 
-	if localCache, ok := sf.mapOfStores[clientDBNames.PodDetailsDBName]; ok {
+	if localCache, ok := (*sf.mapOfStores)[clientDBNames.PodDetailsDBName]; ok {
 		return localCache.(*LocalCacheHSetStore)
 	}
 
@@ -65,10 +62,7 @@ func (sf *StoreFactory) GetPodDetailsStore() *LocalCacheHSetStore {
 
 	//save and return
 	localCache := GetLocalCacheHSetStore(redisClient, expiryCache, nil, sf.ctx)
-	if sf.mapOfStores == nil {
-		sf.mapOfStores = make(map[string]interface{})
-	}
-	sf.mapOfStores[clientDBNames.PodDetailsDBName] = localCache
+	(*sf.mapOfStores)[clientDBNames.PodDetailsDBName] = localCache
 
 	return localCache
 }

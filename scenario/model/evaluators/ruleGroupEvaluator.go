@@ -3,14 +3,14 @@ package evaluators
 import "github.com/zerok-ai/zk-utils-go/scenario/model"
 
 type RuleGroupEvaluator struct {
-	baseRuleEvaluator RuleEvaluator
+	baseRuleEvaluator *RuleEvaluator
 }
 
-func (re RuleGroupEvaluator) init() GroupRuleEvaluator {
+func (re *RuleGroupEvaluator) init() GroupRuleEvaluator {
 	return re
 }
 
-func (re RuleGroupEvaluator) evalRule(rule model.Rule, attributeVersion string, protocol model.ProtocolName, valueStore map[string]interface{}) (bool, error) {
+func (re *RuleGroupEvaluator) evalRule(rule model.Rule, attributeVersion string, protocol model.ProtocolName, valueStore map[string]interface{}) (bool, error) {
 
 	// evaluate all the rules
 	condition := *rule.Condition

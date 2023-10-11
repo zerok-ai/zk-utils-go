@@ -18,7 +18,7 @@ func (re IntegerRuleEvaluator) init() LeafRuleEvaluator {
 }
 
 func NewIntegerRuleEvaluator(factory *functions.FunctionFactory) LeafRuleEvaluator {
-	return IntegerRuleEvaluator{}.init()
+	return IntegerRuleEvaluator{functionFactory: factory}.init()
 }
 
 func (re IntegerRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
