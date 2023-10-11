@@ -211,21 +211,11 @@ func (re *RuleEvaluator) validate(r model.Rule) error {
 
 func GetValueFromStore(inputPath string, store map[string]interface{}, ff *functions.FunctionFactory, attrStoreKey *cache.AttribStoreKey) (interface{}, bool) {
 
-	var err error
 	var ok bool
 	var valueAtObject interface{}
 
 	valueAtObject = store
-	path, functionArr := ff.GetPathAndFunctions(inputPath, attrStoreKey)
-
-	// handle path
-	if len(path) > 0 {
-		valueAtObject, err = jmespath.Search(path, valueAtObject)
-		if err != nil {
-			zkLogger.ErrorF(LoggerTag, "Error evaluating jmespath at path:%s for store %v\n%v", path, store, err)
-			return valueAtObject, false
-		}
-	}
+	functionArr := ff.GetPathAndFunctions(inputPath, attrStoreKey)
 
 	// handle functionArr
 	for _, fn := range functionArr {

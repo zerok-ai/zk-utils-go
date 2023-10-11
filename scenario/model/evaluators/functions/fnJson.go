@@ -42,7 +42,7 @@ func (fn ExtractJson) Execute(valueAtObject interface{}) (value interface{}, ok 
 	path := fn.args[0]
 
 	// resolve the path from attribute store
-	resolvedVal := fn.attrStore.GetAttributeFromStore(fn.attrStoreKey, path)
+	resolvedVal := fn.attrStore.GetAttributeFromStore(*fn.attrStoreKey, path)
 	if resolvedVal != nil {
 		path = *resolvedVal
 	}

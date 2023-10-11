@@ -2,6 +2,7 @@ package cache
 
 import (
 	"fmt"
+	"github.com/zerok-ai/zk-utils-go/scenario/model"
 	"strings"
 )
 
@@ -76,7 +77,7 @@ func (key AttribStoreKey) IsGreaterThan(other AttribStoreKey) bool {
 	return key.Suffix > other.Suffix
 }
 
-func CreateKey(executor string, version string, protocol string) (AttribStoreKey, error) {
+func CreateKey(executor model.ExecutorName, version string, protocol model.ProtocolName) (AttribStoreKey, error) {
 	return ParseKey(fmt.Sprintf("%s_%s_%s", executor, version, protocol))
 }
 

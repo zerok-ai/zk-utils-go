@@ -32,7 +32,7 @@ func (ff FunctionFactory) GetFunction(name string, args []string, attrStoreKey *
 
 	newArgs := make([]string, 0)
 	for _, arg := range args {
-		newArg := ff.attrStore.GetAttributeFromStore(attrStoreKey, arg)
+		newArg := ff.attrStore.GetAttributeFromStore(*attrStoreKey, arg)
 		if newArg != nil {
 			newArgs = append(newArgs, *newArg)
 		} else {
@@ -56,7 +56,7 @@ func (ff FunctionFactory) GetFunction(name string, args []string, attrStoreKey *
 	return &fn
 }
 
-func (ff FunctionFactory) GetPathAndFunctions(input string, attrStoreKey *cache.AttribStoreKey) (path string, functions []Function) {
+func (ff FunctionFactory) GetPathAndFunctions(input string, attrStoreKey *cache.AttribStoreKey) []Function {
 
 	// Define regular expressions for path, function name, and function parameters
 	// Define the regular expression patternForInput.
@@ -73,7 +73,7 @@ func (ff FunctionFactory) GetPathAndFunctions(input string, attrStoreKey *cache.
 	matches := compiledRegexFullMatch.FindAllString(input, -1)
 
 	// create the fucntions
-	functions = make([]Function, 0)
+	functions := make([]Function, 0)
 	for _, match := range matches {
 		var fn *Function
 		if strings.HasPrefix(match, "#") {
@@ -96,7 +96,7 @@ func (ff FunctionFactory) GetPathAndFunctions(input string, attrStoreKey *cache.
 			functions = append(functions, *fn)
 		}
 	}
-	return path, functions
+	return functions
 }
 
 func (ff FunctionFactory) GetPathAndFunctions1(input string, attrStoreKey *cache.AttribStoreKey) (path string, functions []Function) {

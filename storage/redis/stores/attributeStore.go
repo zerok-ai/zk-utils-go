@@ -77,7 +77,7 @@ func (attributeCache *ExecutorAttrStore) GetFromRedis(key string) (*map[string]s
 
 */
 
-func (attributeCache *ExecutorAttrStore) GetAttributeFromStore(key *cache.AttribStoreKey, attributeName string) *string {
+func (attributeCache *ExecutorAttrStore) GetAttributeFromStore(key cache.AttribStoreKey, attributeName string) *string {
 	return attributeCache.Get(model.ExecutorName(key.Executor), key.Version, model.ProtocolName(key.Protocol), attributeName)
 }
 
