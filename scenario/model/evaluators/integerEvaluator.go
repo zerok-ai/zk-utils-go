@@ -15,15 +15,15 @@ type IntegerRuleEvaluator struct {
 	attrStoreKey    *cache.AttribStoreKey
 }
 
-func (re IntegerRuleEvaluator) init() LeafRuleEvaluator {
+func (re *IntegerRuleEvaluator) init() LeafRuleEvaluator {
 	return re
 }
 
 func NewIntegerRuleEvaluator(factory *functions.FunctionFactory) LeafRuleEvaluator {
-	return IntegerRuleEvaluator{functionFactory: factory}.init()
+	return (&IntegerRuleEvaluator{functionFactory: factory}).init()
 }
 
-func (re IntegerRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
+func (re *IntegerRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -92,7 +92,7 @@ func (re IntegerRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID strin
 	return false, fmt.Errorf("integer: invalid operator: %s", operator)
 }
 
-func (re IntegerRuleEvaluator) getValuesFromCSString(csv string) []int {
+func (re *IntegerRuleEvaluator) getValuesFromCSString(csv string) []int {
 	retArr := make([]int, 0)
 	stringSet := strings.Split(csv, ",")
 
@@ -108,7 +108,7 @@ func (re IntegerRuleEvaluator) getValuesFromCSString(csv string) []int {
 	return retArr
 }
 
-func (re IntegerRuleEvaluator) isValueInRange(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
+func (re *IntegerRuleEvaluator) isValueInRange(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
 	operator := string(*r.Operator)
 	valueFromStore, err := re.valueFromStore(r, attributeNameOfID, valueStore)
 	if err != nil {
@@ -122,7 +122,7 @@ func (re IntegerRuleEvaluator) isValueInRange(r model.Rule, attributeNameOfID st
 	return valueFromStore >= numbers[0] && valueFromStore <= numbers[1], nil
 }
 
-func (re IntegerRuleEvaluator) isValuePresentInCSV(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) bool {
+func (re *IntegerRuleEvaluator) isValuePresentInCSV(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) bool {
 
 	csv := string(*r.Value)
 	value, err := re.valueFromStore(r, attributeNameOfID, valueStore)
@@ -146,7 +146,7 @@ func (re IntegerRuleEvaluator) isValuePresentInCSV(r model.Rule, attributeNameOf
 	return false
 }
 
-func (re IntegerRuleEvaluator) valueFromRuleAndStore(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (int, int, error) {
+func (re *IntegerRuleEvaluator) valueFromRuleAndStore(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (int, int, error) {
 	valueFromRule, err := strconv.Atoi(string(*r.Value))
 	if err != nil {
 		return 0, 0, fmt.Errorf("error converting rule value %s to integer: %v", string(*r.Value), err)
@@ -159,7 +159,7 @@ func (re IntegerRuleEvaluator) valueFromRuleAndStore(r model.Rule, attributeName
 	return valueFromRule, valueFromStore, nil
 }
 
-func (re IntegerRuleEvaluator) valueFromStore(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (int, error) {
+func (re *IntegerRuleEvaluator) valueFromStore(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (int, error) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -179,6 +179,6 @@ func (re IntegerRuleEvaluator) valueFromStore(r model.Rule, attributeNameOfID st
 	return valueFromStore, nil
 }
 
-func (re IntegerRuleEvaluator) setAttrStoreKey(attrStoreKey *cache.AttribStoreKey) {
+func (re *IntegerRuleEvaluator) setAttrStoreKey(attrStoreKey *cache.AttribStoreKey) {
 	re.attrStoreKey = attrStoreKey
 }

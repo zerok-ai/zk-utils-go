@@ -13,15 +13,15 @@ type BooleanEvaluator struct {
 	attrStoreKey    *cache.AttribStoreKey
 }
 
-func (re BooleanEvaluator) init() LeafRuleEvaluator {
+func (re *BooleanEvaluator) init() LeafRuleEvaluator {
 	return re
 }
 
 func NewBooleanEvaluator(functionFactory *functions.FunctionFactory) LeafRuleEvaluator {
-	return BooleanEvaluator{functionFactory: functionFactory}.init()
+	return (&BooleanEvaluator{functionFactory: functionFactory}).init()
 }
 
-func (re BooleanEvaluator) evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
+func (re *BooleanEvaluator) evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
 	defer func() {
 		if r := recover(); r != nil {
 			zkLogger.ErrorF(LoggerTag, "In bool eval: Recovered from panic: %v", r)
@@ -56,7 +56,7 @@ func (re BooleanEvaluator) evalRule(rule model.Rule, attributeNameOfID string, v
 	return false, fmt.Errorf("bool: invalid operator: %s", operator)
 }
 
-func (re BooleanEvaluator) setAttrStoreKey(attrStoreKey *cache.AttribStoreKey) {
+func (re *BooleanEvaluator) setAttrStoreKey(attrStoreKey *cache.AttribStoreKey) {
 	re.attrStoreKey = attrStoreKey
 }
 

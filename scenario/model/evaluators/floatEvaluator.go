@@ -15,15 +15,15 @@ type FloatRuleEvaluator struct {
 	attrStoreKey    *cache.AttribStoreKey
 }
 
-func (re FloatRuleEvaluator) init() LeafRuleEvaluator {
+func (re *FloatRuleEvaluator) init() LeafRuleEvaluator {
 	return re
 }
 
 func NewFloatRuleEvaluator(functionFactory *functions.FunctionFactory) LeafRuleEvaluator {
-	return FloatRuleEvaluator{functionFactory: functionFactory}.init()
+	return (&FloatRuleEvaluator{functionFactory: functionFactory}).init()
 }
 
-func (re FloatRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
+func (re *FloatRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -96,7 +96,7 @@ func (re FloatRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID string,
 	return false, fmt.Errorf("float: invalid operator: %s", operator)
 }
 
-func (re FloatRuleEvaluator) getValuesFromCSString(csv string) []float64 {
+func (re *FloatRuleEvaluator) getValuesFromCSString(csv string) []float64 {
 	retArr := make([]float64, 0)
 	stringSet := strings.Split(csv, ",")
 
@@ -112,7 +112,7 @@ func (re FloatRuleEvaluator) getValuesFromCSString(csv string) []float64 {
 	return retArr
 }
 
-func (re FloatRuleEvaluator) isValueInRange(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
+func (re *FloatRuleEvaluator) isValueInRange(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
 	operator := string(*r.Operator)
 	valueFromStore, err := re.valueFromStore(r, attributeNameOfID, valueStore)
 	if err != nil {
@@ -126,7 +126,7 @@ func (re FloatRuleEvaluator) isValueInRange(r model.Rule, attributeNameOfID stri
 	return valueFromStore >= numbers[0] && valueFromStore <= numbers[1], nil
 }
 
-func (re FloatRuleEvaluator) isValuePresentInCSV(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) bool {
+func (re *FloatRuleEvaluator) isValuePresentInCSV(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) bool {
 
 	csv := string(*r.Value)
 
@@ -151,7 +151,7 @@ func (re FloatRuleEvaluator) isValuePresentInCSV(r model.Rule, attributeNameOfID
 	return false
 }
 
-func (re FloatRuleEvaluator) valueFromRuleAndStore(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (float64, float64, error) {
+func (re *FloatRuleEvaluator) valueFromRuleAndStore(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (float64, float64, error) {
 	valueFromRule, err := strconv.ParseFloat(string(*r.Value), 64)
 	if err != nil {
 		return 0, 0, fmt.Errorf("error converting rule value %s to float: %v", string(*r.Value), err)
@@ -165,7 +165,7 @@ func (re FloatRuleEvaluator) valueFromRuleAndStore(r model.Rule, attributeNameOf
 	return valueFromRule, valueFromStore, nil
 }
 
-func (re FloatRuleEvaluator) valueFromStore(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (float64, error) {
+func (re *FloatRuleEvaluator) valueFromStore(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (float64, error) {
 
 	valueInterface, ok := GetValueFromStore(attributeNameOfID, valueStore, re.functionFactory, re.attrStoreKey)
 	if !ok || valueInterface == nil {
@@ -180,6 +180,6 @@ func (re FloatRuleEvaluator) valueFromStore(r model.Rule, attributeNameOfID stri
 	return valueFromStore, nil
 }
 
-func (re FloatRuleEvaluator) setAttrStoreKey(attrStoreKey *cache.AttribStoreKey) {
+func (re *FloatRuleEvaluator) setAttrStoreKey(attrStoreKey *cache.AttribStoreKey) {
 	re.attrStoreKey = attrStoreKey
 }
