@@ -97,11 +97,11 @@ func (re *RuleEvaluator) init() *RuleEvaluator {
 	return re
 }
 
-func (re *RuleEvaluator) EvalRule(rule model.Rule, attrStoreKey *cache.AttribStoreKey, protocol model.ProtocolName, valueStore map[string]interface{}) (bool, error) {
+func (re *RuleEvaluator) EvalRule(rule model.Rule, attrStoreKey cache.AttribStoreKey, protocol model.ProtocolName, valueStore map[string]interface{}) (bool, error) {
 
 	// set the new attrStoreKey in all the leafRuleEvaluators
 	for _, leafEvaluator := range re.leafRuleEvaluators {
-		leafEvaluator.setAttrStoreKey(attrStoreKey)
+		leafEvaluator.setAttrStoreKey(&attrStoreKey)
 	}
 
 	result, err := re.evalRule(rule, attrStoreKey.Version, protocol, valueStore)
