@@ -18,9 +18,29 @@ type ExtractJson struct {
 	args         []string
 	attrStore    *stores.ExecutorAttrStore
 	attrStoreKey *cache.AttribStoreKey
+	ff           *FunctionFactory
 }
 
-func (fn ExtractJson) Execute(valueAtObject interface{}) (value interface{}, ok bool) {
+func (fn ExtractJson) Execute(valueAtObject interface{}) (interface{}, bool) {
+
+	newValueAtObject, ok := fn.transformAttribute(valueAtObject)
+	if ok {
+		valueAtObject = newValueAtObject
+	} else {
+		// try to create functions for the args
+		path := fn.args[0]
+		var newValue interface{}
+		newValue, ok = getValueFromStoreInternal(path, valueAtObject.(map[string]interface{}), fn.ff, fn.attrStoreKey, false)
+		if ok {
+			valueAtObject = newValue
+		} else {
+			valueAtObject, ok = fn.executeJson(valueAtObject)
+		}
+	}
+	return valueAtObject, ok
+}
+
+func (fn ExtractJson) executeJson(valueAtObject interface{}) (interface{}, bool) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -28,12 +48,15 @@ func (fn ExtractJson) Execute(valueAtObject interface{}) (value interface{}, ok 
 		}
 	}()
 
+	path := fn.args[0]
+
 	// check if valueAtObject is a string
 	var err error
 	var stringVal string
 
 	// if valueAtObject is a string, convert it to json, else directly read the json
 	var jsonObject interface{}
+	var ok bool
 	stringVal, ok = valueAtObject.(string)
 	if ok {
 		// convert string to json
@@ -45,13 +68,6 @@ func (fn ExtractJson) Execute(valueAtObject interface{}) (value interface{}, ok 
 	} else {
 		jsonObject = valueAtObject
 	}
-	path := fn.args[0]
-
-	// resolve the path from attribute store
-	resolvedVal := fn.attrStore.GetAttributeFromStore(*fn.attrStoreKey, path)
-	if resolvedVal != nil {
-		path = *resolvedVal
-	}
 
 	valueAtObject, err = jmespath.Search(path, jsonObject)
 
@@ -60,4 +76,20 @@ func (fn ExtractJson) Execute(valueAtObject interface{}) (value interface{}, ok 
 		return "", false
 	}
 	return valueAtObject, true
+}
+
+func (fn ExtractJson) GetName() string {
+	return fn.name
+}
+
+func (fn ExtractJson) transformAttribute(valueAtObject interface{}) (interface{}, bool) {
+	path := fn.args[0]
+
+	// resolve the path from attribute store
+	resolvedVal, ok := fn.attrStore.GetAttributeFromStore(*fn.attrStoreKey, path)
+	if ok {
+		return getValueFromStoreInternal(resolvedVal, valueAtObject.(map[string]interface{}), fn.ff, fn.attrStoreKey, true)
+	}
+
+	return "", false
 }

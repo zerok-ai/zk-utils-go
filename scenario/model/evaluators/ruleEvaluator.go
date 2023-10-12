@@ -152,9 +152,9 @@ func (re *RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion stri
 	}()
 
 	// get the actual id from the idStore. If not found, use the id as is
-	attributeNameFromStore := re.executorAttrStore.Get(re.executorName, attributeVersion, protocol, *rule.RuleLeaf.ID)
-	if attributeNameFromStore != nil {
-		attributeName = *attributeNameFromStore
+	attributeNameFromStore, ok := re.executorAttrStore.Get(re.executorName, attributeVersion, protocol, *rule.RuleLeaf.ID)
+	if ok {
+		attributeName = attributeNameFromStore
 	}
 
 	jsonPath := rule.RuleLeaf.JsonPath
@@ -216,30 +216,5 @@ func (re *RuleEvaluator) validate(r model.Rule) error {
 }
 
 func GetValueFromStore(inputPath string, store map[string]interface{}, ff *functions.FunctionFactory, attrStoreKey *cache.AttribStoreKey) (interface{}, bool) {
-
-	defer func() {
-		if r := recover(); r != nil {
-			zkLogger.ErrorF(LoggerTag, "In GetValueFromStore: inputPath: %s \nstore:  %v \nattrStoreKey:%v", inputPath, store, attrStoreKey, r)
-			zkLogger.ErrorF(LoggerTag, "In GetValueFromStore: Recovered from panic: %v", r)
-		}
-	}()
-
-	var ok bool
-	var valueAtObject interface{}
-
-	valueAtObject = store
-	functionArr := ff.GetPathAndFunctions(inputPath, attrStoreKey)
-
-	// handle functionArr
-	for _, fn := range functionArr {
-		if valueAtObject == nil {
-			return valueAtObject, false
-		}
-		valueAtObject, ok = fn.Execute(valueAtObject)
-		if !ok {
-			return valueAtObject, false
-		}
-	}
-
-	return valueAtObject, true
+	return functions.GetValueFromStore(inputPath, store, ff, attrStoreKey)
 }

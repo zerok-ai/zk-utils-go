@@ -39,14 +39,15 @@ type ContainerDetails struct {
 
 type ContainerPort struct {
 	Name          string `json:"name"`
-	ContainerPort string `json:"containerPort"`
+	ContainerPort int    `json:"containerPort"`
 	Protocol      string `json:"protocol"`
 }
 
 type PodDetails struct {
-	Metadata PodMetadata `json:"metadata"`
-	Spec     PodSpec     `json:"spec"`
-	Status   PodStatus   `json:"status"`
+	Metadata  PodMetadata      `json:"metadata"`
+	Spec      PodSpec          `json:"spec"`
+	Status    PodStatus        `json:"status"`
+	Telemetry TelemetryDetails `json:"telemetry"`
 }
 
 type TelemetryDetails struct {
@@ -134,7 +135,7 @@ type RuntimeSyncRequest struct {
 	RuntimeDetails []ContainerRuntime `json:"details"`
 }
 
-var serviceNamePaths = []string{"Metadata.ServiceName"}
+var serviceNamePaths = []string{"Metadata.ServiceName", "Telemetry.ServiceName"}
 
 func GetServiceNameFromPodDetailsStore(ip string, podDetailsStore *stores.LocalCacheHSetStore) string {
 	workloadDetailsPtr, _ := (*podDetailsStore).Get(ip)
@@ -152,9 +153,10 @@ func GetServiceNameFromPodDetailsStore(ip string, podDetailsStore *stores.LocalC
 }
 
 const (
-	status   = "status"
-	metadata = "metadata"
-	spec     = "spec"
+	status    = "status"
+	metadata  = "metadata"
+	spec      = "spec"
+	telemetry = "telemetry"
 )
 
 func loadPodDetailsIntoHashmap(ip string, input *map[string]string) *PodDetails {
@@ -190,13 +192,24 @@ func loadPodDetailsIntoHashmap(ip string, input *map[string]string) *PodDetails 
 	if ok {
 		err := json.Unmarshal([]byte(stringValue), &podSpec)
 		if err != nil {
-			zkLogger.ErrorF(LoggerTag, "Error marshalling spec for ip = %s\n", ip)
+			zkLogger.ErrorF(LoggerTag, "Error marshalling spec for ip = %s err:%v\n", ip, err)
+		}
+	}
+
+	//load telemetry details
+	var telemetryDetails TelemetryDetails
+	stringValue, ok = (*input)[telemetry]
+	if ok {
+		err := json.Unmarshal([]byte(stringValue), &telemetryDetails)
+		if err != nil {
+			zkLogger.ErrorF(LoggerTag, "Error marshalling telemetry for ip = %s err:%v\n", ip, err)
 		}
 	}
 
 	podDetails.Spec = podSpec
 	podDetails.Status = podStatus
 	podDetails.Metadata = podMetadata
+	podDetails.Telemetry = telemetryDetails
 
 	return &podDetails
 }

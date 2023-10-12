@@ -77,11 +77,11 @@ func (attributeCache *ExecutorAttrStore) GetFromRedis(key string) (*map[string]s
 
 */
 
-func (attributeCache *ExecutorAttrStore) GetAttributeFromStore(key cache.AttribStoreKey, attributeName string) *string {
+func (attributeCache *ExecutorAttrStore) GetAttributeFromStore(key cache.AttribStoreKey, attributeName string) (string, bool) {
 	return attributeCache.Get(model.ExecutorName(key.Executor), key.Version, model.ProtocolName(key.Protocol), attributeName)
 }
 
-func (attributeCache *ExecutorAttrStore) Get(executor model.ExecutorName, attributeVersion string, protocol model.ProtocolName, attributeName string) *string {
+func (attributeCache *ExecutorAttrStore) Get(executor model.ExecutorName, attributeVersion string, protocol model.ProtocolName, attributeName string) (string, bool) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -97,16 +97,16 @@ func (attributeCache *ExecutorAttrStore) Get(executor model.ExecutorName, attrib
 
 		// 2. get data for closest key from local cache
 		dataFromLocalCache, _ := attributeCache.localCacheHSetStore.Get(closestProtocolKey.Value)
-		zklogger.DebugF(LoggerTag, "closestProtocolKey: %v", closestProtocolKey)
 		if dataFromLocalCache != nil {
-			returnVal := (*dataFromLocalCache)[attributeName]
-			if returnVal != "" {
-				return &returnVal
+			zklogger.DebugF(LoggerTag, "looking for attribute: %s in key %s", attributeName, closestProtocolKey.Value)
+			returnVal, gotVal := (*dataFromLocalCache)[attributeName]
+			if gotVal {
+				return returnVal, true
 			}
 		}
 
 	}
-	return nil
+	return "", false
 }
 
 var BlankKey = &cache.AttribStoreKey{Value: ""}

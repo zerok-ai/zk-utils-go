@@ -20,6 +20,10 @@ func (fn UpperCase) Execute(valueAtObject interface{}) (interface{}, bool) {
 	return "", false
 }
 
+func (fn UpperCase) GetName() string {
+	return fn.Name
+}
+
 type LowerCase struct {
 	Name string
 	Args []string
@@ -31,4 +35,8 @@ func (fn LowerCase) Execute(valueAtObject interface{}) (interface{}, bool) {
 		return strings.ToLower(stringVal), true
 	}
 	return "", false
+}
+
+func (fn LowerCase) GetName() string {
+	return fn.Name
 }

@@ -11,6 +11,7 @@ import (
 
 type Function interface {
 	Execute(valueAtObject interface{}) (value interface{}, ok bool)
+	GetName() string
 }
 
 type BlankFunction struct {
@@ -18,6 +19,10 @@ type BlankFunction struct {
 
 func (fn BlankFunction) Execute(valueAtObject interface{}) (value interface{}, ok bool) {
 	return nil, false
+}
+
+func (fn BlankFunction) GetName() string {
+	return ""
 }
 
 type FunctionFactory struct {
@@ -40,18 +45,19 @@ func (ff FunctionFactory) GetFunction(name string, args []string, attrStoreKey *
 
 	newArgs := make([]string, 0)
 	for _, arg := range args {
-		newArg := ff.attrStore.GetAttributeFromStore(*attrStoreKey, arg)
-		if newArg != nil {
-			newArgs = append(newArgs, *newArg)
+		newArg, ok := ff.attrStore.GetAttributeFromStore(*attrStoreKey, arg)
+		if ok {
+			newArgs = append(newArgs, newArg)
 		} else {
 			newArgs = append(newArgs, arg)
 		}
 	}
+	args = newArgs
 
 	var fn Function
 	switch name {
 	case JsonExtract:
-		fn = ExtractJson{name: name, args: args, attrStore: ff.attrStore, attrStoreKey: attrStoreKey}
+		fn = ExtractJson{name: name, args: args, attrStore: ff.attrStore, attrStoreKey: attrStoreKey, ff: &ff}
 	case getWorkloadFromIP:
 		fn = ExtractWorkLoadFromIP{name, args, ff.serviceIPStore}
 	case toLowerCase:
@@ -64,7 +70,15 @@ func (ff FunctionFactory) GetFunction(name string, args []string, attrStoreKey *
 	return &fn
 }
 
+func (ff FunctionFactory) HandleStringForFunctions(input string, attrStoreKey *cache.AttribStoreKey) []Function {
+	return ff.GetPathAndFunctionsInternal(input, attrStoreKey, true)
+}
+
 func (ff FunctionFactory) GetPathAndFunctions(input string, attrStoreKey *cache.AttribStoreKey) []Function {
+	return ff.GetPathAndFunctionsInternal(input, attrStoreKey, true)
+}
+
+func (ff FunctionFactory) GetPathAndFunctionsInternal(input string, attrStoreKey *cache.AttribStoreKey, allowJsonExtractFn bool) []Function {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -101,11 +115,15 @@ func (ff FunctionFactory) GetPathAndFunctions(input string, attrStoreKey *cache.
 				// Split arguments into a list.
 				args := strings.Split(arguments, ", ")
 
+				if !allowJsonExtractFn && functionName == JsonExtract {
+					continue
+				}
 				fn = ff.GetFunction(functionName, args, attrStoreKey)
 			}
-		} else {
+		} else if allowJsonExtractFn {
 			fn = ff.GetFunction(JsonExtract, []string{match}, attrStoreKey)
 		}
+
 		if fn != nil {
 			functions = append(functions, *fn)
 		}
@@ -162,4 +180,42 @@ func (ff FunctionFactory) GetPathAndFunctions1(input string, attrStoreKey *cache
 		}
 	}
 	return path, functions
+}
+
+func GetValueFromStore(inputPath string, store map[string]interface{}, ff *FunctionFactory, attrStoreKey *cache.AttribStoreKey) (interface{}, bool) {
+	return getValueFromStoreInternal(inputPath, store, ff, attrStoreKey, true)
+}
+
+func getValueFromStoreInternal(inputPath string, store map[string]interface{}, ff *FunctionFactory, attrStoreKey *cache.AttribStoreKey, allowJsonExtractFn bool) (interface{}, bool) {
+
+	defer func() {
+		if r := recover(); r != nil {
+			zkLogger.ErrorF(LoggerTag, "In GetValueFromStore: inputPath: %s \nstore:  %v \nattrStoreKey:%v", inputPath, store, attrStoreKey, r)
+			zkLogger.ErrorF(LoggerTag, "In GetValueFromStore: Recovered from panic: %v", r)
+		}
+	}()
+
+	var ok bool
+	var valueAtObject interface{}
+	var newValueAtObject interface{}
+
+	valueAtObject = store
+	functionArr := ff.GetPathAndFunctionsInternal(inputPath, attrStoreKey, allowJsonExtractFn)
+	if len(functionArr) == 0 {
+		return valueAtObject, false
+	}
+
+	// handle functionArr
+	for _, fn := range functionArr {
+		if valueAtObject == nil {
+			return valueAtObject, false
+		}
+		newValueAtObject, ok = fn.Execute(valueAtObject)
+		if !ok {
+			return valueAtObject, false
+		}
+		valueAtObject = newValueAtObject
+	}
+
+	return valueAtObject, true
 }

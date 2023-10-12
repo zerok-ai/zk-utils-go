@@ -40,3 +40,7 @@ func (fn ExtractWorkLoadFromIP) Execute(valueAtObject interface{}) (interface{},
 	serviceName := podDetails.GetServiceNameFromPodDetailsStore(ip.(string), fn.podDetailsStore)
 	return serviceName, true
 }
+
+func (fn ExtractWorkLoadFromIP) GetName() string {
+	return fn.Name
+}
