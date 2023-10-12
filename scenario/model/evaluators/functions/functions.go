@@ -25,8 +25,8 @@ type FunctionFactory struct {
 	attrStore      *stores.ExecutorAttrStore
 }
 
-func NewFunctionFactory(serviceIPStore *stores.LocalCacheHSetStore, attrStore *stores.ExecutorAttrStore) *FunctionFactory {
-	return &FunctionFactory{serviceIPStore: serviceIPStore, attrStore: attrStore}
+func NewFunctionFactory(podDetailsStore *stores.LocalCacheHSetStore, attrStore *stores.ExecutorAttrStore) *FunctionFactory {
+	return &FunctionFactory{serviceIPStore: podDetailsStore, attrStore: attrStore}
 }
 
 func (ff FunctionFactory) GetFunction(name string, args []string, attrStoreKey *cache.AttribStoreKey) *Function {
