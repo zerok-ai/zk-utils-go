@@ -216,5 +216,5 @@ func (re *RuleEvaluator) validate(r model.Rule) error {
 }
 
 func GetValueFromStore(inputPath string, store map[string]interface{}, ff *functions.FunctionFactory, attrStoreKey *cache.AttribStoreKey) (interface{}, bool) {
-	return functions.GetValueFromStore(inputPath, store, ff, attrStoreKey)
+	return ff.EvaluateString(inputPath, store, attrStoreKey)
 }

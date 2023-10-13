@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	zklogger "github.com/zerok-ai/zk-utils-go/logs"
-	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/cache"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/functions"
 	"github.com/zerok-ai/zk-utils-go/test/files/helpers"
@@ -57,7 +56,7 @@ func TestValueFromStore(t *testing.T) {
 	assert.NoError(t, err)
 
 	input := "dest_service"
-	value, ok := evaluators.GetValueFromStore(input, *dataObject, ff, &key)
+	value, ok := ff.EvaluateString(input, *dataObject, &key)
 	zklogger.InfoF("result", fmt.Sprintf("%v", value))
 
 	assert.Equal(t, true, ok)

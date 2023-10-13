@@ -33,7 +33,7 @@ func (re *BooleanEvaluator) evalRule(rule model.Rule, attributeNameOfID string, 
 	}
 
 	// get the value from the value store
-	value, ok := GetValueFromStore(attributeNameOfID, valueStore, re.functionFactory, re.attrStoreKey)
+	value, ok := re.functionFactory.EvaluateString(attributeNameOfID, valueStore, re.attrStoreKey)
 	if !ok {
 		return false, fmt.Errorf("value for attributeName: %s not found in valueStore", attributeNameOfID)
 	}

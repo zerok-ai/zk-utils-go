@@ -169,7 +169,7 @@ func (re *IntegerRuleEvaluator) valueFromStore(r model.Rule, attributeNameOfID s
 		}
 	}()
 
-	valueInterface, ok := GetValueFromStore(attributeNameOfID, valueStore, re.functionFactory, re.attrStoreKey)
+	valueInterface, ok := re.functionFactory.EvaluateString(attributeNameOfID, valueStore, re.attrStoreKey)
 	if !ok || valueInterface == nil {
 		return 0, fmt.Errorf("value not found for id %s", attributeNameOfID)
 	}

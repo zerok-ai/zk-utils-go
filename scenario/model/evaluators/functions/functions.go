@@ -182,16 +182,16 @@ func (ff FunctionFactory) GetPathAndFunctions1(input string, attrStoreKey *cache
 	return path, functions
 }
 
-func GetValueFromStore(inputPath string, store map[string]interface{}, ff *FunctionFactory, attrStoreKey *cache.AttribStoreKey) (interface{}, bool) {
-	return getValueFromStoreInternal(inputPath, store, ff, attrStoreKey, true)
+func (ff FunctionFactory) EvaluateString(inputPath string, store map[string]interface{}, attrStoreKey *cache.AttribStoreKey) (interface{}, bool) {
+	return getValueFromStoreInternal(inputPath, store, &ff, attrStoreKey, true)
 }
 
 func getValueFromStoreInternal(inputPath string, store map[string]interface{}, ff *FunctionFactory, attrStoreKey *cache.AttribStoreKey, allowJsonExtractFn bool) (interface{}, bool) {
 
 	defer func() {
 		if r := recover(); r != nil {
-			zkLogger.ErrorF(LoggerTag, "In GetValueFromStore: inputPath: %s \nstore:  %v \nattrStoreKey:%v", inputPath, store, attrStoreKey, r)
-			zkLogger.ErrorF(LoggerTag, "In GetValueFromStore: Recovered from panic: %v", r)
+			zkLogger.ErrorF(LoggerTag, "In EvaluateString: inputPath: %s \nstore:  %v \nattrStoreKey:%v", inputPath, store, attrStoreKey, r)
+			zkLogger.ErrorF(LoggerTag, "In EvaluateString: Recovered from panic: %v", r)
 		}
 	}()
 

@@ -35,7 +35,7 @@ func (re *StringRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID strin
 	operator := string(*rule.Operator)
 	valueFromRule := string(*rule.Value)
 
-	valueFromStoreI, ok := GetValueFromStore(attributeNameOfID, valueStore, re.functionFactory, re.attrStoreKey)
+	valueFromStoreI, ok := re.functionFactory.EvaluateString(attributeNameOfID, valueStore, re.attrStoreKey)
 	if !ok {
 		return false, fmt.Errorf("value for attributeName: %s not found in valueStore", attributeNameOfID)
 	}

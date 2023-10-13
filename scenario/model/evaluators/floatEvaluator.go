@@ -167,7 +167,7 @@ func (re *FloatRuleEvaluator) valueFromRuleAndStore(r model.Rule, attributeNameO
 
 func (re *FloatRuleEvaluator) valueFromStore(r model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (float64, error) {
 
-	valueInterface, ok := GetValueFromStore(attributeNameOfID, valueStore, re.functionFactory, re.attrStoreKey)
+	valueInterface, ok := re.functionFactory.EvaluateString(attributeNameOfID, valueStore, re.attrStoreKey)
 	if !ok || valueInterface == nil {
 		return 0, fmt.Errorf("value not found for id %s", attributeNameOfID)
 	}
