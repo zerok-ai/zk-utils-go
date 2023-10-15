@@ -4,8 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"github.com/ilyakaznacheev/cleanenv"
+	zklogger "github.com/zerok-ai/zk-utils-go/logs"
 	"os"
 )
+
+var LogTag = "zk_config"
 
 type Args struct {
 	ConfigPath string
@@ -13,7 +16,7 @@ type Args struct {
 
 // ProcessArgs processes and handles CLI arguments
 func ProcessArgs[T any](cfg *T) error {
-	fmt.Println("reading configs")
+	zklogger.DebugF(LogTag, "reading configs")
 	var a Args
 
 	flagSet := flag.NewFlagSet("server", 1)
