@@ -32,18 +32,34 @@ func (re *BooleanEvaluator) evalRule(rule model.Rule, attributeNameOfID string, 
 		return false, err
 	}
 
+	operator := string(*rule.Operator)
+
 	// get the value from the value store
 	value, ok := re.functionFactory.EvaluateString(attributeNameOfID, valueStore, re.attrStoreKey)
+
+	switch operator {
+	case operatorExists:
+		if !ok || value == nil {
+			return false, nil
+		}
+		return true, nil
+	case operatorNotExists:
+		if ok && value != nil {
+			return false, nil
+		}
+		return true, nil
+	}
+
 	if !ok {
 		return false, fmt.Errorf("value for attributeName: %s not found in valueStore", attributeNameOfID)
 	}
+
 	valueFromStore, err1 := getBooleanValue(value)
 	if err1 != nil {
 		return false, err1
 	}
 
 	//	switch on operator
-	operator := string(*rule.Operator)
 	switch operator {
 
 	case operatorEqual:

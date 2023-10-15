@@ -2,6 +2,7 @@ package functions
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/jmespath/go-jmespath"
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/cache"
@@ -23,32 +24,33 @@ type ExtractJson struct {
 
 func (fn ExtractJson) Execute(valueAtObject interface{}) (interface{}, bool) {
 
-	newValueAtObject, ok := fn.transformAttribute(valueAtObject)
+	path := fn.args[0]
+	newValueAtObject, ok := fn.transformAttribute(path, valueAtObject)
 	if ok {
-		valueAtObject = newValueAtObject
-	} else {
-		// try to create functions for the args
-		path := fn.args[0]
-		var newValue interface{}
-		newValue, ok = getValueFromStoreInternal(path, valueAtObject.(map[string]interface{}), fn.ff, fn.attrStoreKey, false)
-		if ok {
-			valueAtObject = newValue
-		} else {
-			valueAtObject, ok = fn.executeJson(valueAtObject)
-		}
+		path = fmt.Sprintf("%v", newValueAtObject)
 	}
+
+	//else {
+	//	// try to create functions for the args
+	//	path := fn.args[0]
+	//	var newValue interface{}
+	//	newValue, ok = getValueFromStoreInternal(path, valueAtObject.(map[string]interface{}), fn.ff, fn.attrStoreKey, false)
+	//	if ok {
+	//		valueAtObject = newValue
+	//	} else {
+	valueAtObject, ok = fn.executeJson(path, valueAtObject)
+	//	}
+	//}
 	return valueAtObject, ok
 }
 
-func (fn ExtractJson) executeJson(valueAtObject interface{}) (interface{}, bool) {
+func (fn ExtractJson) executeJson(path string, valueAtObject interface{}) (interface{}, bool) {
 
 	defer func() {
 		if r := recover(); r != nil {
 			zkLogger.ErrorF(LoggerTag, "In ExtractJson.Execute: Recovered from panic: %v", r)
 		}
 	}()
-
-	path := fn.args[0]
 
 	// check if valueAtObject is a string
 	var err error
@@ -82,14 +84,13 @@ func (fn ExtractJson) GetName() string {
 	return fn.name
 }
 
-func (fn ExtractJson) transformAttribute(valueAtObject interface{}) (interface{}, bool) {
-	path := fn.args[0]
+func (fn ExtractJson) transformAttribute(path string, valueAtObject interface{}) (interface{}, bool) {
 
 	// resolve the path from attribute store
 	resolvedVal, ok := fn.attrStore.GetAttributeFromStore(*fn.attrStoreKey, path)
 	if ok {
-		return getValueFromStoreInternal(resolvedVal, valueAtObject.(map[string]interface{}), fn.ff, fn.attrStoreKey, true)
+		path = resolvedVal
 	}
+	return getValueFromStoreInternal(path, valueAtObject.(map[string]interface{}), fn.ff, fn.attrStoreKey, true)
 
-	return "", false
 }

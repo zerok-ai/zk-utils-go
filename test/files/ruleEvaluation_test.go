@@ -76,42 +76,6 @@ func TestRuleEvaluationFloat(t *testing.T) {
 	validate(t, w, dataStore, true)
 }
 
-//func TestMatchingVersionKey(t *testing.T) {
-//
-//	keys := []string{
-//		"OTEL_1.21.0_GENERAL",
-//		"OTEL_1.7.0_HTTP",
-//		"OTEL_1.7.0_GENERAL",
-//		"OTEL_1.21.0_HTTP",
-//		"EBPF_0.1.0-alpha_HTTP",
-//	}
-//
-//	//protocol := "HTTP"
-//	//executor := "OTEL"
-//
-//	//attributeCache := cache.AttributeCache{}
-//	//attributeCache.Executors = PopulateExecutorDataFromRedis(config.RedisConfig{}, context.Background())
-//
-//	//var parsedKeys []cache.Key
-//	//for _, key := range keys {
-//	//	parsedKey, err := cache.ParseKey(key)
-//	//	if err != nil {
-//	//		fmt.Printf("Error parsing key: %v\n", err)
-//	//		continue
-//	//	}
-//	//	parsedKeys = append(parsedKeys, parsedKey)
-//	//}
-//	//
-//	//// Sort the keys using the custom sorting criteria.
-//	//sort.Sort(cache.ByVersion(parsedKeys))
-//	//
-//	//// Print the sorted keys.
-//	//for _, parsedKey := range parsedKeys {
-//	//	fmt.Println(parsedKey.Value)
-//	//}
-//
-//}
-
 func TestRuleEvaluationID(t *testing.T) {
 	var dataStore map[string]interface{}
 	var w model.Workload
@@ -125,7 +89,7 @@ func validate(t *testing.T, w model.Workload, dataStore map[string]interface{}, 
 	var result bool
 
 	ruleEvaluator := helpers.GetRuleEvaluator()
-	key, err := cache.ParseKey("OTEL_1.21.0_GENERAL")
+	key, err := cache.ParseKey("OTEL_1.21.0_HTTP")
 	result, err = ruleEvaluator.EvalRule(w.Rule, key, "HTTP", dataStore)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, result)

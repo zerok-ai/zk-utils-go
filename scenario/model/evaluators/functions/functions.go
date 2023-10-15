@@ -26,12 +26,12 @@ func (fn BlankFunction) GetName() string {
 }
 
 type FunctionFactory struct {
-	serviceIPStore *stores.LocalCacheHSetStore
-	attrStore      *stores.ExecutorAttrStore
+	podDetailsStore *stores.LocalCacheHSetStore
+	attrStore       *stores.ExecutorAttrStore
 }
 
 func NewFunctionFactory(podDetailsStore *stores.LocalCacheHSetStore, attrStore *stores.ExecutorAttrStore) *FunctionFactory {
-	return &FunctionFactory{serviceIPStore: podDetailsStore, attrStore: attrStore}
+	return &FunctionFactory{podDetailsStore: podDetailsStore, attrStore: attrStore}
 }
 
 func (ff FunctionFactory) GetFunction(name string, args []string, attrStoreKey *cache.AttribStoreKey) *Function {
@@ -43,29 +43,18 @@ func (ff FunctionFactory) GetFunction(name string, args []string, attrStoreKey *
 		}
 	}()
 
-	newArgs := make([]string, 0)
-	for _, arg := range args {
-		newArg, ok := ff.attrStore.GetAttributeFromStore(*attrStoreKey, arg)
-		if ok {
-			newArgs = append(newArgs, newArg)
-		} else {
-			newArgs = append(newArgs, arg)
-		}
-	}
-	args = newArgs
-
 	var fn Function
 	switch name {
 	case JsonExtract:
 		fn = ExtractJson{name: name, args: args, attrStore: ff.attrStore, attrStoreKey: attrStoreKey, ff: &ff}
 	case getWorkloadFromIP:
-		fn = ExtractWorkLoadFromIP{name, args, ff.serviceIPStore}
+		fn = ExtractWorkLoadFromIP{name: name, args: args, attrStore: ff.attrStore, attrStoreKey: attrStoreKey, ff: &ff, podDetailsStore: ff.podDetailsStore}
 	case toLowerCase:
 		fn = LowerCase{name, args}
 	case toUpperCase:
 		fn = UpperCase{name, args}
 	default:
-		fn = BlankFunction{}
+		fn = NoNameFunction{name: NoName, args: args, attrStore: ff.attrStore, attrStoreKey: attrStoreKey, ff: &ff}
 	}
 	return &fn
 }
@@ -121,7 +110,7 @@ func (ff FunctionFactory) GetPathAndFunctionsInternal(input string, attrStoreKey
 				fn = ff.GetFunction(functionName, args, attrStoreKey)
 			}
 		} else if allowJsonExtractFn {
-			fn = ff.GetFunction(JsonExtract, []string{match}, attrStoreKey)
+			fn = ff.GetFunction(NoName, []string{match}, attrStoreKey)
 		}
 
 		if fn != nil {

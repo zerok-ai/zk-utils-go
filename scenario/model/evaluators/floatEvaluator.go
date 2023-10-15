@@ -33,14 +33,22 @@ func (re *FloatRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID string
 
 	// get the values assuming that the rule object is valid
 	operator := string(*rule.Operator)
-	_, ok := valueStore[attributeNameOfID]
-	if !ok {
-		return false, fmt.Errorf("value for attributeName: %s not found in valueStore", attributeNameOfID)
-	}
 
 	//	switch on operator
 	switch operator {
 
+	case operatorExists:
+		valueInterface, ok := re.functionFactory.EvaluateString(attributeNameOfID, valueStore, re.attrStoreKey)
+		if !ok || valueInterface == nil {
+			return false, nil
+		}
+		return true, nil
+	case operatorNotExists:
+		valueInterface, ok := re.functionFactory.EvaluateString(attributeNameOfID, valueStore, re.attrStoreKey)
+		if ok && valueInterface != nil {
+			return false, nil
+		}
+		return true, nil
 	case operatorLessThan:
 		valueFromRule, valueFromStore, err := re.valueFromRuleAndStore(rule, attributeNameOfID, valueStore)
 		if err != nil {

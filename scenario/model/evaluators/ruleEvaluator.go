@@ -2,7 +2,6 @@ package evaluators
 
 import (
 	"fmt"
-	"github.com/jmespath/go-jmespath"
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/scenario/model"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/cache"
@@ -110,7 +109,7 @@ func (re *RuleEvaluator) EvalRule(rule model.Rule, attrStoreKey cache.AttribStor
 
 func (re *RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, protocol model.ProtocolName, valueStore map[string]interface{}) (bool, error) {
 
-	handled, value := false, false
+	value := false
 	var err error
 	if rule.Type == model.RULE_GROUP {
 		value, err = re.groupRuleEvaluator.evalRule(rule, attributeVersion, protocol, valueStore)
@@ -122,80 +121,56 @@ func (re *RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, prot
 		}
 
 		// replace id with actual attribute executorName
-		attributeNameOfID := re.getAttributeName(rule, attributeVersion, protocol)
+		attributeID := *rule.RuleLeaf.ID
+		//re.getAttributeName(rule, attributeVersion, protocol)
 
-		zkLogger.DebugF(LoggerTag, "RuleId:- ruleID=%s, attributeName=%s", *rule.RuleLeaf.ID, *attributeNameOfID)
+		zkLogger.DebugF(LoggerTag, "RuleId:- ruleID=%s, attributeID=%s", *rule.RuleLeaf.ID, attributeID)
 
-		handled, value, err = re.handleCommonOperators(rule, *attributeNameOfID, valueStore)
 		leafEvaluatorType := string(*rule.RuleLeaf.Datatype)
 
-		if !handled {
-			ruleEvaluator := re.leafRuleEvaluators[leafEvaluatorType]
-			if ruleEvaluator == nil {
-				return false, fmt.Errorf("LeafRuleEvaluator not found for type: %s", leafEvaluatorType)
-			}
-			value, err = ruleEvaluator.evalRule(rule, *attributeNameOfID, valueStore)
+		ruleEvaluator := re.leafRuleEvaluators[leafEvaluatorType]
+		if ruleEvaluator == nil {
+			return false, fmt.Errorf("LeafRuleEvaluator not found for type: %s", leafEvaluatorType)
 		}
-		zkLogger.DebugF(LoggerTag, "Evaluated value=%v, for attributeName=%v", value, *attributeNameOfID)
+		value, err = ruleEvaluator.evalRule(rule, attributeID, valueStore)
+		zkLogger.DebugF(LoggerTag, "Evaluated value=%v, for attributeID=%v", value, attributeID)
 	}
 	return value, err
 }
 
-func (re *RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion string, protocol model.ProtocolName) *string {
-
-	attributeName := *rule.RuleLeaf.ID
-
-	defer func() {
-		if r := recover(); r != nil {
-			zkLogger.ErrorF(LoggerTag, "In getAttributeName: AttrName:%s Recovered from panic: %v", attributeName, r)
-		}
-	}()
-
-	// get the actual id from the idStore. If not found, use the id as is
-	attributeNameFromStore, ok := re.executorAttrStore.Get(re.executorName, attributeVersion, protocol, *rule.RuleLeaf.ID)
-	if ok {
-		attributeName = attributeNameFromStore
-	}
-
-	jsonPath := rule.RuleLeaf.JsonPath
-	if jsonPath != nil {
-		//add jsonPath to the attribute name using jsonExtract function
-		jsonPathString := "#" + functions.JsonExtract + "("
-		for index, path := range *jsonPath {
-			if index > 0 {
-				jsonPathString += "."
-			}
-			jsonPathString += "\"" + path + "\""
-		}
-		jsonPathString += ")"
-
-		attributeName += jsonPathString
-	}
-
-	return &attributeName
-}
-
-// handleCommonOperators is a helper function to handle common operators like exists. The function returns
-// a bool indicating if the rule is handled, a bool indicating the value, if handled and an error if any.
-func (re *RuleEvaluator) handleCommonOperators(r model.Rule, attributeNameOfID string, store map[string]interface{}) (handled bool, returnValue bool, err error) {
-	operator := string(*r.Operator)
-	handled = false
-	returnValue = false
-
-	//	switch on operator
-	switch operator {
-	case operatorExists:
-		handled = true
-		value, err := jmespath.Search(attributeNameOfID, store)
-		returnValue = err == nil && value != nil
-	case operatorNotExists:
-		handled = true
-		value, err := jmespath.Search(attributeNameOfID, store)
-		returnValue = err != nil || value == nil
-	}
-
-	return handled, returnValue, nil
-}
+//func (re *RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion string, protocol model.ProtocolName) *string {
+//
+//	attributeName := *rule.RuleLeaf.ID
+//
+//	defer func() {
+//		if r := recover(); r != nil {
+//			zkLogger.ErrorF(LoggerTag, "In getAttributeName: AttrName:%s Recovered from panic: %v", attributeName, r)
+//		}
+//	}()
+//
+//	// get the actual id from the idStore. If not found, use the id as is
+//	attributeNameFromStore, ok := re.executorAttrStore.Get(re.executorName, attributeVersion, protocol, *rule.RuleLeaf.ID)
+//	if ok {
+//		attributeName = attributeNameFromStore
+//	}
+//
+//	jsonPath := rule.RuleLeaf.JsonPath
+//	if jsonPath != nil {
+//		//add jsonPath to the attribute name using jsonExtract function
+//		jsonPathString := "#" + functions.JsonExtract + "("
+//		for index, path := range *jsonPath {
+//			if index > 0 {
+//				jsonPathString += "."
+//			}
+//			jsonPathString += "\"" + path + "\""
+//		}
+//		jsonPathString += ")"
+//
+//		attributeName += jsonPathString
+//	}
+//
+//	return &attributeName
+//}
 
 func (re *RuleEvaluator) validate(r model.Rule) error {
 	id := r.ID

@@ -37,6 +37,18 @@ func (re *IntegerRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID stri
 	//	switch on operator
 	switch operator {
 
+	case operatorExists:
+		valueInterface, ok := re.functionFactory.EvaluateString(attributeNameOfID, valueStore, re.attrStoreKey)
+		if !ok || valueInterface == nil {
+			return false, nil
+		}
+		return true, nil
+	case operatorNotExists:
+		valueInterface, ok := re.functionFactory.EvaluateString(attributeNameOfID, valueStore, re.attrStoreKey)
+		if ok && valueInterface != nil {
+			return false, nil
+		}
+		return true, nil
 	case operatorLessThan:
 		valueFromRule, valueFromStore, err := re.valueFromRuleAndStore(rule, attributeNameOfID, valueStore)
 		if err != nil {

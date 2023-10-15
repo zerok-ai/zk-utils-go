@@ -8,26 +8,10 @@
     "rules": [
       {
         "type": "rule",
-        "id": "errors_message",
-        "datatype": "string",
-        "operator": "equal",
-        "value": "err",
-        "field": "field",
-        "input": "input"
-      },{
-        "type": "rule",
-        "id": "errors_message_name",
-        "datatype": "string",
-        "operator": "equal",
-        "value": "err.n",
-        "field": "field",
-        "input": "input"
-      },{
-        "type": "rule",
-        "id": "errors_hash",
-        "datatype": "string",
-        "operator": "equal",
-        "value": "abc",
+        "id": "latency_ns",
+        "datatype": "integer",
+        "operator": "greater_than",
+        "value": "10",
         "field": "field",
         "input": "input"
       }

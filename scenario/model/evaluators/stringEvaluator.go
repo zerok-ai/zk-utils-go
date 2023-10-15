@@ -36,9 +36,24 @@ func (re *StringRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID strin
 	valueFromRule := string(*rule.Value)
 
 	valueFromStoreI, ok := re.functionFactory.EvaluateString(attributeNameOfID, valueStore, re.attrStoreKey)
+
+	switch operator {
+	case operatorExists:
+		if !ok || valueFromStoreI == nil {
+			return false, nil
+		}
+		return true, nil
+	case operatorNotExists:
+		if ok && valueFromStoreI != nil {
+			return false, nil
+		}
+		return true, nil
+	}
+
 	if !ok {
 		return false, fmt.Errorf("value for attributeName: %s not found in valueStore", attributeNameOfID)
 	}
+
 	valueFromStore := fmt.Sprintf("%v", valueFromStoreI)
 
 	//	switch on operator
