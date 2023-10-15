@@ -1,0 +1,12 @@
+redis:
+  host: 127.0.0.1
+  password: "FuH0jXb9kt"
+  port: 6379
+  dbs:
+    filtered_traces: 1
+    scenarios: 2
+    traces: 3
+    executor_attr: 4
+    pod_details: 7
+    error_details: 8
+  readTimeout: 20

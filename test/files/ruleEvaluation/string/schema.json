@@ -1,0 +1,110 @@
+{
+  "service": "namespace/service-name",
+  "trace_role": "server",
+  "protocol": "HTTP",
+  "rule": {
+    "type": "rule_group",
+    "condition": "AND",
+    "rules": [
+      {
+        "type": "rule",
+        "id": "test_key",
+        "datatype": "string",
+        "operator": "not_exists",
+        "value": "",
+        "field": "field",
+        "input": "input"
+      },
+      {
+        "type": "rule",
+        "id": "country",
+        "datatype": "string",
+        "operator": "equal",
+        "value": "india",
+        "field": "field",
+        "input": "input"
+      },
+      {
+        "type": "rule",
+        "id": "city",
+        "datatype": "string",
+        "operator": "not_equal",
+        "value": "hyderabad",
+        "field": "field",
+        "input": "input"
+      },
+      {
+        "type": "rule",
+        "id": "name",
+        "datatype": "string",
+        "operator": "contains",
+        "value": "science",
+        "field": "field",
+        "input": "input"
+      },
+      {
+        "type": "rule",
+        "id": "name",
+        "datatype": "string",
+        "operator": "does_not_contain",
+        "value": "hero",
+        "field": "field",
+        "input": "input"
+      },
+      {
+        "type": "rule",
+        "id": "name",
+        "datatype": "string",
+        "operator": "does_not_begin_with",
+        "value": "funy",
+        "field": "field",
+        "input": "input"
+      },
+      {
+        "type": "rule",
+        "id": "name",
+        "datatype": "string",
+        "operator": "does_not_end_with",
+        "value": "stores",
+        "field": "field",
+        "input": "input"
+      },
+      {
+        "type": "rule",
+        "id": "name",
+        "datatype": "string",
+        "operator": "matches",
+        "value": ".*rover.*",
+        "field": "field",
+        "input": "input"
+      },
+      {
+        "type": "rule",
+        "id": "name",
+        "datatype": "string",
+        "operator": "does_not_match",
+        "value": ".*shower.*",
+        "field": "field",
+        "input": "input"
+      },
+      {
+        "type": "rule",
+        "id": "author",
+        "datatype": "string",
+        "operator": "not_in",
+        "value": "Tom,Dick,Harry",
+        "field": "field",
+        "input": "input"
+      },
+      {
+        "type": "rule",
+        "id": "address.zip",
+        "datatype": "string",
+        "operator": "equal",
+        "value": "560001",
+        "field": "field",
+        "input": "input"
+      }
+    ]
+  }
+}

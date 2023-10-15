@@ -15,5 +15,8 @@ coverage_html:
 	go test -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out
 
-build:
+sync:
+	go get -v ./...
+
+build: sync
 	go build ./...

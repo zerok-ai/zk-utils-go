@@ -1,3 +1,7 @@
 vendor
 /coverage.out
 .idea
+./redis-helm-charts/*.lock
+./redis-helm-charts//charts/*.tgz
+./postgres-helm-charts/*.lock
+./postgres-helm-charts//charts/*.tgz

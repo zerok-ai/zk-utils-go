@@ -3,9 +3,8 @@ package config
 import (
 	"flag"
 	"fmt"
-	"os"
-
 	"github.com/ilyakaznacheev/cleanenv"
+	"os"
 )
 
 type Args struct {

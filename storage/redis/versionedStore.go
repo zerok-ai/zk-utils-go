@@ -55,6 +55,7 @@ func (versionStore *VersionedStore[T]) initialize(tickerName string, syncTimeInt
 		}
 	}
 	versionStore.tickerTask = ticker.GetNewTickerTask(tickerName, syncTimeInterval, task).Start()
+	task()
 
 	return versionStore
 }
@@ -111,10 +112,15 @@ func (versionStore *VersionedStore[T]) setToLocalCache(key string, value *T, ver
 }
 
 func (versionStore *VersionedStore[T]) GetAllValues() map[string]*T {
+	versionStore.mutex.Lock()
+	defer versionStore.mutex.Unlock()
 	return versionStore.localKeyValueCache
 }
 
 func (versionStore *VersionedStore[T]) GetValue(key string) (*T, error) {
+
+	versionStore.mutex.Lock()
+	defer versionStore.mutex.Unlock()
 
 	// get the value from local store
 	localVal := versionStore.localKeyValueCache[key]
@@ -226,6 +232,50 @@ func (versionStore *VersionedStore[T]) getAllVersionsFromDB() (map[string]string
 	return versions.Val(), versions.Err()
 }
 
+func (versionStore *VersionedStore[T]) DeleteAllKeys() error {
+	rdb := versionStore.redisClient
+	zkLogger.Debug(LogTag, "Deleting all keys from db.")
+
+	versions, err := versionStore.getAllVersionsFromDB()
+
+	zkLogger.Debug(LogTag, "Existing version are ", versions)
+
+	if len(versions) == 0 {
+		return nil
+	}
+
+	if err != nil {
+		zkLogger.Error(LogTag, "Error while getting all version from db.")
+		return err
+	}
+
+	keysArr := []string{}
+	for key, _ := range versions {
+		keysArr = append(keysArr, key)
+	}
+
+	zkLogger.Debug(LogTag, "Deleting keys ", keysArr)
+
+	// create a transaction
+	ctx := context.Background()
+	tx := rdb.TxPipeline()
+
+	// delete version
+	tx.HDel(context.Background(), versionStore.versionHashSetName, keysArr...)
+	tx.Del(context.Background(), keysArr...)
+
+	// Execute the transaction
+	if _, err := tx.Exec(ctx); err != nil {
+		return err
+	}
+
+	versionStore.mutex.Lock()
+	defer versionStore.mutex.Unlock()
+	versionStore.localVersions = map[string]string{}
+	versionStore.localKeyValueCache = map[string]*T{}
+	return nil
+}
+
 func (versionStore *VersionedStore[T]) Delete(key string) error {
 	rdb := versionStore.redisClient
 
@@ -257,11 +307,15 @@ func (versionStore *VersionedStore[T]) Length() (int64, error) {
 
 func (versionStore *VersionedStore[T]) refreshLocalCache() error {
 
+	zkLogger.Debug(LogTag, "Triggered refreshLocalCache.")
+
 	// 1. get the new localVersions for all the keys
 	versionsFromDB, err := versionStore.getAllVersionsFromDB()
 	if err != nil {
 		return fmt.Errorf("error in getting localVersions for values: %v", err)
 	}
+
+	zkLogger.Debug(LogTag, "VersionFromDB ", versionsFromDB)
 
 	// 2. collect the data points which have the same versionFromDb in a new map
 	newDataPair := make(map[string]*T)
@@ -276,20 +330,24 @@ func (versionStore *VersionedStore[T]) refreshLocalCache() error {
 		}
 		missingOrOldDataKeys = append(missingOrOldDataKeys, key)
 	}
-	// 2.1 nothing new, go home
-	if len(missingOrOldDataKeys) == 0 {
-		return nil
+
+	zkLogger.Debug(LogTag, "MissingOrOldKeys ", missingOrOldDataKeys)
+	if len(missingOrOldDataKeys) > 0 {
+		// 3. get the values which are not present locally or are old
+		newRawDataPair, err := versionStore.getMultipleValuesFromDB(missingOrOldDataKeys)
+		if err != nil {
+			return fmt.Errorf("error in fetching new data for cache: %v", err)
+		}
+
+		zkLogger.Debug(LogTag, "newRawDataPair ", newRawDataPair)
+
+		// populate new cache
+		for i, v := range newRawDataPair {
+			newDataPair[missingOrOldDataKeys[i]] = v
+		}
 	}
 
-	// 3. get the values which are not present locally or are old
-	newRawDataPair, err := versionStore.getMultipleValuesFromDB(missingOrOldDataKeys)
-	if err != nil {
-		return fmt.Errorf("error in fetching new data for cache: %v", err)
-	}
-	// populate new cache
-	for i, v := range newRawDataPair {
-		newDataPair[missingOrOldDataKeys[i]] = v
-	}
+	zkLogger.Debug(LogTag, "newDataPair ", newDataPair)
 
 	// 4. assign the new objects to filter processors
 	versionStore.mutex.Lock()

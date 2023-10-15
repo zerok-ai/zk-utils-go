@@ -1,0 +1,36 @@
+{
+  "service": "namespace/service-name",
+  "trace_role": "server",
+  "protocol": "HTTP",
+  "rule": {
+    "type": "rule_group",
+    "condition": "AND",
+    "rules": [
+      {
+        "type": "rule",
+        "id": "errors_message",
+        "datatype": "string",
+        "operator": "equal",
+        "value": "err",
+        "field": "field",
+        "input": "input"
+      },{
+        "type": "rule",
+        "id": "errors_message_name",
+        "datatype": "string",
+        "operator": "equal",
+        "value": "err.n",
+        "field": "field",
+        "input": "input"
+      },{
+        "type": "rule",
+        "id": "errors_hash",
+        "datatype": "string",
+        "operator": "equal",
+        "value": "abc",
+        "field": "field",
+        "input": "input"
+      }
+    ]
+  }
+}

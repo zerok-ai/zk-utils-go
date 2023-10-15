@@ -6,6 +6,7 @@
   "enabled": true,
   "workloads": {
     "idA": {
+      "executor": "EBPF",
       "service": "namespace/service-name",
       "trace_role": "server",
       "protocol": "HTTP",

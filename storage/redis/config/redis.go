@@ -3,12 +3,13 @@ package config
 import (
 	"fmt"
 	"github.com/redis/go-redis/v9"
-	"os"
 	"time"
 )
 
+const LoggerTag = "redis_config"
+
 type RedisConfig struct {
-	Host        string         `yaml:"host"`
+	Host        string         `yaml:"host" env:"ZK_REDIS_HOST" env-description:"Redis HOST"`
 	Port        string         `yaml:"port"`
 	DBs         map[string]int `yaml:"dbs"`
 	ReadTimeout int            `yaml:"readTimeout"`
@@ -21,10 +22,9 @@ type DB struct {
 
 func GetRedisConnection(dbName string, redisConfig RedisConfig) *redis.Client {
 	readTimeout := time.Duration(redisConfig.ReadTimeout) * time.Second
-	password := os.Getenv("ZK_REDIS_PASSWORD")
 	return redis.NewClient(&redis.Options{
 		Addr:        fmt.Sprint(redisConfig.Host, ":", redisConfig.Port),
-		Password:    password,
+		Password:    redisConfig.Password,
 		DB:          redisConfig.DBs[dbName],
 		ReadTimeout: readTimeout,
 	})

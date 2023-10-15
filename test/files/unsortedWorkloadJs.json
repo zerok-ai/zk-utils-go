@@ -1,6 +1,7 @@
 {
   "service": "namespace/service-name",
   "trace_role": "server",
+  "executor": "EBPF",
   "protocol": "HTTP",
   "rule": {
     "type": "rule_group",

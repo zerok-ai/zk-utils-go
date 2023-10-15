@@ -18,6 +18,7 @@ import (
 	"math"
 	"os"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -49,8 +50,8 @@ func ToJsonString(iInstance interface{}) *string {
 	if iInstance == nil {
 		return nil
 	}
-	bytes, error := json.Marshal(iInstance)
-	if error != nil {
+	bytes, err := json.Marshal(iInstance)
+	if err != nil {
 		return nil
 	} else {
 		iString := string(bytes)
@@ -66,8 +67,8 @@ func FromJsonString(iString string, iType reflect.Type) interface{} {
 	iTypeInterface := reflect.New(iType).Interface()
 	iReader := strings.NewReader(iString)
 	decoder := json.NewDecoder(iReader)
-	error := decoder.Decode(iTypeInterface)
-	if error != nil {
+	err := decoder.Decode(iTypeInterface)
+	if err != nil {
 		//TODO:Refactor
 	}
 	return iTypeInterface
@@ -198,6 +199,20 @@ func SetResponseInCtxAndReturn[T any](ctx iris.Context, resp *T, zkError *zkErro
 	return
 }
 
+func ExtractRegexStringFromString(target, jsonExtractPattern string) string {
+
+	// Compile the regular expressions
+	jsonExtractRegex := regexp.MustCompile(jsonExtractPattern)
+
+	// Extract response_payload and message using regular expressions
+	message := jsonExtractRegex.FindStringSubmatch(target)
+
+	if len(message) > 1 {
+		return message[1]
+	}
+	return ""
+}
+
 func GetBytesFromFile(path string) []byte {
 	file, err := os.Open(path)
 	if err != nil {
@@ -232,4 +247,22 @@ func GetStmtRawQuery(tx *sql.Tx, stmt string) (*sql.Stmt, error) {
 		return nil, err
 	}
 	return preparedStmt, nil
+}
+
+func DeepCopy[T any](input *T) (*T, error) {
+
+	byteArray, err := json.Marshal(input)
+	if err != nil {
+		zkLogger.Error(LogTag, "Error in Deep copy[1]:", err)
+		return nil, err
+	}
+
+	var newObject T
+	err = json.Unmarshal(byteArray, &newObject)
+	if err != nil {
+		zkLogger.Error(LogTag, "Error in Deep copy[2]:", err)
+		return nil, err
+	}
+
+	return &newObject, nil
 }
