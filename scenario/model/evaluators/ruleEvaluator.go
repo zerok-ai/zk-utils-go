@@ -90,7 +90,7 @@ func (re *RuleEvaluator) init() *RuleEvaluator {
 	re.functionFactory = functions.NewFunctionFactory(re.podDetailsStore, re.executorAttrStore)
 
 	re.leafRuleEvaluators[typeString] = NewStringRuleEvaluator(re.functionFactory)
-	re.leafRuleEvaluators[typeInteger] = NewIntegerRuleEvaluator(re.functionFactory)
+	re.leafRuleEvaluators[typeInteger] = NewFloatRuleEvaluator(re.functionFactory)
 	re.leafRuleEvaluators[typeFloat] = NewFloatRuleEvaluator(re.functionFactory)
 	re.leafRuleEvaluators[typeBool] = NewBooleanEvaluator(re.functionFactory)
 
