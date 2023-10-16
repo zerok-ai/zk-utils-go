@@ -99,7 +99,7 @@ func validate(t *testing.T, w model.Workload, dataStore map[string]interface{}, 
 
 	ruleEvaluator := helpers.GetRuleEvaluator()
 	key, err := cache.ParseKey("OTEL_1.21.0_HTTP")
-	result, err = ruleEvaluator.EvalRule(w.Rule, key, "HTTP", dataStore)
+	result, err = ruleEvaluator.EvalRule(w.Rule, key, dataStore)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, result)
 }

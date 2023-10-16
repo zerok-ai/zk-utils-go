@@ -25,20 +25,6 @@ func TestFunction(t *testing.T) {
 	assert.Greater(t, len(functionArr), 0)
 }
 
-func TestNonFunction(t *testing.T) {
-	input := "alpha.beta.gamma"
-
-	configPath := "config/config.yaml"
-	sf := helpers.GetStoreFactory(configPath)
-	ff := functions.NewFunctionFactory(sf.GetPodDetailsStore(), sf.GetExecutorAttrStore())
-	key, err := cache.ParseKey("OTEL_1.7.0_HTTP")
-	assert.NoError(t, err)
-
-	functionArr := ff.GetPathAndFunctions(input, &key)
-
-	assert.Equal(t, 0, len(functionArr))
-}
-
 func TestValueFromStore(t *testing.T) {
 
 	configPath := "config/config.yaml"

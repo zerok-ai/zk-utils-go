@@ -2,7 +2,6 @@ package functions
 
 import (
 	"fmt"
-	"github.com/jmespath/go-jmespath"
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/podDetails"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/cache"
@@ -41,13 +40,8 @@ func (fn ExtractWorkLoadFromIP) Execute(valueAtObject interface{}) (interface{},
 		path = fmt.Sprintf("%v", newValueAtObject)
 	}
 
-	ip, err := jmespath.Search(path, valueAtObject)
-	if err != nil || ip == nil || ip.(string) == "" {
-		return "", false
-	}
-
 	// get the workload for the ip
-	serviceName := podDetails.GetServiceNameFromPodDetailsStore(ip.(string), fn.podDetailsStore)
+	serviceName := podDetails.GetServiceNameFromPodDetailsStore(path, fn.podDetailsStore)
 	return serviceName, true
 }
 

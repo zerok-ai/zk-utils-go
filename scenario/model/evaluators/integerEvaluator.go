@@ -23,13 +23,15 @@ func NewIntegerRuleEvaluator(factory *functions.FunctionFactory) LeafRuleEvaluat
 	return (&IntegerRuleEvaluator{functionFactory: factory}).init()
 }
 
-func (re *IntegerRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
+func (re *IntegerRuleEvaluator) evalRule(rule model.Rule, valueStore map[string]interface{}) (bool, error) {
 
 	defer func() {
 		if r := recover(); r != nil {
 			logger.ErrorF(LoggerTag, "In integer eval: Recovered from panic: %v", r)
 		}
 	}()
+
+	attributeID := *rule.RuleLeaf.ID
 
 	// get the values assuming that the rule object is valid
 	operator := string(*rule.Operator)
@@ -38,65 +40,65 @@ func (re *IntegerRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID stri
 	switch operator {
 
 	case operatorExists:
-		valueInterface, ok := re.functionFactory.EvaluateString(attributeNameOfID, valueStore, re.attrStoreKey)
+		valueInterface, ok := re.functionFactory.EvaluateString(attributeID, valueStore, re.attrStoreKey)
 		if !ok || valueInterface == nil {
 			return false, nil
 		}
 		return true, nil
 	case operatorNotExists:
-		valueInterface, ok := re.functionFactory.EvaluateString(attributeNameOfID, valueStore, re.attrStoreKey)
+		valueInterface, ok := re.functionFactory.EvaluateString(attributeID, valueStore, re.attrStoreKey)
 		if ok && valueInterface != nil {
 			return false, nil
 		}
 		return true, nil
 	case operatorLessThan:
-		valueFromRule, valueFromStore, err := re.valueFromRuleAndStore(rule, attributeNameOfID, valueStore)
+		valueFromRule, valueFromStore, err := re.valueFromRuleAndStore(rule, attributeID, valueStore)
 		if err != nil {
 			return false, err
 		}
 		return valueFromStore < valueFromRule, nil
 	case operatorLessThanEqual:
-		valueFromRule, valueFromStore, err := re.valueFromRuleAndStore(rule, attributeNameOfID, valueStore)
+		valueFromRule, valueFromStore, err := re.valueFromRuleAndStore(rule, attributeID, valueStore)
 		if err != nil {
 			return false, err
 		}
 		return valueFromStore <= valueFromRule, nil
 	case operatorGreaterThan:
-		valueFromRule, valueFromStore, err := re.valueFromRuleAndStore(rule, attributeNameOfID, valueStore)
+		valueFromRule, valueFromStore, err := re.valueFromRuleAndStore(rule, attributeID, valueStore)
 		if err != nil {
 			return false, err
 		}
 		return valueFromStore > valueFromRule, nil
 	case operatorGreaterThanEqual:
-		valueFromRule, valueFromStore, err := re.valueFromRuleAndStore(rule, attributeNameOfID, valueStore)
+		valueFromRule, valueFromStore, err := re.valueFromRuleAndStore(rule, attributeID, valueStore)
 		if err != nil {
 			return false, err
 		}
 		return valueFromStore >= valueFromRule, nil
 	case operatorEqual:
-		valueFromRule, valueFromStore, err := re.valueFromRuleAndStore(rule, attributeNameOfID, valueStore)
+		valueFromRule, valueFromStore, err := re.valueFromRuleAndStore(rule, attributeID, valueStore)
 		if err != nil {
 			return false, err
 		}
 		return valueFromStore == valueFromRule, nil
 	case operatorNotEqual:
-		valueFromRule, valueFromStore, err := re.valueFromRuleAndStore(rule, attributeNameOfID, valueStore)
+		valueFromRule, valueFromStore, err := re.valueFromRuleAndStore(rule, attributeID, valueStore)
 		if err != nil {
 			return false, err
 		}
 		return valueFromStore != valueFromRule, nil
 
 	case operatorBetween:
-		return re.isValueInRange(rule, attributeNameOfID, valueStore)
+		return re.isValueInRange(rule, attributeID, valueStore)
 	case operatorNotBetween:
-		valueInRange, err := re.isValueInRange(rule, attributeNameOfID, valueStore)
+		valueInRange, err := re.isValueInRange(rule, attributeID, valueStore)
 		return !valueInRange, err
 
 	case operatorIn:
-		isPresent := re.isValuePresentInCSV(rule, attributeNameOfID, valueStore)
+		isPresent := re.isValuePresentInCSV(rule, attributeID, valueStore)
 		return isPresent, nil
 	case operatorNotIn:
-		isPresent := re.isValuePresentInCSV(rule, attributeNameOfID, valueStore)
+		isPresent := re.isValuePresentInCSV(rule, attributeID, valueStore)
 		return !isPresent, nil
 
 	}

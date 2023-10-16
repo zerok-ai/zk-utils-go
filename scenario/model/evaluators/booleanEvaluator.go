@@ -21,12 +21,15 @@ func NewBooleanEvaluator(functionFactory *functions.FunctionFactory) LeafRuleEva
 	return (&BooleanEvaluator{functionFactory: functionFactory}).init()
 }
 
-func (re *BooleanEvaluator) evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
+func (re *BooleanEvaluator) evalRule(rule model.Rule, valueStore map[string]interface{}) (bool, error) {
 	defer func() {
 		if r := recover(); r != nil {
 			zkLogger.ErrorF(LoggerTag, "In bool eval: Recovered from panic: %v", r)
 		}
 	}()
+
+	attributeID := *rule.RuleLeaf.ID
+
 	valueFromRule, err := getBooleanValue(string(*rule.Value))
 	if err != nil {
 		return false, err
@@ -35,7 +38,7 @@ func (re *BooleanEvaluator) evalRule(rule model.Rule, attributeNameOfID string, 
 	operator := string(*rule.Operator)
 
 	// get the value from the value store
-	value, ok := re.functionFactory.EvaluateString(attributeNameOfID, valueStore, re.attrStoreKey)
+	value, ok := re.functionFactory.EvaluateString(attributeID, valueStore, re.attrStoreKey)
 
 	switch operator {
 	case operatorExists:
@@ -51,7 +54,7 @@ func (re *BooleanEvaluator) evalRule(rule model.Rule, attributeNameOfID string, 
 	}
 
 	if !ok {
-		return false, fmt.Errorf("value for attributeName: %s not found in valueStore", attributeNameOfID)
+		return false, fmt.Errorf("value for attributeName: %s not found in valueStore", attributeID)
 	}
 
 	valueFromStore, err1 := getBooleanValue(value)

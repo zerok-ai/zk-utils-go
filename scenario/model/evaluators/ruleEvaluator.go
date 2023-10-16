@@ -57,16 +57,15 @@ func (ds DataStore) String() string {
 type LeafRuleEvaluator interface {
 	init() LeafRuleEvaluator
 	setAttrStoreKey(attrStoreKey *cache.AttribStoreKey)
-	evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error)
+	evalRule(rule model.Rule, valueStore map[string]interface{}) (bool, error)
 }
 
 type GroupRuleEvaluator interface {
 	init() GroupRuleEvaluator
-	evalRule(rule model.Rule, attributeVersion string, protocol model.ProtocolName, valueStore map[string]interface{}) (bool, error)
+	evalRule(rule model.Rule, attrStoreKey cache.AttribStoreKey, valueStore map[string]interface{}) (bool, error)
 }
 
 type RuleEvaluator struct {
-	executorName      model.ExecutorName
 	executorAttrStore *stores.ExecutorAttrStore
 	podDetailsStore   *stores.LocalCacheHSetStore
 	functionFactory   *functions.FunctionFactory
@@ -75,9 +74,8 @@ type RuleEvaluator struct {
 	groupRuleEvaluator GroupRuleEvaluator
 }
 
-func NewRuleEvaluator(executorName model.ExecutorName, executorAttrStore *stores.ExecutorAttrStore, podDetailsStore *stores.LocalCacheHSetStore) *RuleEvaluator {
+func NewRuleEvaluator(executorAttrStore *stores.ExecutorAttrStore, podDetailsStore *stores.LocalCacheHSetStore) *RuleEvaluator {
 	return (&RuleEvaluator{
-		executorName:       executorName,
 		executorAttrStore:  executorAttrStore,
 		podDetailsStore:    podDetailsStore,
 		leafRuleEvaluators: make(map[string]LeafRuleEvaluator),
@@ -96,23 +94,23 @@ func (re *RuleEvaluator) init() *RuleEvaluator {
 	return re
 }
 
-func (re *RuleEvaluator) EvalRule(rule model.Rule, attrStoreKey cache.AttribStoreKey, protocol model.ProtocolName, valueStore map[string]interface{}) (bool, error) {
+func (re *RuleEvaluator) EvalRule(rule model.Rule, attrStoreKey cache.AttribStoreKey, valueStore map[string]interface{}) (bool, error) {
 
-	// set the new attrStoreKey in all the leafRuleEvaluators
+	// reset the new attrStoreKey in all the leafRuleEvaluators. This pushes the new protocol version to all the leafRuleEvaluators
 	for _, leafEvaluator := range re.leafRuleEvaluators {
 		leafEvaluator.setAttrStoreKey(&attrStoreKey)
 	}
 
-	result, err := re.evalRule(rule, attrStoreKey.Version, protocol, valueStore)
+	result, err := re.evalRule(rule, attrStoreKey, valueStore)
 	return result, err
 }
 
-func (re *RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, protocol model.ProtocolName, valueStore map[string]interface{}) (bool, error) {
+func (re *RuleEvaluator) evalRule(rule model.Rule, attrStoreKey cache.AttribStoreKey, valueStore map[string]interface{}) (bool, error) {
 
 	value := false
 	var err error
 	if rule.Type == model.RULE_GROUP {
-		value, err = re.groupRuleEvaluator.evalRule(rule, attributeVersion, protocol, valueStore)
+		value, err = re.groupRuleEvaluator.evalRule(rule, attrStoreKey, valueStore)
 		zkLogger.DebugF(LoggerTag, "Evaluated value for group =%v, for condition=%s", value, *rule.RuleGroup.Condition)
 	} else {
 		err = re.validate(rule)
@@ -120,10 +118,7 @@ func (re *RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, prot
 			return false, err
 		}
 
-		// replace id with actual attribute executorName
 		attributeID := *rule.RuleLeaf.ID
-		//re.getAttributeName(rule, attributeVersion, protocol)
-
 		zkLogger.DebugF(LoggerTag, "RuleId:- ruleID=%s, attributeID=%s", *rule.RuleLeaf.ID, attributeID)
 
 		leafEvaluatorType := string(*rule.RuleLeaf.Datatype)
@@ -132,45 +127,11 @@ func (re *RuleEvaluator) evalRule(rule model.Rule, attributeVersion string, prot
 		if ruleEvaluator == nil {
 			return false, fmt.Errorf("LeafRuleEvaluator not found for type: %s", leafEvaluatorType)
 		}
-		value, err = ruleEvaluator.evalRule(rule, attributeID, valueStore)
+		value, err = ruleEvaluator.evalRule(rule, valueStore)
 		zkLogger.DebugF(LoggerTag, "Evaluated value=%v, for attributeID=%v", value, attributeID)
 	}
 	return value, err
 }
-
-//func (re *RuleEvaluator) getAttributeName(rule model.Rule, attributeVersion string, protocol model.ProtocolName) *string {
-//
-//	attributeName := *rule.RuleLeaf.ID
-//
-//	defer func() {
-//		if r := recover(); r != nil {
-//			zkLogger.ErrorF(LoggerTag, "In getAttributeName: AttrName:%s Recovered from panic: %v", attributeName, r)
-//		}
-//	}()
-//
-//	// get the actual id from the idStore. If not found, use the id as is
-//	attributeNameFromStore, ok := re.executorAttrStore.Get(re.executorName, attributeVersion, protocol, *rule.RuleLeaf.ID)
-//	if ok {
-//		attributeName = attributeNameFromStore
-//	}
-//
-//	jsonPath := rule.RuleLeaf.JsonPath
-//	if jsonPath != nil {
-//		//add jsonPath to the attribute name using jsonExtract function
-//		jsonPathString := "#" + functions.JsonExtract + "("
-//		for index, path := range *jsonPath {
-//			if index > 0 {
-//				jsonPathString += "."
-//			}
-//			jsonPathString += "\"" + path + "\""
-//		}
-//		jsonPathString += ")"
-//
-//		attributeName += jsonPathString
-//	}
-//
-//	return &attributeName
-//}
 
 func (re *RuleEvaluator) validate(r model.Rule) error {
 	id := r.ID

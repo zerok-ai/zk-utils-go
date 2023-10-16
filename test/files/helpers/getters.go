@@ -6,21 +6,19 @@ import (
 	"fmt"
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/zerok-ai/zk-utils-go/common"
-	"github.com/zerok-ai/zk-utils-go/scenario/model"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators"
 	"github.com/zerok-ai/zk-utils-go/storage/redis/stores"
 	"github.com/zerok-ai/zk-utils-go/test/files/config"
 )
 
 func GetRuleEvaluator() *evaluators.RuleEvaluator {
-	executor := "OTEL"
 
 	configPath := "config/config.yaml"
 	sf := GetStoreFactory(configPath)
 	executorAttrDB := sf.GetExecutorAttrStore()
 	podDetailsStore := sf.GetPodDetailsStore()
 
-	return evaluators.NewRuleEvaluator(model.ExecutorName(executor), executorAttrDB, podDetailsStore)
+	return evaluators.NewRuleEvaluator(executorAttrDB, podDetailsStore)
 }
 
 func GetStoreFactory(configPath string) *stores.StoreFactory {

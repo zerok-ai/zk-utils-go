@@ -13,17 +13,6 @@ type Function interface {
 	GetName() string
 }
 
-type BlankFunction struct {
-}
-
-func (fn BlankFunction) Execute(valueAtObject interface{}) (value interface{}, ok bool) {
-	return nil, false
-}
-
-func (fn BlankFunction) GetName() string {
-	return ""
-}
-
 type FunctionFactory struct {
 	podDetailsStore *stores.LocalCacheHSetStore
 	attrStore       *stores.ExecutorAttrStore
@@ -66,7 +55,7 @@ func (ff FunctionFactory) GetPathAndFunctions(input string, attrStoreKey *cache.
 	return ff.GetPathAndFunctionsInternal(input, attrStoreKey, true)
 }
 
-func (ff FunctionFactory) GetPathAndFunctionsInternal(input string, attrStoreKey *cache.AttribStoreKey, allowJsonExtractFn bool) []Function {
+func (ff FunctionFactory) GetPathAndFunctionsInternal(input string, attrStoreKey *cache.AttribStoreKey, allowNoNameFn bool) []Function {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -88,7 +77,7 @@ func (ff FunctionFactory) GetPathAndFunctionsInternal(input string, attrStoreKey
 	// Find all matches.
 	matches := compiledRegexFullMatch.FindAllString(input, -1)
 
-	// create the fucntions
+	// create the functions
 	functions := make([]Function, 0)
 	for _, match := range matches {
 		var fn *Function
@@ -103,12 +92,12 @@ func (ff FunctionFactory) GetPathAndFunctionsInternal(input string, attrStoreKey
 				// Split arguments into a list.
 				args := strings.Split(arguments, ", ")
 
-				if !allowJsonExtractFn && functionName == JsonExtract {
+				if !allowNoNameFn && functionName == NoName {
 					continue
 				}
 				fn = ff.GetFunction(functionName, args, attrStoreKey)
 			}
-		} else if allowJsonExtractFn {
+		} else if allowNoNameFn {
 			fn = ff.GetFunction(NoName, []string{match}, attrStoreKey)
 		}
 
@@ -119,58 +108,11 @@ func (ff FunctionFactory) GetPathAndFunctionsInternal(input string, attrStoreKey
 	return functions
 }
 
-func (ff FunctionFactory) GetPathAndFunctions1(input string, attrStoreKey *cache.AttribStoreKey) (path string, functions []Function) {
-
-	// Define regular expressions for path, function name, and function parameters
-	pathRegex := regexp.MustCompile(`^([^#]*)`)
-
-	// Extract path
-	pathMatches := pathRegex.FindStringSubmatch(input)
-	path = input
-	if len(pathMatches) > 1 {
-		path = pathMatches[1]
-	}
-
-	// Regular expression pattern to match function calls
-	pattern := `#(\w+)\(([^)]*)\)`
-
-	// Compile the regular expression pattern
-	regex := regexp.MustCompile(pattern)
-
-	// Find all matches of the pattern in the input string
-	matches := regex.FindAllStringSubmatch(input, -1)
-
-	// Iterate over the matches and print the extracted function calls
-	functions = make([]Function, 0)
-	for _, match := range matches {
-		// get the name
-		name := match[1]
-
-		// get the params and trim spaces from each substring
-		params := strings.Split(match[2], ",")
-
-		args := make([]string, 0)
-		for _, s := range params {
-			temp := strings.TrimSpace(s)
-			if len(temp) > 0 {
-				args = append(args, temp)
-			}
-		}
-
-		// append the function to the list
-		fn := ff.GetFunction(name, args, attrStoreKey)
-		if fn != nil {
-			functions = append(functions, *fn)
-		}
-	}
-	return path, functions
-}
-
 func (ff FunctionFactory) EvaluateString(inputPath string, store map[string]interface{}, attrStoreKey *cache.AttribStoreKey) (interface{}, bool) {
 	return getValueFromStoreInternal(inputPath, store, &ff, attrStoreKey, true)
 }
 
-func getValueFromStoreInternal(inputPath string, store map[string]interface{}, ff *FunctionFactory, attrStoreKey *cache.AttribStoreKey, allowJsonExtractFn bool) (interface{}, bool) {
+func getValueFromStoreInternal(inputPath string, store map[string]interface{}, ff *FunctionFactory, attrStoreKey *cache.AttribStoreKey, allowNoNameFn bool) (interface{}, bool) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -184,7 +126,7 @@ func getValueFromStoreInternal(inputPath string, store map[string]interface{}, f
 	var newValueAtObject interface{}
 
 	valueAtObject = store
-	functionArr := ff.GetPathAndFunctionsInternal(inputPath, attrStoreKey, allowJsonExtractFn)
+	functionArr := ff.GetPathAndFunctionsInternal(inputPath, attrStoreKey, allowNoNameFn)
 	if len(functionArr) == 0 {
 		return valueAtObject, false
 	}

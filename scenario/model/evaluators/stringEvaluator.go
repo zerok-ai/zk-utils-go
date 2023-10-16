@@ -23,7 +23,7 @@ func NewStringRuleEvaluator(functionFactory *functions.FunctionFactory) LeafRule
 	return (&StringRuleEvaluator{functionFactory: functionFactory}).init()
 }
 
-func (re *StringRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID string, valueStore map[string]interface{}) (bool, error) {
+func (re *StringRuleEvaluator) evalRule(rule model.Rule, valueStore map[string]interface{}) (bool, error) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -31,11 +31,13 @@ func (re *StringRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID strin
 		}
 	}()
 
+	attributeID := *rule.RuleLeaf.ID
+
 	// get the values assuming that the rule object is valid
 	operator := string(*rule.Operator)
 	valueFromRule := string(*rule.Value)
 
-	valueFromStoreI, ok := re.functionFactory.EvaluateString(attributeNameOfID, valueStore, re.attrStoreKey)
+	valueFromStoreI, ok := re.functionFactory.EvaluateString(attributeID, valueStore, re.attrStoreKey)
 
 	switch operator {
 	case operatorExists:
@@ -51,7 +53,7 @@ func (re *StringRuleEvaluator) evalRule(rule model.Rule, attributeNameOfID strin
 	}
 
 	if !ok {
-		return false, fmt.Errorf("value for attributeName: %s not found in valueStore", attributeNameOfID)
+		return false, fmt.Errorf("value for attributeName: %s not found in valueStore", attributeID)
 	}
 
 	valueFromStore := fmt.Sprintf("%v", valueFromStoreI)
