@@ -1,9 +1,11 @@
 package zktick
 
 import (
-	"fmt"
+	zklogger "github.com/zerok-ai/zk-utils-go/logs"
 	"time"
 )
+
+const LogTag = "zktick"
 
 // TickerTask create a struct to hold the ticker and the task
 type TickerTask struct {
@@ -31,7 +33,7 @@ func (tt TickerTask) Start() *TickerTask {
 				select {
 				case <-tt.ticker.C:
 					// Perform the task
-					fmt.Printf("tick (%s) - %d\n", tt.name, tt.counter)
+					zklogger.DebugF(LogTag, "tick (%s) - %d\n", tt.name, tt.counter)
 					tt.counter = tt.counter + 1
 					runTaskAndFlushPendingTasks(tt)
 				}
@@ -46,7 +48,7 @@ func runTaskAndFlushPendingTasks(tt TickerTask) {
 	//If there are multiple ticks available, flush all for now
 	for len(tt.ticker.C) > 0 {
 		<-tt.ticker.C
-		fmt.Println("Skipping tick due to slow processing")
+		zklogger.Debug(LogTag, "Skipping tick due to slow processing")
 	}
 }
 

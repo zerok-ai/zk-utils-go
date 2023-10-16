@@ -78,7 +78,7 @@ func ToFloat32(input string) (float32, error) {
 	str := "3.14"
 	f, err := strconv.ParseFloat(str, 32)
 	if err != nil {
-		fmt.Println("Error:", err)
+		zkLogger.ErrorF(LogTag, "Error while converting string %s to float32, err %v.\n", str, err)
 		return float32(0.0), err
 	}
 	return float32(f), nil

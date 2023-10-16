@@ -344,7 +344,6 @@ func (r RuleLeaf) LessThan(other RuleLeaf) bool {
 		return false
 	}
 
-	fmt.Println("before returning false")
 	return false
 }
 

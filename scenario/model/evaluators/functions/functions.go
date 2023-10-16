@@ -1,7 +1,6 @@
 package functions
 
 import (
-	"fmt"
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/scenario/model/evaluators/cache"
 	"github.com/zerok-ai/zk-utils-go/storage/redis/stores"
@@ -130,7 +129,6 @@ func (ff FunctionFactory) GetPathAndFunctions1(input string, attrStoreKey *cache
 	path = input
 	if len(pathMatches) > 1 {
 		path = pathMatches[1]
-		fmt.Println("Path:", path)
 	}
 
 	// Regular expression pattern to match function calls
@@ -147,7 +145,6 @@ func (ff FunctionFactory) GetPathAndFunctions1(input string, attrStoreKey *cache
 	for _, match := range matches {
 		// get the name
 		name := match[1]
-		fmt.Print("\n---fn name:" + name)
 
 		// get the params and trim spaces from each substring
 		params := strings.Split(match[2], ",")
@@ -157,10 +154,8 @@ func (ff FunctionFactory) GetPathAndFunctions1(input string, attrStoreKey *cache
 			temp := strings.TrimSpace(s)
 			if len(temp) > 0 {
 				args = append(args, temp)
-				fmt.Print("\t" + temp)
 			}
 		}
-		fmt.Printf("\tnumber of args: %d\n", len(args))
 
 		// append the function to the list
 		fn := ff.GetFunction(name, args, attrStoreKey)

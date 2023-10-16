@@ -13,7 +13,7 @@ import (
 func TestFunction(t *testing.T) {
 	input := "path123.#func1(param1).#func2().#func3(param31, param32)"
 
-	configPath := "../config/config.yaml"
+	configPath := "config/config.yaml"
 	sf := helpers.GetStoreFactory(configPath)
 	ff := functions.NewFunctionFactory(sf.GetPodDetailsStore(), sf.GetExecutorAttrStore())
 
@@ -28,7 +28,7 @@ func TestFunction(t *testing.T) {
 func TestNonFunction(t *testing.T) {
 	input := "alpha.beta.gamma"
 
-	configPath := "../config/config.yaml"
+	configPath := "config/config.yaml"
 	sf := helpers.GetStoreFactory(configPath)
 	ff := functions.NewFunctionFactory(sf.GetPodDetailsStore(), sf.GetExecutorAttrStore())
 	key, err := cache.ParseKey("OTEL_1.7.0_HTTP")
