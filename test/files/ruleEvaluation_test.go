@@ -85,6 +85,15 @@ func TestRuleEvaluationID(t *testing.T) {
 	validate(t, w, dataStore, true)
 }
 
+func TestRuleEvaluationExists(t *testing.T) {
+	var dataStore map[string]interface{}
+	var w model.Workload
+	err := loadObjects("./ruleEvaluation/exists/schema.json", &w, "./ruleEvaluation/exists/data.json", &dataStore)
+	assert.NoError(t, err)
+
+	validate(t, w, dataStore, true)
+}
+
 func validate(t *testing.T, w model.Workload, dataStore map[string]interface{}, expected bool) {
 	var result bool
 

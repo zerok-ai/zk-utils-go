@@ -62,5 +62,5 @@ func (fn ExtractWorkLoadFromIP) transformAttribute(path string, valueAtObject in
 	if ok {
 		path = resolvedVal
 	}
-	return getValueFromStoreInternal(resolvedVal, valueAtObject.(map[string]interface{}), fn.ff, fn.attrStoreKey, true)
+	return getValueFromStoreInternal(path, valueAtObject.(map[string]interface{}), fn.ff, fn.attrStoreKey, true)
 }

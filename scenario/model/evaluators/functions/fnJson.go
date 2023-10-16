@@ -25,22 +25,14 @@ type ExtractJson struct {
 func (fn ExtractJson) Execute(valueAtObject interface{}) (interface{}, bool) {
 
 	path := fn.args[0]
-	newValueAtObject, ok := fn.transformAttribute(path, valueAtObject)
+	var newValueAtObject interface{}
+	var ok bool
+	path, newValueAtObject, ok = fn.transformAttribute(path, valueAtObject)
 	if ok {
 		path = fmt.Sprintf("%v", newValueAtObject)
 	}
 
-	//else {
-	//	// try to create functions for the args
-	//	path := fn.args[0]
-	//	var newValue interface{}
-	//	newValue, ok = getValueFromStoreInternal(path, valueAtObject.(map[string]interface{}), fn.ff, fn.attrStoreKey, false)
-	//	if ok {
-	//		valueAtObject = newValue
-	//	} else {
 	valueAtObject, ok = fn.executeJson(path, valueAtObject)
-	//	}
-	//}
 	return valueAtObject, ok
 }
 
@@ -84,13 +76,13 @@ func (fn ExtractJson) GetName() string {
 	return fn.name
 }
 
-func (fn ExtractJson) transformAttribute(path string, valueAtObject interface{}) (interface{}, bool) {
+func (fn ExtractJson) transformAttribute(path string, valueAtObject interface{}) (string, interface{}, bool) {
 
 	// resolve the path from attribute store
 	resolvedVal, ok := fn.attrStore.GetAttributeFromStore(*fn.attrStoreKey, path)
 	if ok {
 		path = resolvedVal
 	}
-	return getValueFromStoreInternal(path, valueAtObject.(map[string]interface{}), fn.ff, fn.attrStoreKey, true)
-
+	valueAtObject, ok = getValueFromStoreInternal(path, valueAtObject.(map[string]interface{}), fn.ff, fn.attrStoreKey, true)
+	return path, valueAtObject, ok
 }

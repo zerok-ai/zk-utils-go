@@ -1,0 +1,29 @@
+{
+  "service": "namespace/service-name",
+  "trace_role": "server",
+  "protocol": "HTTP",
+  "rule": {
+    "type": "rule_group",
+    "condition": "AND",
+    "rules": [
+      {
+        "type": "rule",
+        "id": "http_response_status_code",
+        "field": "Response Status",
+        "datatype": "string",
+        "input": "",
+        "operator": "exists",
+        "value": ""
+      },
+      {
+        "type": "rule",
+        "id": "errors",
+        "field": "Errors",
+        "datatype": "string",
+        "input": "",
+        "operator": "exists",
+        "value": ""
+      }
+    ]
+  }
+}
