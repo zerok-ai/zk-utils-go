@@ -8,9 +8,27 @@
     "rules": [
       {
         "type": "rule",
-        "id": "http_response_status_code",
-        "field": "Response Status",
-        "datatype": "string",
+        "id": "errors",
+        "field": "Errors",
+        "datatype": "bool",
+        "input": "",
+        "operator": "exists",
+        "value": ""
+      },
+      {
+        "type": "rule",
+        "id": "errors",
+        "field": "Errors",
+        "datatype": "integer",
+        "input": "",
+        "operator": "exists",
+        "value": ""
+      },
+      {
+        "type": "rule",
+        "id": "errors",
+        "field": "Errors",
+        "datatype": "float",
         "input": "",
         "operator": "exists",
         "value": ""

@@ -1,0 +1,75 @@
+{
+  "trace_id": "66c141e63cc93fd76a10cabe2ad504a2",
+  "span_id": "a1e70876f5f482de",
+  "parent_span_id": "0000000000000000",
+  "span_kind": "SERVER",
+  "start_ns": 1697522729032680451,
+  "latency_ns": 15423685,
+  "schema_version": "1.21.0",
+  "attributes": {
+    "http.client_ip": "10.0.25.203",
+    "http.method": "POST",
+    "http.request_content_length": 110,
+    "http.route": "/api/order",
+    "http.scheme": "http",
+    "http.status_code": 500,
+    "http.target": "/api/order",
+    "net.host.name": "sofa-shop.mysql.eks-devclient02.getanton.com",
+    "net.protocol.name": "http",
+    "net.protocol.version": "1.1",
+    "net.sock.host.addr": "10.0.13.18",
+    "net.sock.host.port": 8080,
+    "net.sock.peer.addr": "10.0.29.35",
+    "net.sock.peer.port": 51528,
+    "thread.id": 24,
+    "thread.name": "http-nio-8080-exec-1",
+    "user_agent.original": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
+  },
+  "errors": [
+    {
+      "message": "item not in stock",
+      "error_type": "exception",
+      "exception_type": "java.lang.IllegalArgumentException",
+      "hash": "40a5ffe1d8e2112e2df8376e2ba49a96569d2c0ee56fca589bebff8c9543f818"
+    }
+  ],
+  "protocol": "HTTP",
+  "source_ip": "10.0.29.35",
+  "source": "ingress-nginx-controller-7d884d97b5",
+  "destination_ip": "10.0.13.18",
+  "destination": "order-86c967b4ff",
+  "method": "POST",
+  "route": "/api/order",
+  "scheme": "http",
+  "status": 500,
+  "workload_id_list": [
+    "7e3b5f75-e635-59a3-9f70-2501cd9f9bb5",
+    "cc13b872-b3d9-52ed-aa64-210114c0cbef"
+  ],
+  "group_by": {
+    "1": [
+      {
+        "workload_id": "7e3b5f75-e635-59a3-9f70-2501cd9f9bb5",
+        "title": "ingress-nginx-controller-7d884d97b5",
+        "hash": "ingress-nginx-controller-7d884d97b5"
+      },
+      {
+        "workload_id": "7e3b5f75-e635-59a3-9f70-2501cd9f9bb5",
+        "title": "item not in stock",
+        "hash": "item not in stock"
+      }
+    ],
+    "3": [
+      {
+        "workload_id": "cc13b872-b3d9-52ed-aa64-210114c0cbef",
+        "title": "",
+        "hash": ""
+      },
+      {
+        "workload_id": "cc13b872-b3d9-52ed-aa64-210114c0cbef",
+        "title": "500",
+        "hash": "500"
+      }
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "executor": "OTEL",
+  "service": "*/*",
+  "trace_role": "server",
+  "protocol": "HTTP",
+  "rule": {
+    "type": "rule_group",
+    "condition": "AND",
+    "rules": [
+      {
+        "type": "rule",
+        "id": "errors",
+        "field": "Errors",
+        "datatype": "bool",
+        "input": "bool",
+        "operator": "exists",
+        "value": ""
+      },
+      {
+        "type": "rule",
+        "id": "http_response_status_code",
+        "field": "Response Status",
+        "datatype": "integer",
+        "input": "int",
+        "operator": "exists",
+        "value": ""
+      }
+    ]
+  }
+}

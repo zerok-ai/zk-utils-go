@@ -30,11 +30,6 @@ func (re *BooleanEvaluator) evalRule(rule model.Rule, valueStore map[string]inte
 
 	attributeID := *rule.RuleLeaf.ID
 
-	valueFromRule, err := getBooleanValue(string(*rule.Value))
-	if err != nil {
-		return false, err
-	}
-
 	operator := string(*rule.Operator)
 
 	// get the value from the value store
@@ -60,6 +55,11 @@ func (re *BooleanEvaluator) evalRule(rule model.Rule, valueStore map[string]inte
 	valueFromStore, err1 := getBooleanValue(value)
 	if err1 != nil {
 		return false, err1
+	}
+
+	valueFromRule, err := getBooleanValue(string(*rule.Value))
+	if err != nil {
+		return false, err
 	}
 
 	//	switch on operator
