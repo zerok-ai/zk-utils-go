@@ -374,6 +374,7 @@ const (
 	ExecutorOTel ExecutorName = "OTEL"
 
 	ProtocolHTTP    ProtocolName = "HTTP"
+	ProtocolGRPC    ProtocolName = "GRPC"
 	ProtocolGeneral ProtocolName = "GENERAL"
 )
 
