@@ -373,9 +373,10 @@ const (
 	ExecutorEbpf ExecutorName = "EBPF"
 	ExecutorOTel ExecutorName = "OTEL"
 
-	ProtocolHTTP    ProtocolName = "HTTP"
-	ProtocolGRPC    ProtocolName = "GRPC"
-	ProtocolGeneral ProtocolName = "GENERAL"
+	ProtocolHTTP       ProtocolName = "HTTP"
+	ProtocolGRPC       ProtocolName = "GRPC"
+	ProtocolGeneral    ProtocolName = "GENERAL"
+	ProtocolIdentifier ProtocolName = "IDENTIFIER"
 )
 
 type Rules []Rule
