@@ -162,7 +162,7 @@ const (
 func loadPodDetailsIntoHashmap(ip string, input *map[string]string) *PodDetails {
 	podDetails := PodDetails{}
 	if input == nil || len(*input) == 0 {
-		zkLogger.ErrorF(LoggerTag, "Error getting service for ip = %s \n", ip)
+		zkLogger.Warn(LoggerTag, "Error getting service for ip = %s \n", ip)
 		return &podDetails
 	}
 
