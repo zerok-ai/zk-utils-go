@@ -1,6 +1,9 @@
 package ds
 
-import "time"
+import (
+	"sync"
+	"time"
+)
 
 //----- Expiry Cache Implementation -----//
 
@@ -9,6 +12,7 @@ const NoExpiry = -1
 type CacheWithExpiry[T any] struct {
 	localKeyValueCache map[string]*ExpiryCacheEntry[T]
 	expiryQuanta       int64
+	mutex              sync.Mutex
 }
 
 type ExpiryCacheEntry[T any] struct {
@@ -28,6 +32,8 @@ func GetCacheWithExpiry[T any](expiryQuanta int64) *CacheWithExpiry[T] {
 }
 
 func (lruStore *CacheWithExpiry[T]) Put(key string, value *T) {
+	lruStore.mutex.Lock()
+	defer lruStore.mutex.Unlock()
 	var expiry int64 = NoExpiry
 	if lruStore.expiryQuanta != NoExpiry {
 		expiry = time.Now().Unix() + lruStore.expiryQuanta
@@ -36,6 +42,8 @@ func (lruStore *CacheWithExpiry[T]) Put(key string, value *T) {
 }
 
 func (lruStore *CacheWithExpiry[T]) Get(key string) (*T, bool) {
+	lruStore.mutex.Lock()
+	defer lruStore.mutex.Unlock()
 	if elem, ok := lruStore.localKeyValueCache[key]; ok {
 
 		// return the value if it has not expired
