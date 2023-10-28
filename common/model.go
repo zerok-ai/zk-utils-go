@@ -12,7 +12,7 @@ func (genericMap GenericMap) Value() (driver.Value, error) {
 	return json.Marshal(genericMap)
 }
 
-func (genericMap GenericMap) Scan(value interface{}) error {
+func (genericMap *GenericMap) Scan(value interface{}) error {
 	b, ok := value.([]byte)
 	if !ok {
 		return errors.New("type assertion to []byte failed")
