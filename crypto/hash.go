@@ -9,7 +9,6 @@ import (
 	"github.com/zerok-ai/zk-utils-go/common"
 	"github.com/zerok-ai/zk-utils-go/logs"
 	"io"
-	"log"
 )
 
 var LogTag = "zk_hash"
@@ -63,7 +62,7 @@ func DecompressStringGzip(input []byte) (string, error) {
 		return "", err
 	}
 
-	log.Println("String decompressed successfully")
+	logger.Debug(LogTag, "String decompressed successfully")
 
 	return string(decompressed), nil
 }

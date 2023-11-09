@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"sort"
 	"strconv"
+	"strings"
 )
 
 var LogTag = "scenario_model"
@@ -129,6 +130,18 @@ type Workload struct {
 	TraceRole TraceRole    `json:"trace_role,omitempty"`
 	Protocol  ProtocolName `json:"protocol,omitempty"`
 	Rule      Rule         `json:"rule,omitempty"`
+}
+
+func (wr Workload) GetNamespaceAndWorkloadName() (string, string, error) {
+	if wr.Service == "" {
+		return "", "", fmt.Errorf("service name not present")
+	}
+	// split Service by '/' to obtain namespace and workload name
+	serviceSplit := strings.Split(wr.Service, "/")
+	if len(serviceSplit) != 2 {
+		return "", "", fmt.Errorf("invalid service name")
+	}
+	return serviceSplit[0], serviceSplit[1], nil
 }
 
 func (wr Workload) Equals(other Workload) bool {
