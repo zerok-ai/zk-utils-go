@@ -258,3 +258,11 @@ func (databaseRepo zkPostgresRepo) modifyTable(stmt *sql.Stmt, param []any) (sql
 func (databaseRepo zkPostgresRepo) Close() error {
 	return databaseRepo.Db.Close()
 }
+
+func (databaseRepo zkPostgresRepo) CreateStatement(queryString string) *sql.Stmt {
+	stmt, err := dbInstance.Prepare(queryString)
+	if err != nil {
+		zkLogger.Error(LogTag, "failed to prepare statement: %v", err)
+	}
+	return stmt
+}

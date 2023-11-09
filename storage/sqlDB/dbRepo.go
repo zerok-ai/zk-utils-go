@@ -17,4 +17,5 @@ type DatabaseRepo interface {
 	BulkUpsert(stmt *sql.Stmt, data []interfaces.DbArgs) ([]sql.Result, error)
 	CreateTransaction() (*sql.Tx, error)
 	Close() error
+	CreateStatement(query string) *sql.Stmt
 }
