@@ -22,6 +22,8 @@ type zkApiUtils struct {
 	Cookies          *[]http.Cookie
 	Headers          *map[string]string
 	QueryParams      *map[string]string
+	UserName         *string
+	Password         *string
 }
 
 func Create() zkApiUtils {
@@ -71,6 +73,12 @@ func (zkApiUtils zkApiUtils) QueryParam(key string, value string) zkApiUtils {
 		zkApiUtils.QueryParams = &map[string]string{}
 	}
 	(*zkApiUtils.QueryParams)[key] = value
+	return zkApiUtils
+}
+
+func (zkApiUtils zkApiUtils) BasicAuth(userName, password string) zkApiUtils {
+	zkApiUtils.UserName = &userName
+	zkApiUtils.Password = &password
 	return zkApiUtils
 }
 
@@ -159,6 +167,10 @@ func (zkApiUtils zkApiUtils) MakeRawApiCall(method string, contentType *string, 
 			q.Add(key, value)
 		}
 		req.URL.RawQuery = q.Encode()
+	}
+
+	if zkApiUtils.UserName != nil && zkApiUtils.Password != nil {
+		req.SetBasicAuth(*zkApiUtils.UserName, *zkApiUtils.Password)
 	}
 
 	response, err := client.Do(req)
