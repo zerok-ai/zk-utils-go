@@ -21,6 +21,7 @@ type zkApiUtils struct {
 	ContentType      *string
 	Cookies          *[]http.Cookie
 	Headers          *map[string]string
+	QueryParams      *map[string]string
 }
 
 func Create() zkApiUtils {
@@ -62,6 +63,14 @@ func (zkApiUtils zkApiUtils) Header(key string, value string) zkApiUtils {
 		zkApiUtils.Headers = &map[string]string{}
 	}
 	(*zkApiUtils.Headers)[key] = value
+	return zkApiUtils
+}
+
+func (zkApiUtils zkApiUtils) QueryParam(key string, value string) zkApiUtils {
+	if zkApiUtils.QueryParams == nil {
+		zkApiUtils.QueryParams = &map[string]string{}
+	}
+	(*zkApiUtils.QueryParams)[key] = value
 	return zkApiUtils
 }
 
@@ -142,6 +151,14 @@ func (zkApiUtils zkApiUtils) MakeRawApiCall(method string, contentType *string, 
 		for key, value := range *zkApiUtils.Headers {
 			req.Header.Add(key, value)
 		}
+	}
+
+	if zkApiUtils.QueryParams != nil {
+		q := req.URL.Query()
+		for key, value := range *zkApiUtils.QueryParams {
+			q.Add(key, value)
+		}
+		req.URL.RawQuery = q.Encode()
 	}
 
 	response, err := client.Do(req)
