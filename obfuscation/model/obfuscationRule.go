@@ -3,6 +3,7 @@ package model
 import "time"
 
 type Rule struct {
+	Id         string     `json:"id"`
 	Name       string     `json:"name"`
 	Analyzer   Analyzer   `json:"analyzer"`
 	Anonymizer Anonymizer `json:"anonymizer"`
