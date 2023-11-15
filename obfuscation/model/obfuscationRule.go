@@ -1,16 +1,20 @@
 package model
 
-import "time"
-
 type Rule struct {
 	Id         string     `json:"id"`
 	Name       string     `json:"name"`
 	Analyzer   Analyzer   `json:"analyzer"`
 	Anonymizer Anonymizer `json:"anonymizer"`
-	CreatedAt  time.Time  `json:"created_at"`
-	UpdatedAt  time.Time  `json:"updated_at"`
-	CreatedBy  string     `json:"created_by"`
+	CreatedAt  int64      `json:"created_at"`
+	UpdatedAt  int64      `json:"updated_at"`
 	Enabled    bool       `json:"enabled"`
+}
+
+type RuleOperator struct {
+	Id         string     `json:"id"`
+	Name       string     `json:"name"`
+	Analyzer   Analyzer   `json:"analyzer"`
+	Anonymizer Anonymizer `json:"anonymizer"`
 }
 
 type Analyzer struct {
