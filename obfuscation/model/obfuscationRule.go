@@ -39,5 +39,31 @@ func (i RuleOperator) Equals(otherInterface interfaces.ZKComparable) bool {
 	if !ok {
 		return false
 	}
-	return i.Id == other.Id
+
+	// Compare Id and Name fields
+	if i.Id != other.Id || i.Name != other.Name {
+		return false
+	}
+
+	// Compare UpdatedAt field
+	if i.UpdatedAt != other.UpdatedAt {
+		return false
+	}
+
+	// Compare Analyzer fields
+	if i.Analyzer.Type != other.Analyzer.Type || i.Analyzer.Pattern != other.Analyzer.Pattern {
+		return false
+	}
+
+	// Compare Anonymizer fields
+	if i.Anonymizer.Operator != other.Anonymizer.Operator {
+		return false
+	}
+
+	// Compare AnonymizerParams fields
+	if i.Anonymizer.Params.NewValue != other.Anonymizer.Params.NewValue {
+		return false
+	}
+
+	return true
 }
