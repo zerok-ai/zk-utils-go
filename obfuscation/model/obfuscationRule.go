@@ -17,6 +17,7 @@ type RuleOperator struct {
 	Name       string     `json:"name"`
 	Analyzer   Analyzer   `json:"analyzer"`
 	Anonymizer Anonymizer `json:"anonymizer"`
+	UpdatedAt  int64      `json:"updated_at"`
 }
 
 type Analyzer struct {
