@@ -1,5 +1,7 @@
 package model
 
+import "github.com/zerok-ai/zk-utils-go/interfaces"
+
 type Rule struct {
 	Id         string     `json:"id"`
 	Name       string     `json:"name"`
@@ -29,4 +31,12 @@ type Anonymizer struct {
 
 type AnonymizerParams struct {
 	NewValue string `json:"new_value"`
+}
+
+func (i RuleOperator) Equals(otherInterface interfaces.ZKComparable) bool {
+	other, ok := otherInterface.(RuleOperator)
+	if !ok {
+		return false
+	}
+	return i.Id == other.Id
 }
