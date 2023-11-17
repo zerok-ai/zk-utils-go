@@ -53,10 +53,20 @@ func (databaseRepo zkPostgresRepo) GetWithTx(tx *sql.Tx, query string, param []a
 }
 
 func (databaseRepo zkPostgresRepo) CommitTransaction(tx *sql.Tx) error {
+	if tx == nil {
+		err := errors.New("transaction cannot be nil")
+		zkLogger.Error(LogTag, err)
+		return err
+	}
 	return tx.Commit()
 }
 
 func (databaseRepo zkPostgresRepo) RollbackTransaction(tx *sql.Tx) error {
+	if tx == nil {
+		err := errors.New("transaction cannot be nil")
+		zkLogger.Error(LogTag, err)
+		return err
+	}
 	return tx.Rollback()
 }
 
