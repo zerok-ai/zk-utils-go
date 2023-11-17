@@ -6,6 +6,14 @@ import (
 )
 
 type DatabaseRepo interface {
+	//Below are the methods for transaction
+	CreateTransaction() (*sql.Tx, error)
+	CreateTransactionWithIsolation(isolation sql.IsolationLevel) (*sql.Tx, error)
+	CommitTransaction(tx *sql.Tx) error
+	RollbackTransaction(tx *sql.Tx) error
+	GetAllWithTx(tx *sql.Tx, query string, param []any) (*sql.Rows, error, func())
+	GetWithTx(tx *sql.Tx, query string, param []any, args []any) error
+
 	Get(query string, param []any, args []any) error
 	GetAll(query string, param []any) (*sql.Rows, error, func())
 	Insert(stmt *sql.Stmt, data interfaces.DbArgs) (sql.Result, error)
@@ -15,7 +23,6 @@ type DatabaseRepo interface {
 	Upsert(stmt *sql.Stmt, data interfaces.DbArgs) (sql.Result, error)
 	BulkInsertUsingCopyIn(stmt *sql.Stmt, data []interfaces.DbArgs) error
 	BulkUpsert(stmt *sql.Stmt, data []interfaces.DbArgs) ([]sql.Result, error)
-	CreateTransaction() (*sql.Tx, error)
 	Close() error
 	CreateStatement(query string) *sql.Stmt
 }

@@ -19,6 +19,58 @@ type zkPostgresRepo struct {
 	Db *sql.DB
 }
 
+func (databaseRepo zkPostgresRepo) GetAllWithTx(tx *sql.Tx, query string, param []any) (*sql.Rows, error, func()) {
+	if query == "" {
+		err := errors.New("query cannot be empty")
+		zkLogger.Error(LogTag, err)
+		return nil, err, func() {}
+	}
+	if tx == nil {
+		err := errors.New("transaction cannot be nil")
+		zkLogger.Error(LogTag, err)
+		return nil, err, func() {}
+	}
+	rows, err := tx.Query(query, param...)
+	closeRow := func() {
+		defer rows.Close()
+	}
+	return rows, err, closeRow
+}
+
+func (databaseRepo zkPostgresRepo) GetWithTx(tx *sql.Tx, query string, param []any, args []any) error {
+	if query == "" {
+		err := errors.New("query cannot be empty")
+		zkLogger.Error(LogTag, err)
+		return err
+	}
+	if tx == nil {
+		err := errors.New("transaction cannot be nil")
+		zkLogger.Error(LogTag, err)
+		return err
+	}
+	row := tx.QueryRow(query, param...)
+	return row.Scan(args...)
+}
+
+func (databaseRepo zkPostgresRepo) CommitTransaction(tx *sql.Tx) error {
+	return tx.Commit()
+}
+
+func (databaseRepo zkPostgresRepo) RollbackTransaction(tx *sql.Tx) error {
+	return tx.Rollback()
+}
+
+func (databaseRepo zkPostgresRepo) CreateTransactionWithIsolation(isolation sql.IsolationLevel) (*sql.Tx, error) {
+	tx, err := databaseRepo.Db.BeginTx(context.Background(), &sql.TxOptions{
+		Isolation: isolation,
+	})
+	if err != nil {
+		zkLogger.Debug(LogTag, "unable to create txn, "+err.Error())
+		return nil, err
+	}
+	return tx, nil
+}
+
 func (databaseRepo zkPostgresRepo) InsertWithReturnRow(stmt *sql.Stmt, param []any, args []any) error {
 	if stmt == nil {
 		err := errors.New("statement cannot be empty")
