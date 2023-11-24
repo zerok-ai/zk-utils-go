@@ -27,7 +27,7 @@ type IntegrationResponseObj struct {
 	UpdatedAt      time.Time       `json:"updated_at"`
 	Deleted        bool            `json:"deleted"`
 	Disabled       bool            `json:"disabled"`
-	MetricServer   bool            `json:"metric_server"`
+	MetricServer   *bool           `json:"metric_server"`
 }
 
 func (i IntegrationResponseObj) Equals(otherInterface interfaces.ZKComparable) bool {
