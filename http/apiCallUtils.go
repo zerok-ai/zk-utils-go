@@ -76,9 +76,9 @@ func (zkApiUtils zkApiUtils) QueryParam(key string, value string) zkApiUtils {
 	return zkApiUtils
 }
 
-func (zkApiUtils zkApiUtils) BasicAuth(userName, password string) zkApiUtils {
-	zkApiUtils.UserName = &userName
-	zkApiUtils.Password = &password
+func (zkApiUtils zkApiUtils) BasicAuth(userName, password *string) zkApiUtils {
+	zkApiUtils.UserName = userName
+	zkApiUtils.Password = password
 	return zkApiUtils
 }
 

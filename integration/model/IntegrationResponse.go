@@ -21,7 +21,7 @@ type IntegrationResponseObj struct {
 	Alias          string          `json:"alias"`
 	Type           Type            `json:"type"`
 	URL            string          `json:"url"`
-	Authentication json.RawMessage `json:"authentication"`
+	Authentication json.RawMessage `json:"authentication,omitempty"`
 	Level          Level           `json:"level"`
 	CreatedAt      time.Time       `json:"created_at"`
 	UpdatedAt      time.Time       `json:"updated_at"`
