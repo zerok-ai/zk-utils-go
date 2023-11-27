@@ -9,7 +9,7 @@ postgresql:
   global:
     postgresql:
       auth:
-        postgresPassword: "0kP@ssw0₹D"
+        postgresPassword: "0kP@ssw0rD"
   primary:
     initdb:
       scripts:

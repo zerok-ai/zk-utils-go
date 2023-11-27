@@ -18,4 +18,4 @@ shift
 done
 
 helm dependency update $THIS_DIR
-helm upgrade $APP_NAME --install $THIS_DIR/ --create-namespace --namespace zkcloud --wait
+helm upgrade zk-postgres --install $THIS_DIR/ --create-namespace --namespace zkcloud --wait
