@@ -4,4 +4,4 @@ data:
 kind: ConfigMap
 metadata:
   name: zk-redis-config
-  namespace: zk-client
+  namespace: zkcloud

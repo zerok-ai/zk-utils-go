@@ -18,4 +18,4 @@ shift
 done
 
 helm dependency update $THIS_DIR
-helm upgrade zk-redis --install $THIS_DIR/ --create-namespace --namespace zk-client --wait
+helm upgrade zk-redis --install $THIS_DIR/ --create-namespace --namespace zkcloud --wait

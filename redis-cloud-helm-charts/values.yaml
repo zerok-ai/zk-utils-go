@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 global:
   redis:
-    host: redis-master.zk-client.svc.cluster.local
+    host: redis-master.zkcloud.svc.cluster.local
 
 redis:
   enabled: true
