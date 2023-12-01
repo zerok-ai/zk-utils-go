@@ -9,6 +9,6 @@ type ClusterConnection struct {
 	Connected bool `json:"connected"`
 }
 
-type ClusterConnectionStatus struct {
+type ClusterConnectionRequest struct {
 	Status map[string]ClusterConnection `json:"status"`
 }
