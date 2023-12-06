@@ -8,6 +8,8 @@ global:
 redis:
   enabled: true
   architecture: standalone
+  nameOverride: redis
+  fullnameOverride: redis
   replica:
     replicaCount: 0
   image:
