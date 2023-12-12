@@ -157,9 +157,9 @@ func (wr Workload) Equals(other Workload) bool {
 }
 
 type Rule struct {
-	Type string `json:"type"`
-	*RuleGroup
-	*RuleLeaf
+	Type       string `json:"type"`
+	*RuleGroup `json:""`
+	*RuleLeaf  `json:""`
 }
 
 func (r Rule) String() string {
