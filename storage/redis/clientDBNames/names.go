@@ -8,4 +8,5 @@ const (
 	PodDetailsDBName         = "pod_details"         // 7
 	ErrorDetailDBName        = "error_details"       // 8
 	IntegrationDetailsDBName = "integration_details" // 9
+	ObfuscationRulesDBName   = "obfuscation_rules"
 )

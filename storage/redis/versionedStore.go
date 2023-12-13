@@ -347,8 +347,7 @@ func (versionStore *VersionedStore[T]) refreshLocalCache() error {
 		}
 	}
 
-	zkLogger.Debug(LogTag, "newDataPair ", newDataPair)
-
+	zkLogger.DebugF(LogTag, "newDataPair %v", newDataPair)
 	// 4. assign the new objects to filter processors
 	versionStore.mutex.Lock()
 	defer versionStore.mutex.Unlock()
