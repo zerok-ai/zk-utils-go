@@ -5,8 +5,6 @@ import (
 	"sort"
 )
 
-//+k8s:deepcopy-gen=true
-
 const (
 	FILTER   = "filter"
 	WORKLOAD = "workload"
@@ -15,11 +13,12 @@ const (
 	CONDITION_OR  = "OR"
 )
 
+// +k8s:deepcopy-gen=true
 type Filter struct {
-	Type        string       `json:"type"`
-	Condition   Condition    `json:"condition"`
-	Filters     *Filters     `json:"filters,omitempty"`
-	WorkloadIds *WorkloadIds `json:"workload_ids,omitempty"`
+	Type        string      `json:"type"`
+	Condition   Condition   `json:"condition"`
+	Filters     Filters     `json:"filters,omitempty"`
+	WorkloadIds WorkloadIds `json:"workload_ids,omitempty"`
 }
 
 func (f Filter) Equals(otherInterface interfaces.ZKComparable) bool {
@@ -38,12 +37,12 @@ func (f Filter) Equals(otherInterface interfaces.ZKComparable) bool {
 	}
 
 	// match filters
-	if f.Filters != nil && !(*f.Filters).Equals(*other.Filters) {
+	if f.Filters != nil && !(f.Filters).Equals(other.Filters) {
 		return false
 	}
 
 	// match workloads
-	if f.WorkloadIds != nil && !(*f.WorkloadIds).Equals(*other.WorkloadIds) {
+	if f.WorkloadIds != nil && !(f.WorkloadIds).Equals(other.WorkloadIds) {
 		return false
 	}
 
@@ -66,7 +65,7 @@ func (f Filter) LessThan(other Filter) bool {
 			} else if f.WorkloadIds == nil && other.WorkloadIds == nil {
 				return false
 			}
-			return (*f.WorkloadIds).LessThan(*other.WorkloadIds)
+			return (f.WorkloadIds).LessThan(other.WorkloadIds)
 		} else if f.Type == FILTER {
 			// do null checks
 			if f.Filters == nil && other.Filters != nil {
@@ -76,7 +75,7 @@ func (f Filter) LessThan(other Filter) bool {
 			} else if f.Filters == nil && other.Filters == nil {
 				return false
 			}
-			return (*f.Filters).LessThan(*other.Filters)
+			return (f.Filters).LessThan(other.Filters)
 		}
 	}
 
@@ -85,12 +84,13 @@ func (f Filter) LessThan(other Filter) bool {
 
 func (f Filter) sort() {
 	if f.Type == WORKLOAD {
-		sort.Strings(*f.WorkloadIds)
+		sort.Strings(f.WorkloadIds)
 	} else if f.Type == FILTER {
-		(*f.Filters).sort()
+		(f.Filters).sort()
 	}
 }
 
+// +k8s:deepcopy-gen=true
 type Filters []Filter
 
 func (f Filters) Len() int           { return len(f) }
@@ -137,6 +137,7 @@ func (f Filters) sort() {
 	sort.Sort(f)
 }
 
+// +k8s:deepcopy-gen=true
 type WorkloadIds []string
 
 func (s WorkloadIds) Len() int           { return len(s) }

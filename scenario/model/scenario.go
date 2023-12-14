@@ -17,6 +17,7 @@ import (
 
 var LogTag = "scenario_model"
 
+// +k8s:deepcopy-gen=true
 type Scenario struct {
 	Version   string               `json:"version"`
 	Id        string               `json:"scenario_id"`
@@ -126,6 +127,7 @@ func (s Scenario) Less(other Scenario) bool {
 	return false
 }
 
+// +k8s:deepcopy-gen=true
 type Workload struct {
 	Executor  ExecutorName `json:"executor"`
 	Service   string       `json:"service,omitempty"`
@@ -158,6 +160,7 @@ func (wr Workload) Equals(other Workload) bool {
 	return true
 }
 
+// +k8s:deepcopy-gen=true
 type Rule struct {
 	Type       string `json:"type"`
 	*RuleGroup `json:""`
@@ -193,6 +196,7 @@ func (r Rule) Equals(other Rule) bool {
 	return true
 }
 
+// +k8s:deepcopy-gen=true
 type RuleGroup struct {
 	Condition *Condition `json:"condition,omitempty"`
 	Rules     Rules      `json:"rules,omitempty"`
@@ -262,6 +266,7 @@ func (r RuleGroup) LessThan(other RuleGroup) bool {
 	return false
 }
 
+// +k8s:deepcopy-gen=true
 type RuleLeaf struct {
 	ID       *string        `json:"id,omitempty"`
 	Field    *string        `json:"field,omitempty"`
@@ -394,6 +399,7 @@ const (
 	ProtocolIdentifier ProtocolName = "IDENTIFIER"
 )
 
+// +k8s:deepcopy-gen=true
 type Rules []Rule
 
 func (r Rules) Len() int      { return len(r) }
@@ -478,6 +484,7 @@ const (
 	OR  Condition = "OR"
 )
 
+// +k8s:deepcopy-gen=true
 type Condition string
 
 func WorkLoadUUID(w Workload) uuid.UUID {
@@ -487,6 +494,7 @@ func WorkLoadUUID(w Workload) uuid.UUID {
 	return id
 }
 
+// +k8s:deepcopy-gen=true
 type GroupBy struct {
 	WorkloadId string `json:"workload_id"`
 	Title      string `json:"title"`
@@ -510,6 +518,7 @@ func (g GroupBy) LessThan(other GroupBy) bool {
 	return false
 }
 
+// +k8s:deepcopy-gen=true
 type RateLimit struct {
 	BucketMaxSize    int    `json:"bucket_max_size"`
 	BucketRefillSize int    `json:"bucket_refill_size"`
