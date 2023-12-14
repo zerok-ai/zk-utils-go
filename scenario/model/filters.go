@@ -5,6 +5,8 @@ import (
 	"sort"
 )
 
+//+k8s:deepcopy-gen=true
+
 const (
 	FILTER   = "filter"
 	WORKLOAD = "workload"

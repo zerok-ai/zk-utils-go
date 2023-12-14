@@ -13,6 +13,8 @@ import (
 	"strings"
 )
 
+//+k8s:deepcopy-gen=true
+
 var LogTag = "scenario_model"
 
 type Scenario struct {
