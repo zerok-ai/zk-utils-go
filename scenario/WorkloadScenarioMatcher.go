@@ -1,4 +1,4 @@
-package main
+package scenario
 
 import (
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
