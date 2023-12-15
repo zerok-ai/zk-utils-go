@@ -7,7 +7,7 @@ import (
 
 var LogTag = "scenario_match_handler"
 
-func FindMatchingScenarios(workloadIds []string, scenarios []model.Scenario) ([]string, error) {
+func FindMatchingScenarios(workloadIds []string, scenarios map[string]*model.Scenario) ([]string, error) {
 	var matchingScenarios []string
 	var workloadIdMap = make(map[string]bool)
 	for _, workloadId := range workloadIds {
