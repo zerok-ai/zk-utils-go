@@ -127,16 +127,14 @@ func (s Scenario) Less(other Scenario) bool {
 	return false
 }
 
-//ref : https://github.com/kubernetes-sigs/controller-tools/issues/585
+// ref : https://github.com/kubernetes-sigs/controller-tools/issues/585
 // +k8s:deepcopy-gen=true
 type Workload struct {
 	Executor  ExecutorName `json:"executor"`
 	Service   string       `json:"service,omitempty"`
 	TraceRole TraceRole    `json:"trace_role,omitempty"`
 	Protocol  ProtocolName `json:"protocol,omitempty"`
-	// +kubebuilder:pruning:PreserveUnknownFields
-	// +kubebuilder:validation:Schemaless
-	Rule Rule `json:"rule,omitempty"`
+	Rule      Rule         `json:"rule,omitempty"`
 }
 
 func (wr Workload) GetNamespaceAndWorkloadName() (string, string, error) {
@@ -202,7 +200,9 @@ func (r Rule) Equals(other Rule) bool {
 // +k8s:deepcopy-gen=true
 type RuleGroup struct {
 	Condition *Condition `json:"condition,omitempty"`
-	Rules     Rules      `json:"rules,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Schemaless
+	Rules Rules `json:"rules,omitempty"`
 }
 
 func (r RuleGroup) Equals(other RuleGroup) bool {
