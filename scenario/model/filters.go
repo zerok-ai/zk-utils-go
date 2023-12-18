@@ -15,8 +15,10 @@ const (
 
 // +k8s:deepcopy-gen=true
 type Filter struct {
-	Type        string       `json:"type"`
-	Condition   Condition    `json:"condition"`
+	Type      string    `json:"type"`
+	Condition Condition `json:"condition"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Schemaless
 	Filters     *Filters     `json:"filters,omitempty"`
 	WorkloadIds *WorkloadIds `json:"workload_ids,omitempty"`
 }
