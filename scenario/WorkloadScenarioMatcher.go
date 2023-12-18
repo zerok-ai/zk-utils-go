@@ -16,9 +16,9 @@ func FindMatchingScenarios(workloadIds []string, scenarios map[string]*model.Sce
 	for _, scenario := range scenarios {
 		val, err := evaluateFilter(scenario.Filter, workloadIdMap)
 		if err != nil {
-			zkLogger.Error(LogTag, "Error while evaluating the filter for id: ", scenario.Id, err)
+			zkLogger.Error(LogTag, "Error while evaluating the filter for: ", scenario.Title, err)
 		} else if val {
-			matchingScenarios = append(matchingScenarios, scenario.Id)
+			matchingScenarios = append(matchingScenarios, scenario.Title)
 		}
 	}
 	return matchingScenarios, nil
