@@ -21,13 +21,13 @@ type IntegrationResponseObj struct {
 	Alias          string          `json:"alias"`
 	Type           Type            `json:"type"`
 	URL            string          `json:"url"`
-	Authentication json.RawMessage `json:"authentication"`
+	Authentication json.RawMessage `json:"authentication,omitempty"`
 	Level          Level           `json:"level"`
 	CreatedAt      time.Time       `json:"created_at"`
 	UpdatedAt      time.Time       `json:"updated_at"`
 	Deleted        bool            `json:"deleted"`
 	Disabled       bool            `json:"disabled"`
-	MetricServer   bool            `json:"metric_server"`
+	MetricServer   *bool           `json:"metric_server"`
 }
 
 func (i IntegrationResponseObj) Equals(otherInterface interfaces.ZKComparable) bool {
