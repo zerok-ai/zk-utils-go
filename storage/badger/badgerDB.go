@@ -110,9 +110,7 @@ func (b *BadgerStoreHandler) BulkGetForPrefix(keyPrefix []string) (map[string]st
 	// db.NewStreamAt(readTs) for managed mode.
 
 	// -- Optional settings
-	stream.NumGo = 16                     // Set number of goroutines to use for iteration.
-	stream.Prefix = []byte("some-prefix") // Leave nil for iteration over the whole DB.
-	stream.LogPrefix = "Badger.Streaming" // For identifying stream logs. Outputs to Logger.
+	stream.NumGo = 16 // Set number of goroutines to use for iteration.
 
 	// ChooseKey is called concurrently for every key. If left nil, assumes true by default.
 	stream.ChooseKey = func(item *badger.Item) bool {
