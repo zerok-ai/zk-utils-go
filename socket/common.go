@@ -17,9 +17,6 @@ func readData(conn net.Conn) []byte {
 			return nil
 		}
 
-		// Print the received data
-		fmt.Printf("Received: %s", buffer[:n])
-
 		output = append(output, buffer[:n]...)
 
 		if n < 1024 {

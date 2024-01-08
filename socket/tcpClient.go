@@ -52,7 +52,7 @@ func (client *TCPClient) SendData(data []byte) {
 	// Read the response from the server
 	response := readData(client.conn)
 	if response != nil {
-		fmt.Printf("Server response: %s\n", string(response[:]))
+		fmt.Printf("Received on client: %s\n", string(response[:]))
 	}
 
 }
