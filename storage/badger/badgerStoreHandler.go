@@ -67,7 +67,7 @@ func (b *BadgerStoreHandler) InitializeConn() error {
 
 	// Open the Badger database located in the /tmp/badger directory.
 	// It will be created if it doesn't exist.
-	db, err := badger.Open(badger.DefaultOptions(b.badgerConfig.DBPath).WithValueLogFileSize(1 << 26))
+	db, err := badger.Open(badger.DefaultOptions(b.badgerConfig.DBPath))
 	if err != nil {
 		zkLogger.Error(badgerHandlerLogTag, "Error while initializing connection ", err)
 		return err
