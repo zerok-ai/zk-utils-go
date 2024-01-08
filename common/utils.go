@@ -269,7 +269,7 @@ func DeepCopy[T any](input *T) (*T, error) {
 	return &newObject, nil
 }
 
-func BlockUntilChannelClosed[T any](channel chan T) {
+func BlockUntilChannelClosed() {
 
 	// Create a channel to receive signals
 	sig := make(chan os.Signal, 1)
