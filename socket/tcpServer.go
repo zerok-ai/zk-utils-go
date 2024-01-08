@@ -15,7 +15,7 @@ type HandleTCPData func([]byte) string
 type TCPServer struct {
 	HandleTCPData HandleTCPData
 	Port          string
-	listener      net.Listener
+	listener      *net.Listener
 	connections   []net.Conn
 }
 
@@ -37,6 +37,14 @@ func (server *TCPServer) handleConnection(conn net.Conn) {
 
 func (server *TCPServer) Close() {
 
+	if server.listener == nil {
+		return
+	}
+
+	if server.connections == nil {
+		return
+	}
+
 	for _, conn := range server.connections {
 		err := conn.Close()
 		if err != nil {
@@ -44,7 +52,7 @@ func (server *TCPServer) Close() {
 		}
 	}
 
-	err := server.listener.Close()
+	err := (*server.listener).Close()
 	if err != nil {
 		zkLogger.Error(LoggerTagServer, "Error closing tcp listener:", err)
 	}
@@ -62,7 +70,7 @@ func (server *TCPServer) Start() {
 		zkLogger.Error(LoggerTagServer, "Error listening:", err)
 		return
 	}
-	server.listener = listener
+	server.listener = &listener
 	server.connections = make([]net.Conn, 0)
 
 	zkLogger.Info(LoggerTagServer, "Server is listening on port "+server.Port)

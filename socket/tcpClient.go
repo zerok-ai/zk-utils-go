@@ -11,12 +11,13 @@ const (
 
 type TCPClient struct {
 	Port string
+	Host string
 	conn net.Conn
 }
 
 func (client *TCPClient) Connect() {
 	// Connect to the server
-	conn, err := net.Dial("tcp", "localhost:"+client.Port)
+	conn, err := net.Dial("tcp", client.Host+":"+client.Port)
 	if err != nil {
 		fmt.Println("Error connecting:", err)
 		return
@@ -25,6 +26,9 @@ func (client *TCPClient) Connect() {
 }
 
 func (client *TCPClient) Close() {
+	if client.conn == nil {
+		return
+	}
 	err := client.conn.Close()
 	if err != nil {
 		return
@@ -32,6 +36,10 @@ func (client *TCPClient) Close() {
 }
 
 func (client *TCPClient) SendData(data []byte) {
+
+	if client.conn == nil {
+		return
+	}
 
 	// Send the input to the server
 	_, err := client.conn.Write(data)
