@@ -67,9 +67,7 @@ func (b *BadgerStoreHandler) Set(key string, value string, ttl int64) error {
 		err := txn.SetEntry(entry)
 		if err != nil {
 			fmt.Printf("Error in txn.SetEntry %s in BadgerDB: %s", key, err)
-			return err
 		}
-
 		return err
 	})
 	if err != nil {
