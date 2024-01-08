@@ -28,7 +28,7 @@ type (
 )
 
 func (b *BadgerStoreHandler) Get(key string) (value string, err error) {
-	badgerDbValue := ""
+	var badgerDbValue []byte
 	err = b.db.View(func(txn *badger.Txn) error {
 		key := []byte(key)
 		item, err := txn.Get(key)
@@ -47,8 +47,9 @@ func (b *BadgerStoreHandler) Get(key string) (value string, err error) {
 			return err
 		}
 
-		fmt.Printf("Key: %s, Value: %s\n", key, value)
-		badgerDbValue = string(value) // Assign the value to temp
+		badgerDbValue = make([]byte, len(value))
+		copy(badgerDbValue, value) // Assign the value to temp
+		fmt.Printf("Key: %s, Value: %s\n", key, string(badgerDbValue))
 		return nil
 	})
 
@@ -56,7 +57,7 @@ func (b *BadgerStoreHandler) Get(key string) (value string, err error) {
 		return "", err
 	}
 
-	return badgerDbValue, nil
+	return string(badgerDbValue), nil
 }
 
 // Set implements the DB interface. It attempts to store a value for a given key
