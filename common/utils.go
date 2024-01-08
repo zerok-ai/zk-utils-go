@@ -269,7 +269,9 @@ func DeepCopy[T any](input *T) (*T, error) {
 	return &newObject, nil
 }
 
-func BlockUntilChannelClosed() {
+type Cleanup func() error
+
+func BlockUntilChannelClosed(cleanup Cleanup) {
 
 	// Create a channel to receive signals
 	sig := make(chan os.Signal, 1)
@@ -282,6 +284,15 @@ func BlockUntilChannelClosed() {
 
 	fmt.Println("Received signal. Shutting down gracefully...")
 	// Additional cleanup and shutdown logic can be added here
+
+	// Cleanup
+	if cleanup != nil {
+		err := cleanup()
+		if err != nil {
+			zkLogger.Error(LogTag, "Got error during cleanup:", err)
+			return
+		}
+	}
 
 	// Exit the application
 	os.Exit(0)
