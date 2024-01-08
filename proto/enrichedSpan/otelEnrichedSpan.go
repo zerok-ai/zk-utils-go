@@ -103,3 +103,101 @@ func ConvertToAnyValue(value interface{}) *v11.AnyValue {
 	}
 	return anyValue
 }
+
+func GetEnrichedSpan(x *protoSpan.OtelEnrichedRawSpanForProto) *OtelEnrichedRawSpan {
+	span := OtelEnrichedRawSpan{
+		Span:                   x.Span,
+		SpanAttributes:         ConvertKVListToMap(x.SpanAttributes),
+		SpanEvents:             ConvertListOfKVListToMap(x.SpanEvents),
+		ResourceAttributesHash: x.ResourceAttributesHash,
+		ScopeAttributesHash:    x.ScopeAttributesHash,
+		WorkloadIdList:         x.WorkloadIdList,
+		GroupBy:                ConvertKVListToGroupByMap(x.GroupBy),
+	}
+	return &span
+
+}
+
+func ConvertListOfKVListToMap(attrMap []*protoSpan.KeyValueList) []GenericMap {
+	var attr []GenericMap
+	for _, item := range attrMap {
+		attr = append(attr, ConvertKVListToMap(item))
+	}
+
+	return attr
+}
+
+func ConvertKVListToMap(attr *protoSpan.KeyValueList) map[string]interface{} {
+	attrMap := map[string]interface{}{}
+	for _, kv := range attr.KeyValueList {
+		value := GetAnyValue(kv.Value)
+		if value != nil {
+			attrMap[kv.Key] = value
+		}
+	}
+
+	return attrMap
+}
+
+func GetAnyValue(value *v11.AnyValue) interface{} {
+	switch v := value.Value.(type) {
+	case *v11.AnyValue_StringValue:
+		return v.StringValue
+	case *v11.AnyValue_ArrayValue:
+		var arr []interface{}
+		for _, item := range v.ArrayValue.Values {
+			arr = append(arr, GetAnyValue(item))
+		}
+		return arr
+	case *v11.AnyValue_BoolValue:
+		return v.BoolValue
+	case *v11.AnyValue_DoubleValue:
+		return v.DoubleValue
+	case *v11.AnyValue_BytesValue:
+		return v.BytesValue
+	case *v11.AnyValue_IntValue:
+		return v.IntValue
+	default:
+		logger.Debug(LogTag, "Unknown type ", v)
+	}
+	return nil
+}
+
+func ConvertKVListToGroupByMap(attr *protoSpan.KeyValueList) GroupByMap {
+	attrMap := GroupByMap{}
+	for _, kv := range attr.KeyValueList {
+		value := GetAnyValue(kv.Value)
+		if value != nil {
+			attrMap[ScenarioId(kv.Key)] = ConvertToGroupByValues(value)
+		}
+	}
+	return attrMap
+}
+
+func ConvertToGroupByValues(value interface{}) GroupByValues {
+	var arr GroupByValues
+	switch v := value.(type) {
+	case []interface{}:
+		for _, item := range v {
+			arr = append(arr, ConvertToGroupByValueItem(item))
+		}
+	default:
+		logger.Debug(LogTag, "Unknown type ", v)
+	}
+	return arr
+}
+
+func ConvertToGroupByValueItem(value interface{}) *GroupByValueItem {
+	switch v := value.(type) {
+	case map[string]interface{}:
+		return &GroupByValueItem{
+			WorkloadId: v["workload_id"].(string),
+			Title:      v["title"].(string),
+			Hash:       v["hash"].(string),
+		}
+	default:
+		logger.Debug(LogTag, "Unknown type ", v)
+	}
+	return nil
+
+}
