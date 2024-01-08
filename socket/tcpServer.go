@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	LoggerTag = "TCP Socket"
+	LoggerTagServer = "TCP Socket Server"
 )
 
 type HandleTCPData func([]byte)
@@ -15,34 +15,13 @@ type HandleTCPData func([]byte)
 type TCPServer struct {
 	HandleTCPData HandleTCPData
 	Port          string
+	listener      net.Listener
+	connections   []net.Conn
 }
 
-func (server TCPServer) handleConnection(conn net.Conn) {
-	defer conn.Close()
+func (server *TCPServer) handleConnection(conn net.Conn) {
 
-	buffer := make([]byte, 1024)
-
-	output := make([]byte, 0)
-
-	for {
-		// Read data from the connection
-		n, err := conn.Read(buffer)
-		if err != nil {
-			fmt.Println("Error reading:", err)
-			return
-		}
-
-		if n == 0 {
-			break
-		}
-
-		// Print the received data
-		fmt.Printf("Received: %s", buffer[:n])
-
-		output = append(output, buffer[:n]...)
-
-	}
-
+	output := readData(conn)
 	if server.HandleTCPData != nil {
 		server.HandleTCPData(output)
 	}
@@ -55,27 +34,37 @@ func (server TCPServer) handleConnection(conn net.Conn) {
 	//}
 }
 
+func (server *TCPServer) CloseServer() {
+
+	for _, conn := range server.connections {
+		err := conn.Close()
+		if err != nil {
+			zkLogger.Error(LoggerTagServer, "Error closing connection:", err)
+		}
+	}
+
+	err := server.listener.Close()
+	if err != nil {
+		zkLogger.Error(LoggerTagServer, "Error closing tcp listener:", err)
+	}
+}
+
 func CreateTCPServer(port string, handleTCPData HandleTCPData) *TCPServer {
 	return &TCPServer{Port: port, HandleTCPData: handleTCPData}
 }
 
-func (server TCPServer) Start() {
+func (server *TCPServer) Start() {
 
 	// Start listening
 	listener, err := net.Listen("tcp", ":"+server.Port)
 	if err != nil {
-		zkLogger.Error(LoggerTag, "Error listening:", err)
+		zkLogger.Error(LoggerTagServer, "Error listening:", err)
 		return
 	}
+	server.listener = listener
+	server.connections = make([]net.Conn, 0)
 
-	defer func(listener net.Listener) {
-		err = listener.Close()
-		if err != nil {
-			zkLogger.Error(LoggerTag, "Error closing tcp listener:", err)
-		}
-	}(listener)
-
-	zkLogger.Info(LoggerTag, "Server is listening on port "+server.Port)
+	zkLogger.Info(LoggerTagServer, "Server is listening on port "+server.Port)
 
 	for {
 		// Accept a connection
@@ -84,6 +73,7 @@ func (server TCPServer) Start() {
 			fmt.Println("Error accepting connection:", err1)
 			continue
 		}
+		server.connections = append(server.connections, conn)
 
 		// Handle the connection in a new goroutine
 		go server.handleConnection(conn)

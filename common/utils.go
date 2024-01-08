@@ -17,10 +17,12 @@ import (
 	"io"
 	"math"
 	"os"
+	"os/signal"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -265,4 +267,22 @@ func DeepCopy[T any](input *T) (*T, error) {
 	}
 
 	return &newObject, nil
+}
+
+func BlockUntilChannelClosed[T any](channel chan T) {
+
+	// Create a channel to receive signals
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+
+	fmt.Println("Press Ctrl+C (SIGINT) or send SIGTERM to exit.")
+
+	// Block until a signal is received
+	<-sig
+
+	fmt.Println("Received signal. Shutting down gracefully...")
+	// Additional cleanup and shutdown logic can be added here
+
+	// Exit the application
+	os.Exit(0)
 }
