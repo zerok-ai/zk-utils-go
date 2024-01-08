@@ -21,18 +21,20 @@ type TCPServer struct {
 
 func (server *TCPServer) handleConnection(conn net.Conn) {
 
-	output := readData(conn)
-	fmt.Printf("Received on server: %s\n", output)
-	var status string
-	if server.HandleTCPData != nil {
-		status = server.HandleTCPData(output)
-	}
+	for {
+		output := readData(conn)
+		fmt.Printf("Received on server: %s\n", output)
+		var status string
+		if server.HandleTCPData != nil {
+			status = server.HandleTCPData(output)
+		}
 
-	//Echo the data back to the client
-	_, err := conn.Write([]byte(status))
-	if err != nil {
-		fmt.Println("Error writing:", err)
-		return
+		//Echo the data back to the client
+		_, err := conn.Write([]byte(status))
+		if err != nil {
+			fmt.Println("Error writing:", err)
+			return
+		}
 	}
 }
 
