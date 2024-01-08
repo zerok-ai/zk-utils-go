@@ -15,14 +15,15 @@ type TCPClient struct {
 	conn net.Conn
 }
 
-func (client *TCPClient) Connect() {
+func (client *TCPClient) Connect() bool {
 	// Connect to the server
 	conn, err := net.Dial("tcp", client.Host+":"+client.Port)
 	if err != nil {
 		fmt.Println("Error connecting:", err)
-		return
+		return false
 	}
 	client.conn = conn
+	return true
 }
 
 func (client *TCPClient) Close() {
