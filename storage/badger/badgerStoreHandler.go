@@ -55,7 +55,7 @@ func NewBadgerHandler(configs *config.BadgerConfig) (*BadgerStoreHandler, error)
 		return nil, err
 	}
 
-	timerDuration := configs.GCTimerDuration * time.Second
+	timerDuration := time.Duration(configs.GCTimerDuration) * time.Second
 	handler.gcTicker = zktick.GetNewTickerTask("badger_garbage_collect", timerDuration, handler.runGC)
 	handler.gcTicker.Start()
 	handler.ctx = context.Background()
