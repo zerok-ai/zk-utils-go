@@ -17,14 +17,14 @@ func readData(conn net.Conn) []byte {
 			return nil
 		}
 
-		if n == 0 {
-			break
-		}
-
 		// Print the received data
 		fmt.Printf("Received: %s", buffer[:n])
 
 		output = append(output, buffer[:n]...)
+
+		if n < 1024 {
+			break
+		}
 
 	}
 
