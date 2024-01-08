@@ -35,7 +35,7 @@ func (server *TCPServer) handleConnection(conn net.Conn) {
 	}
 }
 
-func (server *TCPServer) CloseServer() {
+func (server *TCPServer) Close() {
 
 	for _, conn := range server.connections {
 		err := conn.Close()

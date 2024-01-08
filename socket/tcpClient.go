@@ -16,7 +16,7 @@ type TCPClient struct {
 
 func (client *TCPClient) Connect() {
 	// Connect to the server
-	conn, err := net.Dial("tcp", "localhost:8080")
+	conn, err := net.Dial("tcp", "localhost:"+client.Port)
 	if err != nil {
 		fmt.Println("Error connecting:", err)
 		return
