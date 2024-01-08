@@ -10,7 +10,7 @@ const (
 	LoggerTagServer = "TCP Socket Server"
 )
 
-type HandleTCPData func([]byte)
+type HandleTCPData func([]byte) string
 
 type TCPServer struct {
 	HandleTCPData HandleTCPData
@@ -22,16 +22,17 @@ type TCPServer struct {
 func (server *TCPServer) handleConnection(conn net.Conn) {
 
 	output := readData(conn)
+	var status string
 	if server.HandleTCPData != nil {
-		server.HandleTCPData(output)
+		status = server.HandleTCPData(output)
 	}
 
-	// Echo the data back to the client
-	//_, err := conn.Write(buffer[:n])
-	//if err != nil {
-	//	fmt.Println("Error writing:", err)
-	//	return
-	//}
+	//Echo the data back to the client
+	_, err := conn.Write([]byte(status))
+	if err != nil {
+		fmt.Println("Error writing:", err)
+		return
+	}
 }
 
 func (server *TCPServer) CloseServer() {

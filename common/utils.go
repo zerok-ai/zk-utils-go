@@ -277,12 +277,12 @@ func BlockUntilChannelClosed(cleanup Cleanup) {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 
-	fmt.Println("Press Ctrl+C (SIGINT) or send SIGTERM to exit.")
+	zkLogger.Info("Press Ctrl+C (SIGINT) or send SIGTERM to exit.")
 
 	// Block until a signal is received
 	<-sig
 
-	fmt.Println("Received signal. Shutting down gracefully...")
+	zkLogger.Info("Received signal. Shutting down gracefully...")
 	// Additional cleanup and shutdown logic can be added here
 
 	// Cleanup
