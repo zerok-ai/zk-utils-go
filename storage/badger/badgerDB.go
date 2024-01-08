@@ -86,6 +86,7 @@ func (b *BadgerStoreHandler) Has(key string) (ok bool, err error) {
 	case nil:
 		return true, nil
 	}
+	fmt.Printf("Error while checking if key %s exists in BadgerDB: %s", key, err)
 	return false, err
 }
 
