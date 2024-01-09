@@ -1,12 +1,8 @@
 package socket
 
 import (
-	"fmt"
+	zklogger "github.com/zerok-ai/zk-utils-go/logs"
 	"net"
-)
-
-const (
-	LoggerTagClient = "TCP Socket Client"
 )
 
 type TCPClient struct {
@@ -19,7 +15,7 @@ func (client *TCPClient) Connect() bool {
 	// Connect to the server
 	conn, err := net.Dial("tcp", client.Host+":"+client.Port)
 	if err != nil {
-		fmt.Println("Error connecting:", err)
+		zklogger.Error(LoggerTagSocket, "Error connecting:", err)
 		return false
 	}
 	client.conn = conn
@@ -45,14 +41,14 @@ func (client *TCPClient) SendData(data []byte) {
 	// Send the input to the server
 	_, err := client.conn.Write(data)
 	if err != nil {
-		fmt.Println("Error sending data:", err)
+		zklogger.Error(LoggerTagSocket, "Error sending data:", err)
 		return
 	}
 
 	// Read the response from the server
 	response := readData(client.conn)
 	if response != nil {
-		fmt.Printf("Received on client: %s\n", string(response[:]))
+		zklogger.DebugF(LoggerTagSocket, "Received on client: %s\n", string(response[:]))
 	}
 
 }
