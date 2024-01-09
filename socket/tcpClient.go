@@ -12,6 +12,10 @@ type TCPClient struct {
 	WaitForAck bool
 }
 
+func CreateTCPClient(clientConfig TCPClientConfig) *TCPClient {
+	return &TCPClient{Host: clientConfig.Host, Port: clientConfig.Port, WaitForAck: clientConfig.WaitForAck}
+}
+
 func (client *TCPClient) Connect() bool {
 	// Connect to the server
 	conn, err := net.Dial("tcp", client.Host+":"+client.Port)

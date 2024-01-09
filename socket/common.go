@@ -10,6 +10,17 @@ const (
 	bufferSize      = 1024
 )
 
+type TCPServerConfig struct {
+	Port    string `yaml:"port" env:"TCP_SERVER_PORT" env-description:"Server port" env-default:"6473"`
+	SendAck bool   `yaml:"sendAck" env:"TCP_SERVER_SEND_ACK" env-description:"Server to acknowledge the message to clinet" env-default:"false"`
+}
+
+type TCPClientConfig struct {
+	Host       string `yaml:"host" env:"TCP_CLIENT_HOST" env-description:"Client host" env-default:"127.0.0.1"`
+	Port       string `yaml:"port" env:"TCP_CLIENT_PORT" env-description:"Client port" env-default:"6473"`
+	WaitForAck bool   `yaml:"sendAck" env:"TCP_SERVER_WAIT_FOR_ACK" env-description:"Server to acknowledge the message to client" env-default:"false"`
+}
+
 func readData(conn net.Conn) []byte {
 
 	output := make([]byte, 0)
