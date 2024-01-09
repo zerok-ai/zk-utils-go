@@ -2,6 +2,7 @@ package badger
 
 import (
 	"context"
+	"fmt"
 	"github.com/kataras/iris/v12/x/errors"
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"github.com/zerok-ai/zk-utils-go/storage/badger/config"
@@ -67,6 +68,7 @@ func (b *BadgerStoreHandler) InitializeConn() error {
 
 	// Open the Badger database located in the /tmp/badger directory.
 	// It will be created if it doesn't exist.
+	fmt.Println("Badger DB Path: ", b.badgerConfig.DBPath)
 	db, err := badger.Open(badger.DefaultOptions(b.badgerConfig.DBPath).WithBypassLockGuard(true).WithTruncate(true))
 	if err != nil {
 		zkLogger.Error(badgerHandlerLogTag, "Error while initializing connection ", err)
