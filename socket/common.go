@@ -7,6 +7,7 @@ import (
 
 const (
 	LoggerTagSocket = "TCP Socket"
+	bufferSize      = 1024
 )
 
 func readData(conn net.Conn) []byte {
@@ -14,7 +15,7 @@ func readData(conn net.Conn) []byte {
 	output := make([]byte, 0)
 	for {
 		// Read data from the connection
-		buffer := make([]byte, 1024)
+		buffer := make([]byte, bufferSize)
 		n, err := conn.Read(buffer)
 		if err != nil {
 			zkLogger.Error(LoggerTagSocket, "Error reading:", err)
@@ -23,7 +24,7 @@ func readData(conn net.Conn) []byte {
 
 		output = append(output, buffer[:n]...)
 
-		if n < 1024 {
+		if n < bufferSize {
 			break
 		}
 

@@ -6,6 +6,10 @@ import (
 	"net"
 )
 
+type TCPServerConfig struct {
+	Port string `yaml:"port" env:"TCP_SERVER_PORT" env-description:"Server port" env-default:"6473"`
+}
+
 type HandleTCPData func([]byte) string
 
 type TCPServer struct {
@@ -56,8 +60,8 @@ func (server *TCPServer) Close() {
 	}
 }
 
-func CreateTCPServer(port string, handleTCPData HandleTCPData, sendAck bool) *TCPServer {
-	return &TCPServer{Port: port, HandleTCPData: handleTCPData, SendAck: sendAck}
+func CreateTCPServer(serverConfig TCPServerConfig, handleTCPData HandleTCPData, sendAck bool) *TCPServer {
+	return &TCPServer{Port: serverConfig.Port, HandleTCPData: handleTCPData, SendAck: sendAck}
 }
 
 func (server *TCPServer) Start() {
