@@ -7,7 +7,8 @@ import (
 )
 
 type TCPServerConfig struct {
-	Port string `yaml:"port" env:"TCP_SERVER_PORT" env-description:"Server port" env-default:"6473"`
+	Port    string `yaml:"port" env:"TCP_SERVER_PORT" env-description:"Server port" env-default:"6473"`
+	SendAck bool   `yaml:"sendAck" env:"TCP_SERVER_SEND_ACK" env-description:"Server to acknowledge the message to clinet" env-default:"false"`
 }
 
 type HandleTCPData func([]byte) string
@@ -60,8 +61,8 @@ func (server *TCPServer) Close() {
 	}
 }
 
-func CreateTCPServer(serverConfig TCPServerConfig, handleTCPData HandleTCPData, sendAck bool) *TCPServer {
-	return &TCPServer{Port: serverConfig.Port, HandleTCPData: handleTCPData, SendAck: sendAck}
+func CreateTCPServer(serverConfig TCPServerConfig, handleTCPData HandleTCPData) *TCPServer {
+	return &TCPServer{Port: serverConfig.Port, HandleTCPData: handleTCPData, SendAck: serverConfig.SendAck}
 }
 
 func (server *TCPServer) Start() {
