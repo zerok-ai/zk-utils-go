@@ -1,39 +1,28 @@
 package enrichedSpan
 
 import (
+	"github.com/zerok-ai/zk-utils-go/common"
 	logger "github.com/zerok-ai/zk-utils-go/logs"
 	protoSpan "github.com/zerok-ai/zk-utils-go/proto/opentelemetry"
-	v11 "go.opentelemetry.io/proto/otlp/common/v1"
-	v1 "go.opentelemetry.io/proto/otlp/trace/v1"
+	otlpCommon "go.opentelemetry.io/proto/otlp/common/v1"
+	otlpTrace "go.opentelemetry.io/proto/otlp/trace/v1"
 )
 
 var LogTag = "enrichedSpan"
 
 type OtelEnrichedRawSpan struct {
-	Span *v1.Span `json:"span"`
+	Span *otlpTrace.Span `json:"span"`
 
 	// Span Attributes
-	SpanAttributes         GenericMap   `json:"span_attributes,omitempty"`
-	SpanEvents             []GenericMap `json:"span_events,omitempty"`
-	ResourceAttributesHash string       `json:"resource_attributes_hash,omitempty"`
-	ScopeAttributesHash    string       `json:"scope_attributes_hash,omitempty"`
+	SpanAttributes         common.GenericMap   `json:"span_attributes,omitempty"`
+	SpanEvents             []common.GenericMap `json:"span_events,omitempty"`
+	ResourceAttributesHash string              `json:"resource_attributes_hash,omitempty"`
+	ScopeAttributesHash    string              `json:"scope_attributes_hash,omitempty"`
 
 	// ZeroK Properties
-	WorkloadIdList []string   `json:"workload_id_list,omitempty"`
-	GroupBy        GroupByMap `json:"group_by,omitempty"`
+	WorkloadIdList []string          `json:"workload_id_list,omitempty"`
+	GroupBy        common.GroupByMap `json:"group_by,omitempty"`
 }
-
-type GenericMap map[string]interface{}
-
-type GroupByMap map[ScenarioId]GroupByValues
-
-type GroupByValueItem struct {
-	WorkloadId string `json:"workload_id"`
-	Title      string `json:"title"`
-	Hash       string `json:"hash"`
-}
-type GroupByValues []*GroupByValueItem
-type ScenarioId string
 
 func (x *OtelEnrichedRawSpan) GetProtoEnrichedSpan() *protoSpan.OtelEnrichedRawSpanForProto {
 	span := protoSpan.OtelEnrichedRawSpanForProto{
@@ -48,10 +37,10 @@ func (x *OtelEnrichedRawSpan) GetProtoEnrichedSpan() *protoSpan.OtelEnrichedRawS
 	return &span
 }
 
-func ConvertGroupByMapToKVList(groupByMap GroupByMap) *protoSpan.KeyValueList {
-	var groupBy []*v11.KeyValue
+func ConvertGroupByMapToKVList(groupByMap common.GroupByMap) *protoSpan.KeyValueList {
+	var groupBy []*otlpCommon.KeyValue
 	for k, v := range groupByMap {
-		groupBy = append(groupBy, &v11.KeyValue{
+		groupBy = append(groupBy, &otlpCommon.KeyValue{
 			Key:   string(k),
 			Value: ConvertToAnyValue(v),
 		})
@@ -59,7 +48,7 @@ func ConvertGroupByMapToKVList(groupByMap GroupByMap) *protoSpan.KeyValueList {
 	return &protoSpan.KeyValueList{KeyValueList: groupBy}
 }
 
-func ConvertListOfMapToKVList(attrMap []GenericMap) []*protoSpan.KeyValueList {
+func ConvertListOfMapToKVList(attrMap []common.GenericMap) []*protoSpan.KeyValueList {
 	var attr []*protoSpan.KeyValueList
 	for _, item := range attrMap {
 		attr = append(attr, ConvertMapToKVList(item))
@@ -67,10 +56,10 @@ func ConvertListOfMapToKVList(attrMap []GenericMap) []*protoSpan.KeyValueList {
 	return attr
 }
 
-func ConvertMapToKVList(attrMap GenericMap) *protoSpan.KeyValueList {
-	var attr []*v11.KeyValue
+func ConvertMapToKVList(attrMap common.GenericMap) *protoSpan.KeyValueList {
+	var attr []*otlpCommon.KeyValue
 	for k, v := range attrMap {
-		attr = append(attr, &v11.KeyValue{
+		attr = append(attr, &otlpCommon.KeyValue{
 			Key:   k,
 			Value: ConvertToAnyValue(v),
 		})
@@ -79,25 +68,25 @@ func ConvertMapToKVList(attrMap GenericMap) *protoSpan.KeyValueList {
 	return &protoSpan.KeyValueList{KeyValueList: attr}
 }
 
-func ConvertToAnyValue(value interface{}) *v11.AnyValue {
-	anyValue := &v11.AnyValue{}
+func ConvertToAnyValue(value interface{}) *otlpCommon.AnyValue {
+	anyValue := &otlpCommon.AnyValue{}
 	switch v := value.(type) {
 	case string:
-		anyValue.Value = &v11.AnyValue_StringValue{StringValue: v}
+		anyValue.Value = &otlpCommon.AnyValue_StringValue{StringValue: v}
 	case []interface{}:
-		var arr []*v11.AnyValue
+		var arr []*otlpCommon.AnyValue
 		for _, item := range v {
 			arr = append(arr, ConvertToAnyValue(item))
 		}
-		anyValue.Value = &v11.AnyValue_ArrayValue{ArrayValue: &v11.ArrayValue{Values: arr}}
+		anyValue.Value = &otlpCommon.AnyValue_ArrayValue{ArrayValue: &otlpCommon.ArrayValue{Values: arr}}
 	case bool:
-		anyValue.Value = &v11.AnyValue_BoolValue{BoolValue: v}
+		anyValue.Value = &otlpCommon.AnyValue_BoolValue{BoolValue: v}
 	case float64:
-		anyValue.Value = &v11.AnyValue_DoubleValue{DoubleValue: v}
+		anyValue.Value = &otlpCommon.AnyValue_DoubleValue{DoubleValue: v}
 	case []byte:
-		anyValue.Value = &v11.AnyValue_BytesValue{BytesValue: v}
+		anyValue.Value = &otlpCommon.AnyValue_BytesValue{BytesValue: v}
 	case int64:
-		anyValue.Value = &v11.AnyValue_IntValue{IntValue: v}
+		anyValue.Value = &otlpCommon.AnyValue_IntValue{IntValue: v}
 	default:
 		logger.Debug(LogTag, "Unknown type ", v)
 	}
@@ -118,8 +107,8 @@ func GetEnrichedSpan(x *protoSpan.OtelEnrichedRawSpanForProto) *OtelEnrichedRawS
 
 }
 
-func ConvertListOfKVListToMap(attrMap []*protoSpan.KeyValueList) []GenericMap {
-	var attr []GenericMap
+func ConvertListOfKVListToMap(attrMap []*protoSpan.KeyValueList) []common.GenericMap {
+	var attr []common.GenericMap
 	for _, item := range attrMap {
 		attr = append(attr, ConvertKVListToMap(item))
 	}
@@ -139,23 +128,23 @@ func ConvertKVListToMap(attr *protoSpan.KeyValueList) map[string]interface{} {
 	return attrMap
 }
 
-func GetAnyValue(value *v11.AnyValue) interface{} {
+func GetAnyValue(value *otlpCommon.AnyValue) interface{} {
 	switch v := value.Value.(type) {
-	case *v11.AnyValue_StringValue:
+	case *otlpCommon.AnyValue_StringValue:
 		return v.StringValue
-	case *v11.AnyValue_ArrayValue:
+	case *otlpCommon.AnyValue_ArrayValue:
 		var arr []interface{}
 		for _, item := range v.ArrayValue.Values {
 			arr = append(arr, GetAnyValue(item))
 		}
 		return arr
-	case *v11.AnyValue_BoolValue:
+	case *otlpCommon.AnyValue_BoolValue:
 		return v.BoolValue
-	case *v11.AnyValue_DoubleValue:
+	case *otlpCommon.AnyValue_DoubleValue:
 		return v.DoubleValue
-	case *v11.AnyValue_BytesValue:
+	case *otlpCommon.AnyValue_BytesValue:
 		return v.BytesValue
-	case *v11.AnyValue_IntValue:
+	case *otlpCommon.AnyValue_IntValue:
 		return v.IntValue
 	default:
 		logger.Debug(LogTag, "Unknown type ", v)
@@ -163,19 +152,19 @@ func GetAnyValue(value *v11.AnyValue) interface{} {
 	return nil
 }
 
-func ConvertKVListToGroupByMap(attr *protoSpan.KeyValueList) GroupByMap {
-	attrMap := GroupByMap{}
+func ConvertKVListToGroupByMap(attr *protoSpan.KeyValueList) common.GroupByMap {
+	attrMap := common.GroupByMap{}
 	for _, kv := range attr.KeyValueList {
 		value := GetAnyValue(kv.Value)
 		if value != nil {
-			attrMap[ScenarioId(kv.Key)] = ConvertToGroupByValues(value)
+			attrMap[common.ScenarioId(kv.Key)] = ConvertToGroupByValues(value)
 		}
 	}
 	return attrMap
 }
 
-func ConvertToGroupByValues(value interface{}) GroupByValues {
-	var arr GroupByValues
+func ConvertToGroupByValues(value interface{}) common.GroupByValues {
+	var arr common.GroupByValues
 	switch v := value.(type) {
 	case []interface{}:
 		for _, item := range v {
@@ -187,10 +176,10 @@ func ConvertToGroupByValues(value interface{}) GroupByValues {
 	return arr
 }
 
-func ConvertToGroupByValueItem(value interface{}) *GroupByValueItem {
+func ConvertToGroupByValueItem(value interface{}) *common.GroupByValueItem {
 	switch v := value.(type) {
 	case map[string]interface{}:
-		return &GroupByValueItem{
+		return &common.GroupByValueItem{
 			WorkloadId: v["workload_id"].(string),
 			Title:      v["title"].(string),
 			Hash:       v["hash"].(string),

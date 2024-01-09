@@ -20,3 +20,14 @@ func (genericMap *GenericMap) Scan(value interface{}) error {
 
 	return json.Unmarshal(b, &genericMap)
 }
+
+type ScenarioId string
+type GroupByValues []*GroupByValueItem
+
+type GroupByMap map[ScenarioId]GroupByValues
+
+type GroupByValueItem struct {
+	WorkloadId string `json:"workload_id"`
+	Title      string `json:"title"`
+	Hash       string `json:"hash"`
+}
