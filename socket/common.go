@@ -1,7 +1,7 @@
 package socket
 
 import (
-	zklogger "github.com/zerok-ai/zk-utils-go/logs"
+	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"net"
 )
 
@@ -17,7 +17,7 @@ func readData(conn net.Conn) []byte {
 		buffer := make([]byte, 1024)
 		n, err := conn.Read(buffer)
 		if err != nil {
-			zklogger.Error(LoggerTagSocket, "Error reading:", err)
+			zkLogger.Error(LoggerTagSocket, "Error reading:", err)
 			return nil
 		}
 
@@ -30,4 +30,15 @@ func readData(conn net.Conn) []byte {
 	}
 
 	return output
+}
+
+func writeData(conn net.Conn, data []byte) bool {
+
+	_, err := conn.Write(data)
+	if err != nil {
+		zkLogger.Error(LoggerTagSocket, "Error writing:", err)
+		return false
+	}
+
+	return true
 }

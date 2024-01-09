@@ -28,11 +28,7 @@ func (server *TCPServer) handleConnection(conn net.Conn) {
 
 		//Echo the data back to the client
 		if server.SendAck {
-			_, err := conn.Write([]byte(status))
-			if err != nil {
-				fmt.Println("Error writing:", err)
-				return
-			}
+			go writeData(conn, []byte(status))
 		}
 	}
 }
@@ -81,7 +77,7 @@ func (server *TCPServer) Start() {
 		// Accept a connection
 		conn, err1 := listener.Accept()
 		if err1 != nil {
-			fmt.Println("Error accepting connection:", err1)
+			zkLogger.Error(LoggerTagSocket, "Error accepting connection:", err1)
 			continue
 		}
 		server.connections = append(server.connections, conn)
