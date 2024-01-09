@@ -18,7 +18,7 @@ type TCPServerConfig struct {
 type TCPClientConfig struct {
 	Host       string `yaml:"host" env:"TCP_CLIENT_HOST" env-description:"Client host" env-default:"127.0.0.1"`
 	Port       string `yaml:"port" env:"TCP_CLIENT_PORT" env-description:"Client port" env-default:"6473"`
-	WaitForAck bool   `yaml:"sendAck" env:"TCP_SERVER_WAIT_FOR_ACK" env-description:"Server to acknowledge the message to client" env-default:"false"`
+	WaitForAck bool   `yaml:"waitForAck" env:"TCP_SERVER_WAIT_FOR_ACK" env-description:"Server to acknowledge the message to client" env-default:"false"`
 }
 
 func readData(conn net.Conn) []byte {
