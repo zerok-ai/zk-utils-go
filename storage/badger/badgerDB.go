@@ -65,6 +65,7 @@ func (b *BadgerStoreHandler) Get(key string) (value string, err error) {
 func (b *BadgerStoreHandler) Set(key string, value string, ttl int64) error {
 	err := b.db.Update(func(txn *badger.Txn) error {
 		entry := badger.NewEntry([]byte(key), []byte(value)).WithTTL(time.Duration(ttl) * time.Second)
+		fmt.Printf("Setting key in badger set method : %s, value: %s\n", entry.Key, entry.Value)
 		err := txn.SetEntry(entry)
 		if err != nil {
 			fmt.Printf("Error in txn.SetEntry %s in BadgerDB: %s", key, err)
