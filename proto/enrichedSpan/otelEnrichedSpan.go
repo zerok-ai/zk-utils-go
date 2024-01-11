@@ -86,6 +86,12 @@ func ConvertToAnyValue(value interface{}) *otlpCommon.AnyValue {
 			arr = append(arr, ConvertToAnyValue(item))
 		}
 		anyValue.Value = &otlpCommon.AnyValue_ArrayValue{ArrayValue: &otlpCommon.ArrayValue{Values: arr}}
+	case []string:
+		var arr []*otlpCommon.AnyValue
+		for _, item := range v {
+			arr = append(arr, ConvertToAnyValue(item))
+		}
+		anyValue.Value = &otlpCommon.AnyValue_ArrayValue{ArrayValue: &otlpCommon.ArrayValue{Values: arr}}
 	case bool:
 		anyValue.Value = &otlpCommon.AnyValue_BoolValue{BoolValue: v}
 	case float64:
