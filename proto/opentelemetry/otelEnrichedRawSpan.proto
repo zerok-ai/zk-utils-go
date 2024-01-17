@@ -24,3 +24,12 @@ message OtelEnrichedRawSpanForProto {
 message KeyValueList {
     repeated opentelemetry.proto.common.v1.KeyValue key_value_list = 1;
 }
+
+message BadgerResponse  {
+    string key = 1;
+    OtelEnrichedRawSpanForProto value = 2;
+}
+
+message BadgerResponseList {
+    repeated BadgerResponse response_list = 1;
+}

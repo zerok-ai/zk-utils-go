@@ -166,6 +166,108 @@ func (x *KeyValueList) GetKeyValueList() []*v11.KeyValue {
 	return nil
 }
 
+type BadgerResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Key   string                       `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Value *OtelEnrichedRawSpanForProto `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+}
+
+func (x *BadgerResponse) Reset() {
+	*x = BadgerResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_otelEnrichedRawSpan_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BadgerResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BadgerResponse) ProtoMessage() {}
+
+func (x *BadgerResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_otelEnrichedRawSpan_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BadgerResponse.ProtoReflect.Descriptor instead.
+func (*BadgerResponse) Descriptor() ([]byte, []int) {
+	return file_otelEnrichedRawSpan_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *BadgerResponse) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *BadgerResponse) GetValue() *OtelEnrichedRawSpanForProto {
+	if x != nil {
+		return x.Value
+	}
+	return nil
+}
+
+type BadgerResponseList struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ResponseList []*BadgerResponse `protobuf:"bytes,1,rep,name=response_list,json=responseList,proto3" json:"response_list,omitempty"`
+}
+
+func (x *BadgerResponseList) Reset() {
+	*x = BadgerResponseList{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_otelEnrichedRawSpan_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BadgerResponseList) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BadgerResponseList) ProtoMessage() {}
+
+func (x *BadgerResponseList) ProtoReflect() protoreflect.Message {
+	mi := &file_otelEnrichedRawSpan_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BadgerResponseList.ProtoReflect.Descriptor instead.
+func (*BadgerResponseList) Descriptor() ([]byte, []int) {
+	return file_otelEnrichedRawSpan_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *BadgerResponseList) GetResponseList() []*BadgerResponse {
+	if x != nil {
+		return x.ResponseList
+	}
+	return nil
+}
+
 var File_otelEnrichedRawSpan_proto protoreflect.FileDescriptor
 
 var file_otelEnrichedRawSpan_proto_rawDesc = []byte{
@@ -210,8 +312,21 @@ var file_otelEnrichedRawSpan_proto_rawDesc = []byte{
 	0x70, 0x65, 0x6e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x70, 0x72, 0x6f,
 	0x74, 0x6f, 0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x4b, 0x65, 0x79,
 	0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x0c, 0x6b, 0x65, 0x79, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x4c,
-	0x69, 0x73, 0x74, 0x42, 0x04, 0x5a, 0x02, 0x2e, 0x2f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x33,
+	0x69, 0x73, 0x74, 0x22, 0x70, 0x0a, 0x0e, 0x42, 0x61, 0x64, 0x67, 0x65, 0x72, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x4c, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x36, 0x2e, 0x6f, 0x70, 0x65, 0x6e, 0x74, 0x65, 0x6c,
+	0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x65, 0x6e, 0x72, 0x69, 0x63, 0x68, 0x65, 0x64, 0x73, 0x70,
+	0x61, 0x6e, 0x2e, 0x4f, 0x74, 0x65, 0x6c, 0x45, 0x6e, 0x72, 0x69, 0x63, 0x68, 0x65, 0x64, 0x52,
+	0x61, 0x77, 0x53, 0x70, 0x61, 0x6e, 0x46, 0x6f, 0x72, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x52, 0x05,
+	0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x64, 0x0a, 0x12, 0x42, 0x61, 0x64, 0x67, 0x65, 0x72, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x4c, 0x69, 0x73, 0x74, 0x12, 0x4e, 0x0a, 0x0d, 0x72,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x5f, 0x6c, 0x69, 0x73, 0x74, 0x18, 0x01, 0x20, 0x03,
+	0x28, 0x0b, 0x32, 0x29, 0x2e, 0x6f, 0x70, 0x65, 0x6e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74,
+	0x72, 0x79, 0x65, 0x6e, 0x72, 0x69, 0x63, 0x68, 0x65, 0x64, 0x73, 0x70, 0x61, 0x6e, 0x2e, 0x42,
+	0x61, 0x64, 0x67, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x52, 0x0c, 0x72,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x4c, 0x69, 0x73, 0x74, 0x42, 0x04, 0x5a, 0x02, 0x2e,
+	0x2f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -226,24 +341,28 @@ func file_otelEnrichedRawSpan_proto_rawDescGZIP() []byte {
 	return file_otelEnrichedRawSpan_proto_rawDescData
 }
 
-var file_otelEnrichedRawSpan_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_otelEnrichedRawSpan_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_otelEnrichedRawSpan_proto_goTypes = []interface{}{
 	(*OtelEnrichedRawSpanForProto)(nil), // 0: opentelemetryenrichedspan.OtelEnrichedRawSpanForProto
 	(*KeyValueList)(nil),                // 1: opentelemetryenrichedspan.KeyValueList
-	(*v1.Span)(nil),                     // 2: opentelemetry.proto.trace.v1.Span
-	(*v11.KeyValue)(nil),                // 3: opentelemetry.proto.common.v1.KeyValue
+	(*BadgerResponse)(nil),              // 2: opentelemetryenrichedspan.BadgerResponse
+	(*BadgerResponseList)(nil),          // 3: opentelemetryenrichedspan.BadgerResponseList
+	(*v1.Span)(nil),                     // 4: opentelemetry.proto.trace.v1.Span
+	(*v11.KeyValue)(nil),                // 5: opentelemetry.proto.common.v1.KeyValue
 }
 var file_otelEnrichedRawSpan_proto_depIdxs = []int32{
-	2, // 0: opentelemetryenrichedspan.OtelEnrichedRawSpanForProto.span:type_name -> opentelemetry.proto.trace.v1.Span
+	4, // 0: opentelemetryenrichedspan.OtelEnrichedRawSpanForProto.span:type_name -> opentelemetry.proto.trace.v1.Span
 	1, // 1: opentelemetryenrichedspan.OtelEnrichedRawSpanForProto.span_attributes:type_name -> opentelemetryenrichedspan.KeyValueList
 	1, // 2: opentelemetryenrichedspan.OtelEnrichedRawSpanForProto.span_events:type_name -> opentelemetryenrichedspan.KeyValueList
 	1, // 3: opentelemetryenrichedspan.OtelEnrichedRawSpanForProto.group_by:type_name -> opentelemetryenrichedspan.KeyValueList
-	3, // 4: opentelemetryenrichedspan.KeyValueList.key_value_list:type_name -> opentelemetry.proto.common.v1.KeyValue
-	5, // [5:5] is the sub-list for method output_type
-	5, // [5:5] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	5, // 4: opentelemetryenrichedspan.KeyValueList.key_value_list:type_name -> opentelemetry.proto.common.v1.KeyValue
+	0, // 5: opentelemetryenrichedspan.BadgerResponse.value:type_name -> opentelemetryenrichedspan.OtelEnrichedRawSpanForProto
+	2, // 6: opentelemetryenrichedspan.BadgerResponseList.response_list:type_name -> opentelemetryenrichedspan.BadgerResponse
+	7, // [7:7] is the sub-list for method output_type
+	7, // [7:7] is the sub-list for method input_type
+	7, // [7:7] is the sub-list for extension type_name
+	7, // [7:7] is the sub-list for extension extendee
+	0, // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_otelEnrichedRawSpan_proto_init() }
@@ -276,6 +395,30 @@ func file_otelEnrichedRawSpan_proto_init() {
 				return nil
 			}
 		}
+		file_otelEnrichedRawSpan_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BadgerResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_otelEnrichedRawSpan_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BadgerResponseList); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -283,7 +426,7 @@ func file_otelEnrichedRawSpan_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_otelEnrichedRawSpan_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

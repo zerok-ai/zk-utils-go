@@ -2,6 +2,7 @@ package enrichedSpan
 
 import (
 	"github.com/zerok-ai/zk-utils-go/common"
+	"github.com/zerok-ai/zk-utils-go/ds"
 	logger "github.com/zerok-ai/zk-utils-go/logs"
 	protoSpan "github.com/zerok-ai/zk-utils-go/proto/opentelemetry"
 	otlpCommon "go.opentelemetry.io/proto/otlp/common/v1"
@@ -74,6 +75,18 @@ func ConvertToAnyValue(value interface{}) *otlpCommon.AnyValue {
 	case string:
 		anyValue.Value = &otlpCommon.AnyValue_StringValue{StringValue: v}
 	case []interface{}:
+		var arr []*otlpCommon.AnyValue
+		for _, item := range v {
+			arr = append(arr, ConvertToAnyValue(item))
+		}
+		anyValue.Value = &otlpCommon.AnyValue_ArrayValue{ArrayValue: &otlpCommon.ArrayValue{Values: arr}}
+	case ds.Set[string]:
+		var arr []*otlpCommon.AnyValue
+		for item := range v {
+			arr = append(arr, ConvertToAnyValue(item))
+		}
+		anyValue.Value = &otlpCommon.AnyValue_ArrayValue{ArrayValue: &otlpCommon.ArrayValue{Values: arr}}
+	case []string:
 		var arr []*otlpCommon.AnyValue
 		for _, item := range v {
 			arr = append(arr, ConvertToAnyValue(item))
