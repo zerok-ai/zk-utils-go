@@ -62,9 +62,9 @@ func (b *BadgerStoreHandler) Get(key string) (value string, err error) {
 
 // Set implements the DB interface. It attempts to store a value for a given key
 // and namespace. If the key/value pair cannot be saved, an error is returned.
-func (b *BadgerStoreHandler) Set(key string, value []byte, ttl int64) error {
+func (b *BadgerStoreHandler) Set(key string, value []byte, ttl time.Duration) error {
 	err := b.db.Update(func(txn *badger.Txn) error {
-		entry := badger.NewEntry([]byte(key), value).WithTTL(time.Duration(ttl) * time.Second)
+		entry := badger.NewEntry([]byte(key), value).WithTTL(ttl)
 		fmt.Printf("Setting key in badger set method : %s, value: %s\n", entry.Key, entry.Value)
 		err := txn.SetEntry(entry)
 		if err != nil {
