@@ -4,6 +4,13 @@ package proto;
 
 option go_package = "./";
 
+
+message EbpfEntryResponse {
+  string trace_id = 1;
+  string span_id = 2;
+  EbpfEntryDataForSpan ebpf_data = 3;
+}
+
 message EbpfEntryDataForSpan {
   string content_type = 1;
   string req_headers = 2;
