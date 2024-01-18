@@ -4,7 +4,7 @@ import (
 	"github.com/zerok-ai/zk-utils-go/common"
 	"github.com/zerok-ai/zk-utils-go/ds"
 	logger "github.com/zerok-ai/zk-utils-go/logs"
-	protoSpan "github.com/zerok-ai/zk-utils-go/proto/opentelemetry"
+	protoSpan "github.com/zerok-ai/zk-utils-go/proto"
 	otlpCommon "go.opentelemetry.io/proto/otlp/common/v1"
 	otlpTrace "go.opentelemetry.io/proto/otlp/trace/v1"
 )
