@@ -101,6 +101,10 @@ func ConvertToAnyValue(value interface{}) *otlpCommon.AnyValue {
 	case int64:
 		anyValue.Value = &otlpCommon.AnyValue_IntValue{IntValue: v}
 	default:
+		if v == nil {
+			return anyValue
+		}
+
 		logger.Debug(LogTag, "Unknown type ", v)
 	}
 	return anyValue
@@ -160,6 +164,10 @@ func GetAnyValue(value *otlpCommon.AnyValue) interface{} {
 	case *otlpCommon.AnyValue_IntValue:
 		return v.IntValue
 	default:
+		if v == nil {
+			return nil
+		}
+
 		logger.Debug(LogTag, "Unknown type ", v)
 	}
 	return nil
