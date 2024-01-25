@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package opentelemetryenrichedspan;
+
+option go_package = "./";
+
+import "trace/v1/trace.proto";
+import "common/v1/common.proto";
+
+message OtelEnrichedRawSpanForProto {
+    opentelemetry.proto.trace.v1.Span span = 1;
+
+    // Span Attributes
+    KeyValueList span_attributes = 2;
+    repeated KeyValueList span_events = 3;
+    string resource_attributes_hash = 4;
+    string scope_attributes_hash = 5;
+
+    // ZeroK Properties
+    repeated string workload_id_list = 6;
+    KeyValueList group_by = 7;
+}
+
+message KeyValueList {
+    repeated opentelemetry.proto.common.v1.KeyValue key_value_list = 1;
+}
+
+message BadgerResponse  {
+    string key = 1;
+    OtelEnrichedRawSpanForProto value = 2;
+}
+
+message BadgerResponseList {
+    repeated BadgerResponse response_list = 1;
+}
