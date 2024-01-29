@@ -5,6 +5,7 @@ package proto;
 option go_package = "./";
 
 
+//This is the data that is sent from the ebpf collector to the otlp receiver.
 message EbpfEntryResponse {
   string trace_id = 1;
   string span_id = 2;

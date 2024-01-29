@@ -125,6 +125,7 @@ func (b *BadgerStoreHandler) BulkGetForPrefix(keyPrefix []string) (map[string]st
 	// ChooseKey is called concurrently for every key. If left nil, assumes true by default.
 	stream.ChooseKey = func(item *badger.Item) bool {
 		for _, key := range keyPrefix {
+			zkLogger.Debug(badgerDBHandlerLogTag, fmt.Sprintf("Checking if key %s has prefix %s", item.Key(), key))
 			if bytes.HasPrefix(item.Key(), []byte(key)) {
 				return true
 			}
