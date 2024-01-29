@@ -113,6 +113,14 @@ func (b *BadgerStoreHandler) BulkSet(keyVals map[string]string, ttl int64) error
 	return nil
 }
 
+func (b *BadgerStoreHandler) DropAll() {
+	err := b.db.DropAll()
+	if err != nil {
+		zkLogger.Error(badgerHandlerLogTag, "Error while dropping all data from Badger ", err)
+		return
+	}
+}
+
 func (b *BadgerStoreHandler) BulkGetForPrefix(keyPrefix []string) (map[string]string, error) {
 
 	resultSet := make(map[string]string)
