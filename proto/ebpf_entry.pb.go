@@ -20,6 +20,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// This is the data that is sent from the ebpf collector to the otlp receiver.
 type EbpfEntryResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
