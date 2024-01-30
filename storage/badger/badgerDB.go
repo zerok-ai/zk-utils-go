@@ -1,7 +1,6 @@
 package badger
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"github.com/dgraph-io/badger"
@@ -127,17 +126,6 @@ func (b *BadgerStoreHandler) BulkGetForPrefix(keyPrefix []string) (map[string]st
 	for _, prefix := range keyPrefix {
 		stream := b.db.NewStream()
 		stream.Prefix = []byte(prefix)
-
-		// ChooseKey is called concurrently for every key. If left nil, assumes true by default.
-		stream.ChooseKey = func(item *badger.Item) bool {
-			for _, key := range keyPrefix {
-				zkLogger.Debug(badgerDBHandlerLogTag, fmt.Sprintf("Checking if key %s has prefix %s", item.Key(), key))
-				if bytes.HasPrefix(item.Key(), []byte(key)) {
-					return true
-				}
-			}
-			return false
-		}
 		stream.KeyToList = nil
 
 		// Send is called serially, while Stream.Orchestrate is running.
