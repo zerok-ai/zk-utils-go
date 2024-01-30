@@ -124,36 +124,35 @@ func (b *BadgerStoreHandler) DropAll() {
 func (b *BadgerStoreHandler) BulkGetForPrefix(keyPrefix []string) (map[string]string, error) {
 
 	resultSet := make(map[string]string)
-	stream := b.db.NewStream()
-	// db.NewStreamAt(readTs) for managed mode.
+	for _, prefix := range keyPrefix {
+		stream := b.db.NewStream()
+		stream.Prefix = []byte(prefix)
 
-	// -- Optional settings
-	stream.NumGo = 16 // Set number of goroutines to use for iteration.
-
-	// ChooseKey is called concurrently for every key. If left nil, assumes true by default.
-	stream.ChooseKey = func(item *badger.Item) bool {
-		for _, key := range keyPrefix {
-			zkLogger.Debug(badgerDBHandlerLogTag, fmt.Sprintf("Checking if key %s has prefix %s", item.Key(), key))
-			if bytes.HasPrefix(item.Key(), []byte(key)) {
-				return true
+		// ChooseKey is called concurrently for every key. If left nil, assumes true by default.
+		stream.ChooseKey = func(item *badger.Item) bool {
+			for _, key := range keyPrefix {
+				zkLogger.Debug(badgerDBHandlerLogTag, fmt.Sprintf("Checking if key %s has prefix %s", item.Key(), key))
+				if bytes.HasPrefix(item.Key(), []byte(key)) {
+					return true
+				}
 			}
+			return false
 		}
-		return false
-	}
-	stream.KeyToList = nil
+		stream.KeyToList = nil
 
-	// Send is called serially, while Stream.Orchestrate is running.
-	stream.Send = func(list *pb.KVList) error {
-		recordItems := list.GetKv()
-		for _, record := range recordItems {
-			resultSet[string(record.GetKey())] = string(record.GetValue())
+		// Send is called serially, while Stream.Orchestrate is running.
+		stream.Send = func(list *pb.KVList) error {
+			recordItems := list.GetKv()
+			for _, record := range recordItems {
+				resultSet[string(record.GetKey())] = string(record.GetValue())
+			}
+			return nil
 		}
-		return nil
-	}
 
-	// Run the stream
-	if err := stream.Orchestrate(context.Background()); err != nil {
-		return resultSet, err
+		// Run the stream
+		if err := stream.Orchestrate(context.Background()); err != nil {
+			zkLogger.ErrorF(badgerDBHandlerLogTag, "Error %v while fetching data from Badger for Prefix %v", err, prefix)
+		}
 	}
 
 	return resultSet, nil
