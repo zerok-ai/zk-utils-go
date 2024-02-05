@@ -1,7 +1,6 @@
 package badger
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"github.com/dgraph-io/badger"
@@ -11,7 +10,8 @@ import (
 )
 
 const (
-	LogTag = "BadgerStoreHandler"
+	// Log tag
+	badgerDBHandlerLogTag = "BadgerStoreHandler"
 )
 
 type (
@@ -47,7 +47,7 @@ func (b *BadgerStoreHandler) Get(key string) (value string, err error) {
 
 		badgerDbValue = make([]byte, len(value))
 		copy(badgerDbValue, value) // Assign the value to temp
-		zkLogger.ErrorF(LogTag, "Key: %s, Value: %s\n", key, string(badgerDbValue))
+		zkLogger.ErrorF(badgerDBHandlerLogTag, "Key: %s, Value: %s\n", key, string(badgerDbValue))
 		return nil
 	})
 
@@ -70,7 +70,7 @@ func (b *BadgerStoreHandler) Set(key string, value []byte, ttl time.Duration) er
 		return err
 	})
 	if err != nil {
-		zkLogger.ErrorF(LogTag, "Error while setting key %s in BadgerDB: %s", key, err)
+		zkLogger.ErrorF(badgerDBHandlerLogTag, "Error while setting key %s in BadgerDB: %s", key, err)
 		return err
 	}
 	return nil
@@ -87,7 +87,7 @@ func (b *BadgerStoreHandler) Has(key string) (ok bool, err error) {
 	case err == nil:
 		return true, nil
 	}
-	zkLogger.ErrorF(LogTag, "Error while checking if key %s exists in BadgerDB: %s", key, err)
+	zkLogger.ErrorF(badgerDBHandlerLogTag, "Error while checking if key %s exists in BadgerDB: %s", key, err)
 	return false, err
 }
 
@@ -110,38 +110,35 @@ func (b *BadgerStoreHandler) BulkSet(keyVals map[string]string, ttl int64) error
 	return nil
 }
 
+func (b *BadgerStoreHandler) DropAll() {
+	err := b.db.DropAll()
+	if err != nil {
+		zkLogger.Error(badgerHandlerLogTag, "Error while dropping all data from Badger ", err)
+		return
+	}
+}
+
 func (b *BadgerStoreHandler) BulkGetForPrefix(keyPrefix []string) (map[string]string, error) {
 
 	resultSet := make(map[string]string)
-	stream := b.db.NewStream()
-	// db.NewStreamAt(readTs) for managed mode.
+	for _, prefix := range keyPrefix {
+		stream := b.db.NewStream()
+		stream.Prefix = []byte(prefix)
+		stream.KeyToList = nil
 
-	// -- Optional settings
-	stream.NumGo = 16 // Set number of goroutines to use for iteration.
-
-	// ChooseKey is called concurrently for every key. If left nil, assumes true by default.
-	stream.ChooseKey = func(item *badger.Item) bool {
-		for _, key := range keyPrefix {
-			if bytes.HasPrefix(item.Key(), []byte(key)) {
-				return true
+		// Send is called serially, while Stream.Orchestrate is running.
+		stream.Send = func(list *pb.KVList) error {
+			recordItems := list.GetKv()
+			for _, record := range recordItems {
+				resultSet[string(record.GetKey())] = string(record.GetValue())
 			}
+			return nil
 		}
-		return false
-	}
-	stream.KeyToList = nil
 
-	// Send is called serially, while Stream.Orchestrate is running.
-	stream.Send = func(list *pb.KVList) error {
-		recordItems := list.GetKv()
-		for _, record := range recordItems {
-			resultSet[string(record.GetKey())] = string(record.GetValue())
+		// Run the stream
+		if err := stream.Orchestrate(context.Background()); err != nil {
+			zkLogger.ErrorF(badgerDBHandlerLogTag, "Error %v while fetching data from Badger for Prefix %v", err, prefix)
 		}
-		return nil
-	}
-
-	// Run the stream
-	if err := stream.Orchestrate(context.Background()); err != nil {
-		return resultSet, err
 	}
 
 	return resultSet, nil
