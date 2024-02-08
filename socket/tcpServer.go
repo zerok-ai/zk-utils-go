@@ -1,7 +1,6 @@
 package socket
 
 import (
-	"fmt"
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
 	"net"
 )
@@ -24,7 +23,7 @@ func (server *TCPServer) handleConnection(conn net.Conn) {
 
 	for {
 		output := readData(conn)
-		fmt.Printf("Received on server: %s\n", output)
+		//fmt.Printf("Received on server: %s\n", output)
 		var status string
 		if server.HandleTCPData != nil {
 			status = server.HandleTCPData(output)
