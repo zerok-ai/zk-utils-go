@@ -60,3 +60,15 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+
+{{/*
+Create the redis host from the release namespace
+*/}}
+{{- define "mychart.redisHost" -}}
+{{- if .Release.Namespace -}}
+  redis-master.{{ .Release.Namespace }}.svc.cluster.local
+{{- else -}}
+  redis-master.zk-client.svc.cluster.local
+{{- end -}}
+{{- end -}}
