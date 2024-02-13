@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 global:
   redis:
-    host: {{ include "mychart.redisHost" . }}
+    host: {{ template "mychart.redisHost" . }}
 
 redis:
   enabled: true
