@@ -67,7 +67,7 @@ Create the redis host from the release namespace
 */}}
 {{- define "mychart.redisHost" -}}
 {{- if .Release.Namespace -}}
-  {{ printf "redis-master.%s.svc.cluster.local" .Release.Namespace }}
+  {{ printf "redis-master.%s.svc.cluster.local" .Release.Namespace | quote }}
 {{- else -}}
   "redis-master.zk-client.svc.cluster.local"
 {{- end -}}
