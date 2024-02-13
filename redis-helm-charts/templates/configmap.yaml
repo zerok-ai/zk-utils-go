@@ -4,4 +4,4 @@ data:
 kind: ConfigMap
 metadata:
   name: zk-redis-config
-  namespace: zk-client
+  namespace: {{ if .Release.Namespace }}{{ .Release.Namespace }}{{ else }}zk-client{{ end }}
