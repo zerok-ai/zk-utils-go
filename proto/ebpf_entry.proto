@@ -4,8 +4,6 @@ package proto;
 
 option go_package = "./";
 
-import "opentelemetry/common/v1/common.proto";
-
 
 //This is the data that is sent from the ebpf collector to the otlp receiver.
 message EbpfEntryResponse {
@@ -17,12 +15,12 @@ message EbpfEntryResponse {
 
 message EbpfEntryDataForSpan {
   string content_type = 1;
-  repeated opentelemetry.proto.common.v1.KeyValue req_headers = 2;
+  string req_headers = 2;
   string req_method = 3;
   string req_path = 4;
   string req_body_size = 5;
   string req_body = 6;
-  repeated opentelemetry.proto.common.v1.KeyValue resp_headers = 7;
+  string resp_headers = 7;
   string resp_status = 8;
   string resp_message = 9;
   string resp_body_size = 10;
