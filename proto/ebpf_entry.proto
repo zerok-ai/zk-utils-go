@@ -4,6 +4,8 @@ package proto;
 
 option go_package = "./";
 
+import "key_value_list.proto";
+
 
 //This is the data that is sent from the ebpf collector to the otlp receiver.
 message EbpfEntryResponse {
@@ -15,12 +17,12 @@ message EbpfEntryResponse {
 
 message EbpfEntryDataForSpan {
   string content_type = 1;
-  string req_headers = 2;
+  KeyValueList req_headers = 2;
   string req_method = 3;
   string req_path = 4;
   string req_body_size = 5;
   string req_body = 6;
-  string resp_headers = 7;
+  KeyValueList resp_headers = 7;
   string resp_status = 8;
   string resp_message = 9;
   string resp_body_size = 10;
