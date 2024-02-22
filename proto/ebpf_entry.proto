@@ -17,12 +17,12 @@ message EbpfEntryResponse {
 
 message EbpfEntryDataForSpan {
   string content_type = 1;
-  opentelemetry.proto.common.v1.KeyValueList req_headers = 2;
+  repeated opentelemetry.proto.common.v1.KeyValue req_headers = 2;
   string req_method = 3;
   string req_path = 4;
   string req_body_size = 5;
   string req_body = 6;
-  opentelemetry.proto.common.v1.KeyValueList resp_headers = 7;
+  repeated opentelemetry.proto.common.v1.KeyValue resp_headers = 7;
   string resp_status = 8;
   string resp_message = 9;
   string resp_body_size = 10;
