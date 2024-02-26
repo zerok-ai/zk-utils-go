@@ -2,7 +2,7 @@ package badger
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"github.com/dgraph-io/badger"
 	"github.com/dgraph-io/badger/pb"
 	zkLogger "github.com/zerok-ai/zk-utils-go/logs"
@@ -10,7 +10,6 @@ import (
 )
 
 const (
-
 	// Log tag
 	badgerDBHandlerLogTag = "BadgerStoreHandler"
 )
@@ -48,7 +47,7 @@ func (b *BadgerStoreHandler) Get(key string) (value string, err error) {
 
 		badgerDbValue = make([]byte, len(value))
 		copy(badgerDbValue, value) // Assign the value to temp
-		fmt.Printf("Key: %s, Value: %s\n", key, string(badgerDbValue))
+		zkLogger.ErrorF(badgerDBHandlerLogTag, "Key: %s, Value: %s\n", key, string(badgerDbValue))
 		return nil
 	})
 
@@ -64,15 +63,14 @@ func (b *BadgerStoreHandler) Get(key string) (value string, err error) {
 func (b *BadgerStoreHandler) Set(key string, value []byte, ttl time.Duration) error {
 	err := b.db.Update(func(txn *badger.Txn) error {
 		entry := badger.NewEntry([]byte(key), value).WithTTL(ttl)
-		fmt.Printf("Setting key in badger set method : %s, value: %s\n", entry.Key, entry.Value)
 		err := txn.SetEntry(entry)
 		if err != nil {
-			fmt.Printf("Error in txn.SetEntry %s in BadgerDB: %s", key, err)
+			zkLogger.ErrorF("Error in txn.SetEntry %s in BadgerDB: %s", key, err)
 		}
 		return err
 	})
 	if err != nil {
-		fmt.Printf("Error while setting key %s in BadgerDB: %s", key, err)
+		zkLogger.ErrorF(badgerDBHandlerLogTag, "Error while setting key %s in BadgerDB: %s", key, err)
 		return err
 	}
 	return nil
@@ -83,13 +81,13 @@ func (b *BadgerStoreHandler) Set(key string, value []byte, ttl time.Duration) er
 // an error to Get would be returned that is not of type badger.ErrKeyNotFound.
 func (b *BadgerStoreHandler) Has(key string) (ok bool, err error) {
 	_, err = b.Get(key)
-	switch err {
-	case badger.ErrKeyNotFound:
+	switch {
+	case errors.Is(err, badger.ErrKeyNotFound):
 		return false, nil
-	case nil:
+	case err == nil:
 		return true, nil
 	}
-	fmt.Printf("Error while checking if key %s exists in BadgerDB: %s", key, err)
+	zkLogger.ErrorF(badgerDBHandlerLogTag, "Error while checking if key %s exists in BadgerDB: %s", key, err)
 	return false, err
 }
 

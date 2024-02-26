@@ -2,8 +2,6 @@ module github.com/zerok-ai/zk-utils-go
 
 go 1.21
 
-toolchain go1.21.5
-
 require (
 	github.com/dgraph-io/badger v1.6.2
 	github.com/go-playground/validator/v10 v10.14.0
