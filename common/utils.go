@@ -266,3 +266,5 @@ func DeepCopy[T any](input *T) (*T, error) {
 
 	return &newObject, nil
 }
+
+type Cleanup func() error

@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package proto;
+
+import "opentelemetry.proto";
+import "ebpf_entry.proto";
+
+option go_package = "./";
+
+message BadgerResponse {
+  string key = 1;
+  OtelEnrichedRawSpanForProto value = 2;
+}
+
+message BadgerEbpfResponse {
+  string key = 1;
+  EbpfEntryDataForSpan value = 2;
+}
+
+message BadgerResponseList {
+  repeated BadgerResponse response_list = 1;
+  repeated BadgerEbpfResponse ebpf_response_list = 2;
+}
