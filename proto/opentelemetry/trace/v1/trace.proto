@@ -16,8 +16,8 @@ syntax = "proto3";
 
 package opentelemetry.proto.trace.v1;
 
-import "common/v1/common.proto";
-import "resource/v1/resource.proto";
+import "opentelemetry/common/v1/common.proto";
+import "opentelemetry/resource/v1/resource.proto";
 
 option csharp_namespace = "OpenTelemetry.Proto.Trace.V1";
 option java_multiple_files = true;
@@ -215,6 +215,7 @@ message Span {
     fixed64 time_unix_nano = 1;
 
     // name of the event.
+    // This field is semantically required to be set to non-empty string.
     // This field is semantically required to be set to non-empty string.
     string name = 2;
 

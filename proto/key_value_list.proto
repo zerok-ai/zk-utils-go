@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "./";
+
+import "opentelemetry/common/v1/common.proto";
+
+message KeyValueList {
+  repeated opentelemetry.proto.common.v1.KeyValue key_value_list = 1;
+}

@@ -17,10 +17,12 @@ import (
 	"io"
 	"math"
 	"os"
+	"os/signal"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -265,4 +267,33 @@ func DeepCopy[T any](input *T) (*T, error) {
 	}
 
 	return &newObject, nil
+}
+
+type Cleanup func() error
+
+func BlockUntilChannelClosed(cleanup Cleanup) {
+
+	// Create a channel to receive signals
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+
+	zkLogger.Info("Press Ctrl+C (SIGINT) or send SIGTERM to exit.")
+
+	// Block until a signal is received
+	<-sig
+
+	zkLogger.Info("Received signal. Shutting down gracefully...")
+	// Additional cleanup and shutdown logic can be added here
+
+	// Cleanup
+	if cleanup != nil {
+		err := cleanup()
+		if err != nil {
+			zkLogger.Error(LogTag, "Got error during cleanup:", err)
+			return
+		}
+	}
+
+	// Exit the application
+	os.Exit(0)
 }

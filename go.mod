@@ -1,6 +1,6 @@
 module github.com/zerok-ai/zk-utils-go
 
-go 1.19
+go 1.21
 
 require (
 	github.com/dgraph-io/badger v1.6.2

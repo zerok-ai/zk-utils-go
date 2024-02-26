@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "./";
+
+
+//This is the data that is sent from the ebpf collector to the otlp receiver.
+message EbpfEntryResponse {
+  string trace_id = 1;
+  string span_id = 2;
+  //This is the data of type EbpfEntryDataForSpan, but proto marshalled.
+  bytes ebpf_data = 3;
+}
+
+message EbpfEntryDataForSpan {
+  string content_type = 1;
+  string req_headers = 2;
+  string req_method = 3;
+  string req_path = 4;
+  string req_body_size = 5;
+  string req_body = 6;
+  string resp_headers = 7;
+  string resp_status = 8;
+  string resp_message = 9;
+  string resp_body_size = 10;
+  string resp_body = 11;
+}
